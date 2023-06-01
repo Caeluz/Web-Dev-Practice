@@ -2,14 +2,16 @@
 const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
 
+// Block Preview
 const blockPreviewCanvas = document.getElementById('blockPreview');
 const blockPreviewContext = blockPreviewCanvas.getContext('2d');
 
 context.scale(20, 20);
 
-
-
 let isPaused = false;
+let nextPieceMatrix = null;
+const pieces = 'ILJOTSZ';
+
 
 function play() {
     if (isPaused) {
@@ -46,48 +48,24 @@ function play() {
     update();
   }
 
-//   function drawBlockPreview(nextBlock) {
-//     blockPreviewContext.clearRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
-  
-//     // Calculate the position to center the block preview
-//     const centerX = blockPreviewCanvas.width / 2;
-//     const centerY = blockPreviewCanvas.height / 2;
-  
-//     // Calculate the size of each block in the preview
-//     const blockSize = Math.min(blockPreviewCanvas.width / nextBlock[0].length, blockPreviewCanvas.height / nextBlock.length);
-  
-//     // Loop through the blocks and draw them on the canvas
-//     for (let y = 0; y < nextBlock.length; y++) {
-//       for (let x = 0; x < nextBlock[y].length; x++) {
-//         if (nextBlock[y][x]) {
-//           // Calculate the position to draw each block
-//           const xPos = centerX - (nextBlock[y].length / 2 * blockSize) + (x * blockSize);
-//           const yPos = centerY - (nextBlock.length / 2 * blockSize) + (y * blockSize);
-  
-//           // Draw the block
-//           blockPreviewContext.fillStyle = 'blue'; // Set the desired color for the blocks
-//           blockPreviewContext.fillRect(xPos, yPos, blockSize, blockSize);
-//         }
-//       }
-//     }
-//   }
-// function drawBlockPreview() {
-//     blockPreviewContext.clearRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
-  
-//     const blockSize = Math.min(blockPreviewCanvas.width / player.nextPiece[0].length, blockPreviewCanvas.height / player.nextPiece.length);
-  
-//     player.nextPiece.forEach((row, y) => {
-//       row.forEach((value, x) => {
-//         if (value !== 0) {
-//           blockPreviewContext.fillStyle = colors[value];
-//           blockPreviewContext.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
-//         }
-//       });
-//     });
-//   }
-  
+  function drawBlockPreview() {
+    blockPreviewContext.fillStyle = '#000';
+    blockPreviewContext.fillRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
 
+    const blockSize = Math.min(
+        blockPreviewCanvas.width / nextPieceMatrix[0].length,
+        blockPreviewCanvas.height / nextPieceMatrix.length
+    );
 
+    nextPieceMatrix.forEach((row, y) => {
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                blockPreviewContext.fillStyle = colors[value];
+                blockPreviewContext.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+            }
+        });
+    });
+}
 
 function arenaSweep() {
 let rowCount = 0;
@@ -113,6 +91,7 @@ let isSpeedUp = true;
 
 
 // If player clears 10 rows, the speed will increase.
+// Bug cannot level up... when player score up by 10 when it's 100 it levels up
 while (player.score - previousScore === 100 && isSpeedUp) {
     
     increaseSpeed(); // Call the function to increase the speed  
@@ -265,15 +244,24 @@ matrix.forEach((row, y) => {
 });
 }
 
+
 function merge(arena, player) {
     player.matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-        if (value !== 0) {
-        arena[y + player.pos.y][x + player.pos.x] = value;
-        }
+        row.forEach((value, x) => {
+            if (value !== 0) {
+                arena[y + player.pos.y][x + player.pos.x] = value;
+            }
+        });
     });
-    });
+
+    nextPieceMatrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+    
+    // drawBlockPreview();
+    
+    playerReset();
+
 }
+
 
 function playerDrop() {
     player.pos.y++;
@@ -283,6 +271,8 @@ function playerDrop() {
     playerReset();
     arenaSweep();
     updateScore();
+
+
     }
     dropCounter = 0;
 }
@@ -295,8 +285,20 @@ function playerMove(dir) {
 }
 
 function playerReset() {
-    const pieces = 'ILJOTSZ';
-    player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+    // const pieces = 'ILJOTSZ';
+    // player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+
+    console.log(nextPieceMatrix);
+    if (nextPieceMatrix === null){
+        player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+    } else{
+        player.matrix = nextPieceMatrix;
+        drawBlockPreview();
+    }
+    // player.matrix = nextPieceMatrix;
+    // player.matrix = nextPieceMatrix;
+
+    console.log("testing");
     player.pos.y = 0;
     player.pos.x =
     ((arena[0].length / 2) | 0) -
@@ -311,11 +313,11 @@ function playerReset() {
     player.score = 0;
     dropInterval = 1000;
 
-    // block
-    // player.nextPiece = generateNextPiece();
-    // drawBlockPreview();
-    
 
+
+    // Draw the block preview
+    
+    
     updateScore();
     }
 }
@@ -408,6 +410,7 @@ const colors = [
 
 const arena = createMatrix(12, 20);
 
+// The Player
 const player = {
     pos: { x: 0, y: 0 },
     matrix: null,
@@ -416,6 +419,7 @@ const player = {
     level: 0
 };
 
+// Player Movements
 const playButton = document.getElementById('playButton');
 const pauseButton = document.getElementById('pauseButton');
 const restartButton = document.getElementById('restartButton');
