@@ -1,7 +1,13 @@
 // Tetris game logic
 const canvas = document.getElementById('tetris');
 const context = canvas.getContext('2d');
+
+const blockPreviewCanvas = document.getElementById('blockPreview');
+const blockPreviewContext = blockPreviewCanvas.getContext('2d');
+
 context.scale(20, 20);
+
+
 
 let isPaused = false;
 
@@ -39,6 +45,49 @@ function play() {
     playButton.textContent = 'Play'; // Reset the play button text
     update();
   }
+
+//   function drawBlockPreview(nextBlock) {
+//     blockPreviewContext.clearRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
+  
+//     // Calculate the position to center the block preview
+//     const centerX = blockPreviewCanvas.width / 2;
+//     const centerY = blockPreviewCanvas.height / 2;
+  
+//     // Calculate the size of each block in the preview
+//     const blockSize = Math.min(blockPreviewCanvas.width / nextBlock[0].length, blockPreviewCanvas.height / nextBlock.length);
+  
+//     // Loop through the blocks and draw them on the canvas
+//     for (let y = 0; y < nextBlock.length; y++) {
+//       for (let x = 0; x < nextBlock[y].length; x++) {
+//         if (nextBlock[y][x]) {
+//           // Calculate the position to draw each block
+//           const xPos = centerX - (nextBlock[y].length / 2 * blockSize) + (x * blockSize);
+//           const yPos = centerY - (nextBlock.length / 2 * blockSize) + (y * blockSize);
+  
+//           // Draw the block
+//           blockPreviewContext.fillStyle = 'blue'; // Set the desired color for the blocks
+//           blockPreviewContext.fillRect(xPos, yPos, blockSize, blockSize);
+//         }
+//       }
+//     }
+//   }
+// function drawBlockPreview() {
+//     blockPreviewContext.clearRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
+  
+//     const blockSize = Math.min(blockPreviewCanvas.width / player.nextPiece[0].length, blockPreviewCanvas.height / player.nextPiece.length);
+  
+//     player.nextPiece.forEach((row, y) => {
+//       row.forEach((value, x) => {
+//         if (value !== 0) {
+//           blockPreviewContext.fillStyle = colors[value];
+//           blockPreviewContext.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
+//         }
+//       });
+//     });
+//   }
+  
+
+
 
 function arenaSweep() {
 let rowCount = 0;
@@ -261,6 +310,10 @@ function playerReset() {
     }
     player.score = 0;
     dropInterval = 1000;
+
+    // block
+    // player.nextPiece = generateNextPiece();
+    // drawBlockPreview();
     
 
     updateScore();
@@ -338,6 +391,8 @@ function updateScore() {
     document.getElementById('score').textContent = 'Score: ' + player.score;
     document.getElementById('high-score').textContent = 'High Score: ' + player.highScore;
     document.getElementById('level').textContent = 'Level: ' + player.level;
+
+    // drawBlockPreview();
 }
 
 const colors = [
