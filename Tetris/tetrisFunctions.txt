@@ -1,0 +1,19 @@
+Next Block Preview: Display a preview of the next block that will appear on the game board. This can help players plan their moves in advance.
+
+Hold Block: Allow players to hold a block and use it later. This can provide strategic options and add another layer of complexity to the gameplay.
+
+Ghost Piece: Show a translucent outline of where the current piece will land. This helps players visualize the final position before committing to a move.
+
+Sound Effects: Add sound effects for actions such as rotating blocks, clearing lines, and game over. This can make the game more engaging and immersive.
+
+Level Progression: Increase the difficulty as the player advances through levels. This can be achieved by gradually increasing the speed of falling blocks or introducing more challenging block patterns.
+
+Power-ups: Introduce power-ups that provide temporary benefits to the player, such as clearing multiple lines at once or slowing down the falling speed.
+
+Multiplayer Mode: Implement a multiplayer mode where players can compete against each other in real-time or take turns. This can add a competitive aspect and allow players to challenge their friends.
+
+High Score Leaderboard: Keep track of the highest scores achieved by players and display them on a leaderboard. This encourages replayability and competition among players.
+
+Different Block Sets or Themes: Customize the appearance of the blocks or the overall visual theme of the game to give it a unique look and feel.
+
+Mobile Optimization: Adapt the game to be playable on mobile devices with touch controls. This can expand the potential audience and make the game accessible to more players.
