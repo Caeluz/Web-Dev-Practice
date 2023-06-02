@@ -5,6 +5,11 @@
 
   <link rel="stylesheet" type="text/css" href="tetris.css">
   <script src="tetris.js" type="text/javascript" defer></script>
+
+  <audio id="sound-reset" src="Sounds/mixkit-arcade-retro-game-over-213.wav"></audio>
+  <audio id="sound-points-up" src="Sounds/points-up.wav"></audio>
+  <audio id="sound-combo-points-up" src="Sounds/combo-points-up.wav"></audio>
+  <audio id="sound-drop-blocks" src="Sounds/dropping-blocks.wav"></audio>
 </head>
 <body>
   <!-- <h1>Tetris</h1> -->
@@ -34,7 +39,12 @@
     <button id="playButton">Play</button>
     <button id="pauseButton">Pause</button>
     <button id="restartButton">Restart</button>
+    <button id="muteButton" onclick="toggleMute()">Mute</button>
+
   </div>
+
+
+  
 
   
   

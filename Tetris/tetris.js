@@ -11,8 +11,8 @@ context.scale(20, 20);
 let isPaused = false;
 let nextBlockPreviewValue = null;
 let nextPieceMatrix = null;
-// const pieces = 'ILJOTSZ';
-const pieces = 'I';
+const pieces = 'ILJOTSZ';
+// const pieces = 'I'; // Testing purposes
 
 
 function play() {
@@ -86,17 +86,29 @@ outer: for (let y = arena.length - 1; y >= 0; --y) {
     ++y;
 
     rowCount++;
+
+
+
+    // If Player scores, they will hear this sound
+    const pointsUpSound = document.getElementById('sound-points-up');
+    pointsUpSound.play();
+    pointsSoundVar = true;
+}
+
+let pointsSoundVar = false;
+if (pointsSoundVar === false){
+    const dropBlocksSound = document.getElementById('sound-drop-blocks');
+    dropBlocksSound.play();
 }
 
 let previousScore = player.score;
-// If player clears 10 rows, the player will get 10 points of score.
-
-
 if (rowCount === 4) {
     // Display "Tetris!" announcer
     displayAnnouncer("Tetris!");
     player.score += 70;
-
+    //
+    const comboPointsUpSound = document.getElementById('sound-combo-points-up');
+    comboPointsUpSound.play();
 } else {
     player.score += rowCount * 10;
 }
@@ -272,6 +284,9 @@ function merge(arena, player) {
             }
         });
     });
+    
+
+
 }
 
 
@@ -281,10 +296,8 @@ function playerDrop() {
     player.pos.y--;
     merge(arena, player);
     playerReset();
-    
     arenaSweep();
     updateScore();
-
 
     }
     dropCounter = 0;
@@ -322,13 +335,12 @@ function playerReset() {
     }
     player.score = 0;
     dropInterval = 1000;
-
-
-
-    // Draw the block preview
     
     
     updateScore();
+
+    const resetSound = document.getElementById('sound-reset');
+    resetSound.play();
     }
 }
 
@@ -459,6 +471,23 @@ document.addEventListener('keydown', event => {
         restart();
     }
 });
+
+const muteButton = document.getElementById('muteButton');
+function toggleMute() {
+    if (pointsUpSound.muted) {
+      pointsUpSound.muted = false; // Unmute the audio
+      dropBlocksSound.muted = false; // Unmute the audio
+      comboPointsUpSound.muted = false; // Unmute the audio
+      resetSound.muted = false; // Unmute the audio
+      muteButton.textContent = 'Mute';
+    } else {
+        pointsUpSound.muted = true; // Unmute the audio
+        dropBlocksSound.muted = true; // Unmute the audio
+        comboPointsUpSound.muted = true; // Unmute the audio
+        resetSound.muted = true; // Unmute the audio
+      muteButton.textContent = 'Unmute';
+    }
+  }
 
 playerReset();
 updateScore();

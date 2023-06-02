@@ -68,5 +68,23 @@
         font-size: 16px;
 
       }
+      #blockPreview {
+        /* position: absolute; */
+        /* top:  150px; */
+        /* left: 45%; */
+        /* transform: translateX(-50%); */
+        /* float: left; */
+        
+        top: 9.5rem;
+        left: 30rem;
+        margin-left: 45rem;
+        margin-right: 1rem;
+        color: #00ff00;
+        font-size: 24px;
+        text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
+
+      }
+
+  
       
       
