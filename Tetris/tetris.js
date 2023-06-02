@@ -9,8 +9,10 @@ const blockPreviewContext = blockPreviewCanvas.getContext('2d');
 context.scale(20, 20);
 
 let isPaused = false;
+let nextBlockPreviewValue = null;
 let nextPieceMatrix = null;
-const pieces = 'ILJOTSZ';
+// const pieces = 'ILJOTSZ';
+const pieces = 'I';
 
 
 function play() {
@@ -52,6 +54,7 @@ function play() {
     blockPreviewContext.fillStyle = '#000';
     blockPreviewContext.fillRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
 
+    
     const blockSize = Math.min(
         blockPreviewCanvas.width / nextPieceMatrix[0].length,
         blockPreviewCanvas.height / nextPieceMatrix.length
@@ -60,11 +63,13 @@ function play() {
     nextPieceMatrix.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
+                
                 blockPreviewContext.fillStyle = colors[value];
                 blockPreviewContext.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
             }
         });
     });
+    nextBlockPreviewValue = nextPieceMatrix;
 }
 
 function arenaSweep() {
@@ -85,30 +90,44 @@ outer: for (let y = arena.length - 1; y >= 0; --y) {
 
 let previousScore = player.score;
 // If player clears 10 rows, the player will get 10 points of score.
-player.score += rowCount * 10;
+
+
+if (rowCount === 4) {
+    // Display "Tetris!" announcer
+    displayAnnouncer("Tetris!");
+    player.score += 70;
+
+} else {
+    player.score += rowCount * 10;
+}
 
 let isSpeedUp = true;
 
 
 // If player clears 10 rows, the speed will increase.
 // Bug cannot level up... when player score up by 10 when it's 100 it levels up
-while (player.score - previousScore === 100 && isSpeedUp) {
+// while (player.score - previousScore >= 100 && isSpeedUp) {
     
+//     increaseSpeed(); // Call the function to increase the speed  
+//     isSpeedUp = false;
+// } 
+
+while (Math.floor(player.score / 100) > Math.floor(previousScore / 100) && isSpeedUp) {
     increaseSpeed(); // Call the function to increase the speed  
-    isSpeedUp = false;
-} 
+    previousScore = Math.floor(player.score / 100) * 100; // Update previousScore
+}
 
 function increaseSpeed() {
     dropInterval -= 100;
+    if (dropInterval < 0) {
+        dropInterval = 100; // Limit the drop interval to 0
+    }
     player.level += 1; // Decrease the drop interval to increase the speed
 }
 
 updateScore();
 
-    if (rowCount === 4) {
-        // Display "Tetris!" announcer
-        displayAnnouncer("Tetris!");
-    }
+
 }
 
 function displayAnnouncer(text) {
@@ -208,19 +227,19 @@ function draw() {
 
 function drawMatrix(matrix, offset) {
     matrix.forEach((row, y) => {
-    row.forEach((value, x) => {
-        if (value !== 0) {
-        context.fillStyle = colors[value];
-        context.fillRect(x + offset.x, y + offset.y, 1, 1);
-        }
-    });
+        row.forEach((value, x) => {
+            if (value !== 0) {
+            context.fillStyle = colors[value];
+            context.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+        });
     });
 }
 
 function drawGhostPiece() {
     const ghost = {
-    pos: { x: player.pos.x, y: player.pos.y },
-    matrix: player.matrix,
+        pos: { x: player.pos.x, y: player.pos.y },
+        matrix: player.matrix,
     };
 
     while (!collide(arena, ghost)) {
@@ -253,13 +272,6 @@ function merge(arena, player) {
             }
         });
     });
-
-    nextPieceMatrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
-    
-    // drawBlockPreview();
-    
-    playerReset();
-
 }
 
 
@@ -269,6 +281,7 @@ function playerDrop() {
     player.pos.y--;
     merge(arena, player);
     playerReset();
+    
     arenaSweep();
     updateScore();
 
@@ -286,19 +299,16 @@ function playerMove(dir) {
 
 function playerReset() {
     // const pieces = 'ILJOTSZ';
-    // player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
-
-    console.log(nextPieceMatrix);
-    if (nextPieceMatrix === null){
+    if (nextBlockPreviewValue === null) { // Check if there is a saved preview block value
         player.matrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
-    } else{
-        player.matrix = nextPieceMatrix;
-        drawBlockPreview();
+    } else {
+        player.matrix = nextBlockPreviewValue; // Use the saved preview block value
+        // drawBlockPreview();
     }
-    // player.matrix = nextPieceMatrix;
-    // player.matrix = nextPieceMatrix;
 
-    console.log("testing");
+    nextPieceMatrix = createPiece(pieces[(pieces.length * Math.random()) | 0]);
+    drawBlockPreview();
+
     player.pos.y = 0;
     player.pos.x =
     ((arena[0].length / 2) | 0) -
