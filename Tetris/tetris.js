@@ -5,8 +5,8 @@ const context = canvas.getContext('2d');
 // Block Preview
 const blockPreviewCanvas = document.getElementById('blockPreview');
 const blockPreviewContext = blockPreviewCanvas.getContext('2d');
-
 context.scale(20, 20);
+
 
 let isPaused = false;
 let nextBlockPreviewValue = null;
@@ -14,6 +14,11 @@ let nextPieceMatrix = null;
 const pieces = 'ILJOTSZ';
 // const pieces = 'I'; // Testing purposes
 
+// Sounds
+const pointsUpSound = document.getElementById('sound-points-up');
+const dropBlocksSound = document.getElementById('sound-drop-blocks');
+const comboPointsUpSound = document.getElementById('sound-combo-points-up');
+const resetSound = document.getElementById('sound-reset');
 
 function play() {
     if (isPaused) {
@@ -54,7 +59,6 @@ function play() {
     blockPreviewContext.fillStyle = '#000';
     blockPreviewContext.fillRect(0, 0, blockPreviewCanvas.width, blockPreviewCanvas.height);
 
-    
     const blockSize = Math.min(
         blockPreviewCanvas.width / nextPieceMatrix[0].length,
         blockPreviewCanvas.height / nextPieceMatrix.length
@@ -87,17 +91,15 @@ outer: for (let y = arena.length - 1; y >= 0; --y) {
 
     rowCount++;
 
-
-
     // If Player scores, they will hear this sound
-    const pointsUpSound = document.getElementById('sound-points-up');
+    // const pointsUpSound = document.getElementById('sound-points-up');
     pointsUpSound.play();
     pointsSoundVar = true;
 }
 
 let pointsSoundVar = false;
 if (pointsSoundVar === false){
-    const dropBlocksSound = document.getElementById('sound-drop-blocks');
+    
     dropBlocksSound.play();
 }
 
@@ -107,7 +109,7 @@ if (rowCount === 4) {
     displayAnnouncer("Tetris!");
     player.score += 70;
     //
-    const comboPointsUpSound = document.getElementById('sound-combo-points-up');
+    
     comboPointsUpSound.play();
 } else {
     player.score += rowCount * 10;
@@ -339,7 +341,7 @@ function playerReset() {
     
     updateScore();
 
-    const resetSound = document.getElementById('sound-reset');
+    
     resetSound.play();
     }
 }
@@ -404,6 +406,7 @@ function update(time = 0) {
       if (dropCounter > dropInterval) {
         playerDrop();
       }
+      
 
       draw();
     }
@@ -451,43 +454,53 @@ pauseButton.addEventListener('click', pause);
 restartButton.addEventListener('click', restart);
 
 document.addEventListener('keydown', event => {
-    if (event.key === 'ArrowLeft') {
-        playerMove(-1);
-    } else if (event.key === 'ArrowRight') {
-        playerMove(1);
-    } else if (event.key === 'ArrowDown') {
-        playerDrop();
-    } else if (event.key === 'ArrowUp') {
-        playerRotate(1);
-    } else if (event.key === 'Control') {
-        playerRotate(-1);
-    } else if (event.key === ' ') {
-        playerMoveBottom();
-    } else if (event.key === "q" || event.key === "Q") {
-        play();
-    } else if (event.key === "t" || event.key === "t") {
-        pause();
-    } else if (event.key === "r" || event.key === "R") {
-        restart();
+    if (isPaused) {
+      return; // If paused, do not process key events
     }
-});
+    
+    if (event.key === 'ArrowLeft') {
+      playerMove(-1);
+    } else if (event.key === 'ArrowRight') {
+      playerMove(1);
+    } else if (event.key === 'ArrowDown') {
+      playerDrop();
+    } else if (event.key === 'ArrowUp') {
+      playerRotate(1);
+    } else if (event.key === 'Control') {
+      playerRotate(-1);
+    } else if (event.key === ' ') {
+      event.preventDefault();
+      playerMoveBottom();
+    } else if (event.key === "q" || event.key === "Q") {
+      play();
+    } else if (event.key === "t" || event.key === "t") {
+      pause();
+    } else if (event.key === "r" || event.key === "R") {
+      restart();
+    }
+  });
+  
 
 const muteButton = document.getElementById('muteButton');
 function toggleMute() {
-    if (pointsUpSound.muted) {
-      pointsUpSound.muted = false; // Unmute the audio
-      dropBlocksSound.muted = false; // Unmute the audio
-      comboPointsUpSound.muted = false; // Unmute the audio
-      resetSound.muted = false; // Unmute the audio
-      muteButton.textContent = 'Mute';
+    if (pointsUpSound.muted == false ) {
+        pointsUpSound.muted = true; 
+        dropBlocksSound.muted = true; 
+        comboPointsUpSound.muted = true; 
+        resetSound.muted = true; 
+        muteButton.textContent = 'Unmute';
     } else {
-        pointsUpSound.muted = true; // Unmute the audio
-        dropBlocksSound.muted = true; // Unmute the audio
-        comboPointsUpSound.muted = true; // Unmute the audio
-        resetSound.muted = true; // Unmute the audio
-      muteButton.textContent = 'Unmute';
+        pointsUpSound.muted = false; 
+        dropBlocksSound.muted = false; 
+        comboPointsUpSound.muted = false; 
+        resetSound.muted = false; 
+        muteButton.textContent = 'Mute';
     }
   }
+
+// function toggleMute() {
+//     pointsUpSound.muted = true;
+// }
 
 playerReset();
 updateScore();

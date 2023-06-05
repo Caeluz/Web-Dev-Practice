@@ -77,12 +77,15 @@
         
         top: 9.5rem;
         left: 30rem;
-        margin-left: 45rem;
-        margin-right: 1rem;
+        float: center;
         color: #00ff00;
         font-size: 24px;
         text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
 
+      }
+
+      #tetris {
+        float: center;
       }
 
   
