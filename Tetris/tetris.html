@@ -5,6 +5,9 @@
 
   <link rel="stylesheet" type="text/css" href="tetris.css">
   <script src="tetris.js" type="text/javascript" defer></script>
+  <script src="tetris-player-two.js" type="text/javascript" id="tetrisPlayerTwo" defer></script>
+  <!-- <script src="tetris-testing.js" type="text/javascript" defer></script> -->
+
 
   <audio id="sound-reset" src="Sounds/mixkit-arcade-retro-game-over-213.wav"></audio>
   <audio id="sound-points-up" src="Sounds/points-up.wav"></audio>
@@ -20,6 +23,13 @@
     <div id="level">Level: 0</div>
   </div>
 
+  <div id="scoreboard-player-two">
+    <div id="announcer-player-two"></div>
+    <div id="high-score-player-two">High Score: 0</div>
+    <div id="score-player-two">Score: 0</div>
+    <div id="level-player-two">Level: 0</div>
+  </div>
+
   <div class="instructions">
     <p>Instructions:</p>
     <p>Use arrow keys to move, rotate, and drop the blocks.</p>
@@ -30,22 +40,26 @@
   
 
   <canvas id="blockPreview" width="80" height="80"></canvas>
+  <canvas id="blockPreviewPlayerTwo" width="80" height="80"></canvas>
   
+<div class="canvas-container">
   <canvas id="tetris" width="240" height="400"></canvas>
+  <canvas id="tetris-player-two" width="240" height="400"></canvas>
+  
+</div>
+
 
   <div class="button-container">
     <button id="playButton">Play</button>
     <button id="pauseButton">Pause</button>
     <button id="restartButton">Restart</button>
     <button id="muteButton" onclick="toggleMute()">Mute</button>
+    <button id="singlePlayerButton" onclick="disableTetrisPlayerTwo()">SinglePlayer</button>
+    <!-- <button id="multiPlayerButton" onclick="">MultiPlayer</button> -->
+    <button id="botButton">Bot</button>
+    
 
   </div>
 
-
-  
-
-  
-  
-  
 </body>
 </html>

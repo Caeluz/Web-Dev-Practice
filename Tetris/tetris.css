@@ -10,11 +10,20 @@
         margin: 0;
         overflow: hidden;
       }
+
+      .canvas-container {
+        display: flex;
+        justify-content: center;
+      }
   
       canvas {
         border: 1px solid #fff;
         display: block;
-        margin: 0 auto;
+        /* margin: 0 auto; */
+        margin-right: 10px;
+        margin-left: 10px;
+
+        display: inline-block;
         
       }
 
@@ -22,11 +31,32 @@
         float: left;
         margin-right: 20px;
       }
+
+      #scoreboard-player-two {
+        float: right;
+        margin-right: 20px;
+      }
   
       #score,
       #high-score,
       #level,
       #announcer {
+        /* position: absolute; */
+        /* top:  150px; */
+        /* left: 45%; */
+        /* transform: translateX(-50%); */
+        margin-top: 1rem;
+        margin-left: 2rem;
+        margin-right: 1rem;
+        color: #00ff00;
+        font-size: 24px;
+        text-shadow: 0 0 10px #00ff00, 0 0 20px #00ff00, 0 0 40px #00ff00;
+      }
+
+      #score-player-two,
+      #high-score-player-two,
+      #level-player-two,
+      #announcer-player-two {
         /* position: absolute; */
         /* top:  150px; */
         /* left: 45%; */
@@ -87,6 +117,10 @@
       #tetris {
         float: center;
       }
+
+
+      
+
 
   
       
