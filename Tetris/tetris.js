@@ -502,13 +502,12 @@ function toggleMute() {
 
 const singlePlayerButton = document.getElementById('singlePlayerButton');
 function disableTetrisPlayerTwo() {
-    if (singlePlayerButton.textContent === 'Multiplayer') {
-        // var jsFile = document.getElementById("tetrisPlayerTwo");
+    if (singlePlayerButton.textContent === 'SinglePlayer') {
         pausePlayerTwo();
-        singlePlayerButton.textContent = 'SinglePlayer';
+        singlePlayerButton.textContent = 'MultiPlayer';
     } else {
         playPlayerTwo();
-        singlePlayerButton.textContent = 'Multiplayer';
+        singlePlayerButton.textContent = 'SinglePlayer';
     }
 }
 

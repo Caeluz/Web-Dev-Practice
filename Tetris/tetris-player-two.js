@@ -1,3 +1,4 @@
+
 // Tetris game logic
 const canvasPlayerTwo = document.getElementById('tetris-player-two');
 const contextPlayerTwo = canvasPlayerTwo.getContext('2d');
@@ -8,36 +9,37 @@ const blockPreviewContextPlayerTwo = blockPreviewCanvasPlayerTwo.getContext('2d'
 contextPlayerTwo.scale(20, 20);
 
 
-let isPausedPlayerTwo = false;
+let isPausedPlayerTwo = true;
+
 let nextBlockPreviewValuePlayerTwo = null;
 let nextPieceMatrixPlayerTwo = null;
-const piecesPlayerTwo = 'ILJOTSZ';
-// const pieces = 'I'; // Testing purposes
+// const piecesPlayerTwo = 'ILJOTSZ';
+const piecesPlayerTwo = 'I'; // Testing purposes
 
 function playPlayerTwo() {
     if (isPausedPlayerTwo) {
-      // Resume the game from a paused state
-      isPausedPlayerTwo = false;
-      playButtonPlayerTwo.textContent = 'Play';  
-      updatePlayerTwo();
+        // Resume the game from a paused state
+        isPausedPlayerTwo = false;
+        playButtonPlayerTwo.textContent = 'Play';
+        updatePlayerTwo();
     } else {
-      // Start the game
-      //playButton.disabled = true; // Disable the play button
-      updateScorePlayerTwo();
-      updatePlayerTwo();
+        // Start the game
+        //playButton.disabled = true; // Disable the play button
+        updateScorePlayerTwo();
+        updatePlayerTwo();
     }
-  }
+}
 
-  function pausePlayerTwo() {
+function pausePlayerTwo() {
     if (!isPausedPlayerTwo) {
-      // Pause the game
-      isPausedPlayerTwo = true;
-      
-      playButtonPlayerTwo.textContent = 'Resume';
-    }
-  }
+        // Pause the game
+        isPausedPlayerTwo = true;
 
-  function restart() {
+        playButtonPlayerTwo.textContent = 'Resume';
+    }
+}
+
+function restart() {
     // Reset the game to the initial state
     playerResetPlayerTwo();
     arenaTwo.forEach(row => row.fill(0));
@@ -47,9 +49,9 @@ function playPlayerTwo() {
     isPausedPlayerTwo = false; // Reset the paused state
     playButtonPlayerTwo.textContent = 'Play'; // Reset the play button text
     updatePlayerTwo();
-  }
+}
 
-  function drawBlockPreviewPlayerTwo() {
+function drawBlockPreviewPlayerTwo() {
     blockPreviewContextPlayerTwo.fillStyle = '#000';
     blockPreviewContextPlayerTwo.fillRect(0, 0, blockPreviewCanvasPlayerTwo.width, blockPreviewCanvasPlayerTwo.height);
 
@@ -61,7 +63,7 @@ function playPlayerTwo() {
     nextPieceMatrixPlayerTwo.forEach((row, y) => {
         row.forEach((value, x) => {
             if (value !== 0) {
-                
+
                 blockPreviewContextPlayerTwo.fillStyle = colorsPlayerTwo[value];
                 blockPreviewContextPlayerTwo.fillRect(x * blockSize, y * blockSize, blockSize, blockSize);
             }
@@ -71,62 +73,59 @@ function playPlayerTwo() {
 }
 
 function arenaSweepPlayerTwo() {
-let rowCountPlayerTwo = 0;
+    let rowCountPlayerTwo = 0;
 
-outer: for (let y = arenaTwo.length - 1; y >= 0; --y) {
-    for (let x = 0; x < arenaTwo[y].length; ++x) {
-    if (arenaTwo[y][x] === 0) {
-        continue outer;
+    outer: for (let y = arenaTwo.length - 1; y >= 0; --y) {
+        for (let x = 0; x < arenaTwo[y].length; ++x) {
+            if (arenaTwo[y][x] === 0) {
+                continue outer;
+            }
+        }
+        const rowPlayerTwo = arenaTwo.splice(y, 1)[0].fill(0);
+        arenaTwo.unshift(rowPlayerTwo);
+        ++y;
+
+        rowCountPlayerTwo++;
+
+
     }
+
+
+
+    let previousScorePlayerTwo = playerTwo.score;
+    if (rowCountPlayerTwo === 4) {
+        // Display "Tetris!" announcer
+        displayAnnouncer("Tetris!");
+        playerTwo.score += 70;
+        //
+
+
+    } else {
+        playerTwo.score += rowCountPlayerTwo * 10;
     }
-    const rowPlayerTwo = arenaTwo.splice(y, 1)[0].fill(0);
-    arenaTwo.unshift(rowPlayerTwo);
-    ++y;
 
-    rowCountPlayerTwo++;
+    let isSpeedUpPlayerTwo = true;
 
 
-}
+    // If player clears 10 rows, the speed will increase.
+    // Bug cannot level up... when player score up by 10 when it's 100 it levels up
+    // while (player.score - previousScore >= 100 && isSpeedUp) {
 
 
-
-let previousScorePlayerTwo = playerTwo.score;
-if (rowCountPlayerTwo === 4) {
-    // Display "Tetris!" announcer
-    displayAnnouncer("Tetris!");
-    playerTwo.score += 70;
-    //
-    
-    
-} else {
-    playerTwo.score += rowCountPlayerTwo * 10;
-}
-
-let isSpeedUpPlayerTwo = true;
-
-
-// If player clears 10 rows, the speed will increase.
-// Bug cannot level up... when player score up by 10 when it's 100 it levels up
-// while (player.score - previousScore >= 100 && isSpeedUp) {
-    
-//     increaseSpeed(); // Call the function to increase the speed  
-//     isSpeedUp = false;
-// } 
-
-while (Math.floor(playerTwo.score / 100) > Math.floor(previousScorePlayerTwo / 100) && isSpeedUpPlayerTwo) {
-    increaseSpeed(); // Call the function to increase the speed  
-    previousScorePlayerTwo = Math.floor(playerTwo.score / 100) * 100; // Update previousScore
-}
-
-function increaseSpeed() {
-    dropIntervalPlayerTwo -= 100;
-    if (dropIntervalPlayerTwo < 0) {
-        dropIntervalPlayerTwo = 100; // Limit the drop interval to 0
+    while (Math.floor(playerTwo.score / 100) > Math.floor(previousScorePlayerTwo / 100) && isSpeedUpPlayerTwo) {
+        increaseSpeed(); // Call the function to increase the speed  
+        previousScorePlayerTwo = Math.floor(playerTwo.score / 100) * 100; // Update previousScore
     }
-    playerTwo.level += 1; // Decrease the drop interval to increase the speed
-}
 
-updateScorePlayerTwo();
+    function increaseSpeed() {
+        dropIntervalPlayerTwo -= 100;
+        if (dropIntervalPlayerTwo < 0) {
+            dropIntervalPlayerTwo = 100; // Limit the drop interval to 0
+        }
+        playerTwo.level += 1; // Decrease the drop interval to increase the speed
+    }
+
+    updateScorePlayerTwo();
 
 
 }
@@ -135,87 +134,129 @@ function displayAnnouncer(text) {
     const announcerElement = document.getElementById('announcer-player-two');
     announcerElement.textContent = text;
     announcerElement.classList.add('show');
-  
+
     setTimeout(() => {
-      announcerElement.classList.remove('show');
+        announcerElement.classList.remove('show');
     }, 1500); // Display the announcer for 1.5 seconds
-  }
+}
 
 function collidePlayerTwo(arenaTwo, playerTwo) {
     const [m, o] = [playerTwo.matrix, playerTwo.pos];
     for (let y = 0; y < m.length; ++y) {
-    for (let x = 0; x < m[y].length; ++x) {
-        if (
-        m[y][x] !== 0 &&
-        (arenaTwo[y + o.y] &&
-            arenaTwo[y + o.y][x + o.x]) !== 0
-        ) {
-        return true;
+        for (let x = 0; x < m[y].length; ++x) {
+            if (
+                m[y][x] !== 0 &&
+                (arenaTwo[y + o.y] &&
+                    arenaTwo[y + o.y][x + o.x]) !== 0
+            ) {
+                
+                return true;
+            }
         }
-    }
     }
     return false;
 }
 
+
+  
+
 function createMatrixPlayerTwo(w, h) {
     const matrixPlayerTwo = [];
     while (h--) {
-    matrixPlayerTwo.push(new Array(w).fill(0));
+        matrixPlayerTwo.push(new Array(w).fill(0));
     }
+    
     return matrixPlayerTwo;
 }
 
 function createPiecePlayerTwo(type) {
     if (type === 'T') {
-    return [
-        [0, 0, 0],
-        [1, 1, 1],
-        [0, 1, 0],
-    ];
+        return [
+            [0, 0, 0],
+            [1, 1, 1],
+            [0, 1, 0],
+        ];
     } else if (type === 'O') {
-    return [
-        [2, 2],
-        [2, 2],
-    ];
+        return [
+            [2, 2],
+            [2, 2],
+        ];
     } else if (type === 'L') {
-    return [
-        [0, 3, 0],
-        [0, 3, 0],
-        [0, 3, 3],
-    ];
+        return [
+            [0, 3, 0],
+            [0, 3, 0],
+            [0, 3, 3],
+        ];
     } else if (type === 'J') {
-    return [
-        [0, 4, 0],
-        [0, 4, 0],
-        [4, 4, 0],
-    ];
+        return [
+            [0, 4, 0],
+            [0, 4, 0],
+            [4, 4, 0],
+        ];
     } else if (type === 'I') {
-    return [
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-        [0, 5, 0, 0],
-    ];
+        return [
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+            [0, 5, 0, 0],
+        ];
     } else if (type === 'S') {
-    return [
-        [0, 6, 6],
-        [6, 6, 0],
-        [0, 0, 0],
-    ];
+        return [
+            [0, 6, 6],
+            [6, 6, 0],
+            [0, 0, 0],
+        ];
     } else if (type === 'Z') {
-    return [
-        [7, 7, 0],
-        [0, 7, 7],
-        [0, 0, 0],
-    ];
-    // return [
-    //     [0, 0, 0, 0],
-    //     [1, 1, 1, 1],
-    //     [0, 0, 0, 0],
-    //     [0, 0, 0, 0],
-    //   ];
+        return [
+            [7, 7, 0],
+            [0, 7, 7],
+            [0, 0, 0],
+        ];
+        // return [
+        //     [0, 0, 0, 0],
+        //     [1, 1, 1, 1],
+        //     [0, 0, 0, 0],
+        //     [0, 0, 0, 0],
+        //   ];
     }
 }
+
+function getHighestRow(arenaTwo) {
+    for (let y = 0; y < arenaTwo.length; y++) {
+        if (arenaTwo[y].some(value => value !== 0)) {
+            y = arenaTwo.length - y;
+            return y;
+        }
+    }
+    
+    return 0; // Return -1 if no tetromino is found in the field
+}
+
+function checkColumns(arenaTwo) {
+    const columnCount = arenaTwo[0].length; // Assuming all rows have the same length
+  
+    for (let x = 0; x < columnCount; x++) {
+      let hasGap = false;
+      for (let y = 0; y < 12; y++) {
+        if (arenaTwo[y][x] === 0) {
+          hasGap = true;
+          console.log("x="+x+ "y="+y)
+          break;
+        }
+        
+      }
+  
+      if (hasGap) {
+        console.log(`Column ${x} has a gap.`);
+        
+      } else {
+        console.log(`Column ${x} is complete.`);
+      }
+    }
+  }
+  
+  
+  
 
 function drawPlayerTwo() {
     contextPlayerTwo.fillStyle = '#000';
@@ -224,18 +265,16 @@ function drawPlayerTwo() {
     drawMatrixPlayerTwo(arenaTwo, { x: 0, y: 0 });
     drawMatrixPlayerTwo(playerTwo.matrix, playerTwo.pos);
     drawGhostPiecePlayerTwo();
-}
 
-// function drawMatrix(matrix, offset) {
-//     matrix.forEach((rowPlayerTwo, y) => {
-//         rowPlayerTwo.forEach((value, x) => {
-//             if (value !== 0) {
-//             contextPlayerTwo.fillStyle = colorsPlayerTwo[value];
-//             contextPlayerTwo.fillRect(x + offset.x, y + offset.y, 1, 1);
-//             }
-//         });
-//     });
-// }
+    // checking the highest row
+    const highestRow = getHighestRow(arenaTwo);
+    document.getElementById('highestRow').textContent = 'Highest Row: ' + highestRow;
+
+    checkColumns(arenaTwo);
+    
+    
+
+}
 
 function drawGhostPiecePlayerTwo() {
     const ghost = {
@@ -244,7 +283,7 @@ function drawGhostPiecePlayerTwo() {
     };
 
     while (!collidePlayerTwo(arenaTwo, ghost)) {
-    ghost.pos.y++;
+        ghost.pos.y++;
     }
 
     ghost.pos.y--;
@@ -253,15 +292,15 @@ function drawGhostPiecePlayerTwo() {
 }
 
 function drawMatrixPlayerTwo(matrix, offset, isGhost) {
-matrix.forEach((rowPlayerTwo, y) => {
-    rowPlayerTwo.forEach((value, x) => {
-    if (value !== 0) {
-        const colorPlayerTwo = isGhost ? 'rgba(255, 255, 255, 0.3)' : colorsPlayerTwo[value];
-        contextPlayerTwo.fillStyle = colorPlayerTwo;
-        contextPlayerTwo.fillRect(x + offset.x, y + offset.y, 1, 1);
-    }
+    matrix.forEach((rowPlayerTwo, y) => {
+        rowPlayerTwo.forEach((value, x) => {
+            if (value !== 0) {
+                const colorPlayerTwo = isGhost ? 'rgba(255, 255, 255, 0.3)' : colorsPlayerTwo[value];
+                contextPlayerTwo.fillStyle = colorPlayerTwo;
+                contextPlayerTwo.fillRect(x + offset.x, y + offset.y, 1, 1);
+            }
+        });
     });
-});
 }
 
 
@@ -270,6 +309,7 @@ function mergePlayerTwo(arenaTwo, playerTwo) {
         rowPlayerTwo.forEach((value, x) => {
             if (value !== 0) {
                 arenaTwo[y + playerTwo.pos.y][x + playerTwo.pos.x] = value;
+                // console.log(arenaTwo);
             }
         });
     });
@@ -279,11 +319,13 @@ function mergePlayerTwo(arenaTwo, playerTwo) {
 function playerDropPlayerTwo() {
     playerTwo.pos.y++;
     if (collidePlayerTwo(arenaTwo, playerTwo)) {
-    playerTwo.pos.y--;
-    mergePlayerTwo(arenaTwo, playerTwo);
-    playerResetPlayerTwo();
-    arenaSweepPlayerTwo();
-    updateScorePlayerTwo();
+        playerTwo.pos.y--;
+        
+        mergePlayerTwo(arenaTwo, playerTwo);
+        
+        playerResetPlayerTwo();
+        arenaSweepPlayerTwo();
+        updateScorePlayerTwo();
 
     }
     dropCounterPlayerTwo = 0;
@@ -292,7 +334,7 @@ function playerDropPlayerTwo() {
 function playerMovePlayerTwo(dir) {
     playerTwo.pos.x += dir;
     if (collidePlayerTwo(arenaTwo, playerTwo)) {
-    playerTwo.pos.x -= dir;
+        playerTwo.pos.x -= dir;
     }
 }
 
@@ -310,20 +352,20 @@ function playerResetPlayerTwo() {
 
     playerTwo.pos.y = 0;
     playerTwo.pos.x =
-    ((arenaTwo[0].length / 2) | 0) -
-    ((playerTwo.matrix[0].length / 2) | 0);
+        ((arenaTwo[0].length / 2) | 0) -
+        ((playerTwo.matrix[0].length / 2) | 0);
     if (collidePlayerTwo(arenaTwo, playerTwo)) {
-    arenaTwo.forEach(rowPlayerTwo => rowPlayerTwo.fill(0));
-    
-    if (playerTwo.score > playerTwo.highScore) {
-        localStorage.setItem('highScore', playerTwo.score);
-        playerTwo.highScore = localStorage.getItem('highScore');
-    }
-    playerTwo.score = 0;
-    dropIntervalPlayerTwo = 1000;
-    
-    
-    updateScorePlayerTwo();
+        arenaTwo.forEach(rowPlayerTwo => rowPlayerTwo.fill(0));
+
+        if (playerTwo.score > playerTwo.highScore) {
+            localStorage.setItem('highScore', playerTwo.score);
+            playerTwo.highScore = localStorage.getItem('highScore');
+        }
+        playerTwo.score = 0;
+        dropIntervalPlayerTwo = 1000;
+
+
+        updateScorePlayerTwo();
 
 
     }
@@ -333,24 +375,25 @@ function playerRotateTwo(dir) {
     const pos = playerTwo.pos.x;
     let offset = 1;
     rotatePlayerTwo(playerTwo.matrix, dir);
+    
     while (collidePlayerTwo(arenaTwo, playerTwo)) {
-    playerTwo.pos.x += offset;
-    offset = -(offset + (offset > 0 ? 1 : -1));
-    if (offset > playerTwo.matrix[0].length) {
-        rotatePlayerTwo(playerTwo.matrix, -dir);
-        playerTwo.pos.x = pos;
-        return;
-    }
+        playerTwo.pos.x += offset;
+        offset = -(offset + (offset > 0 ? 1 : -1));
+        if (offset > playerTwo.matrix[0].length) {
+            rotatePlayerTwo(playerTwo.matrix, -dir);
+            playerTwo.pos.x = pos;
+            return;
+        }
     }
 }
 
 function playerMoveBottomPlayerTwo() {
     while (!collidePlayerTwo(arenaTwo, playerTwo)) {
-    playerTwo.pos.y++;
+        playerTwo.pos.y++;
     }
 
     playerTwo.pos.y--;
-
+    
     mergePlayerTwo(arenaTwo, playerTwo);
     playerResetPlayerTwo();
     arenaSweepPlayerTwo();
@@ -360,18 +403,18 @@ function playerMoveBottomPlayerTwo() {
 
 function rotatePlayerTwo(matrix, dir) {
     for (let y = 0; y < matrix.length; ++y) {
-    for (let x = 0; x < y; ++x) {
-        [matrix[x][y], matrix[y][x]] = [
-        matrix[y][x],
-        matrix[x][y],
-        ];
-    }
+        for (let x = 0; x < y; ++x) {
+            [matrix[x][y], matrix[y][x]] = [
+                matrix[y][x],
+                matrix[x][y],
+            ];
+        }
     }
 
     if (dir > 0) {
-    matrix.forEach(row => row.reverse());
+        matrix.forEach(row => row.reverse());
     } else {
-    matrix.reverse();
+        matrix.reverse();
     }
 }
 
@@ -382,22 +425,29 @@ let lastTimePlayerTwo = 0;
 
 function updatePlayerTwo(time = 0) {
     if (!isPausedPlayerTwo) {
-      const deltaTimePlayerTwo = time - lastTimePlayerTwo;
-      lastTimePlayerTwo = time;
-      
+        const deltaTimePlayerTwo = time - lastTimePlayerTwo;
+        lastTimePlayerTwo = time;
 
-      dropCounterPlayerTwo += deltaTimePlayerTwo;
-      if (dropCounterPlayerTwo > dropIntervalPlayerTwo) {
-        playerDropPlayerTwo();
-        
-      }
-      
-      
-      drawPlayerTwo();
+
+        dropCounterPlayerTwo += deltaTimePlayerTwo;
+        if (dropCounterPlayerTwo > dropIntervalPlayerTwo) {
+            playerDropPlayerTwo();            
+
+        }
+
+        drawPlayerTwo();
+        // console.log("11:" + arenaTwo[19][11]);
+        // console.log("10:" + arenaTwo[19][10]);
+        // console.log("9:" + arenaTwo[19][9]);
+        // console.log("8:" + arenaTwo[19][8]);
     }
 
     requestAnimationFrame(updatePlayerTwo);
-  }
+}
+
+function testing() {
+    
+}
 
 function updateScorePlayerTwo() {
     document.getElementById('score-player-two').textContent = 'Score: ' + playerTwo.score;
@@ -439,35 +489,34 @@ restartButtonPlayerTwo.addEventListener('click', restart);
 
 document.addEventListener('keydown', event => {
     if (isPausedPlayerTwo) {
-      return; // If paused, do not process key events
+        return; // If paused, do not process key events
     }
-    
-    if  (event.key === 'ArrowLeft') {
-      playerMovePlayerTwo(-1);
+
+    if (event.key === 'ArrowLeft') {
+        playerMovePlayerTwo(-1);
     } else if (event.key === 'ArrowRight') {
-      playerMovePlayerTwo(1);
+        playerMovePlayerTwo(1);
     } else if (event.key === 'ArrowDown') {
-      playerDropPlayerTwo();
+        playerDropPlayerTwo();
     } else if (event.key === 'ArrowUp') {
-      playerRotateTwo(1);
+        playerRotateTwo(1);
     } else if (event.key === ']') {
-      playerRotateTwo(-1);
+        playerRotateTwo(-1);
     } else if (event.key === '\\') {
-      event.preventDefault();
-      playerMoveBottomPlayerTwo();
+        event.preventDefault();
+        playerMoveBottomPlayerTwo();
     } else if (event.key === "q" || event.key === "Q") {
-      playPlayerTwo();
+        playPlayerTwo();
     } else if (event.key === "t" || event.key === "t") {
-      pausePlayerTwo();
+        pausePlayerTwo();
     } else if (event.key === "r" || event.key === "R") {
-      restart();
+        restart();
     }
-  });
+});
 
 
 
-  
- 
+
 playerResetPlayerTwo();
 updateScorePlayerTwo();
 updatePlayerTwo();
