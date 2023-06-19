@@ -13,8 +13,33 @@ let isPausedPlayerTwo = true;
 
 let nextBlockPreviewValuePlayerTwo = null;
 let nextPieceMatrixPlayerTwo = null;
-// const piecesPlayerTwo = 'ILJOTSZ';
-const piecesPlayerTwo = 'I'; // Testing purposes
+const piecesPlayerTwo = 'ILJOTSZ';
+// const piecesPlayerTwo = 'I'; // Testing purposes
+
+function gameState() {
+    const fallingPiece = {
+        shape: playerTwo.matrix,
+        position: { x: playerTwo.pos.x, y: playerTwo.pos.y },
+        orientation: playerTwo.orientation
+    };
+
+    const grid = arenaTwo;
+    const score = playerTwo.score;
+    const level = playerTwo.level;
+    const linesCleared = playerTwo.score / 10;
+
+    return {
+        fallingPiece,
+        grid,
+        score,
+        level,
+        linesCleared
+    };
+}
+
+
+
+
 
 function playPlayerTwo() {
     if (isPausedPlayerTwo) {
@@ -89,9 +114,6 @@ function arenaSweepPlayerTwo() {
 
 
     }
-
-
-
     let previousScorePlayerTwo = playerTwo.score;
     if (rowCountPlayerTwo === 4) {
         // Display "Tetris!" announcer
@@ -105,8 +127,6 @@ function arenaSweepPlayerTwo() {
     }
 
     let isSpeedUpPlayerTwo = true;
-
-
     // If player clears 10 rows, the speed will increase.
     // Bug cannot level up... when player score up by 10 when it's 100 it levels up
     // while (player.score - previousScore >= 100 && isSpeedUp) {
@@ -149,7 +169,7 @@ function collidePlayerTwo(arenaTwo, playerTwo) {
                 (arenaTwo[y + o.y] &&
                     arenaTwo[y + o.y][x + o.x]) !== 0
             ) {
-                
+
                 return true;
             }
         }
@@ -158,14 +178,14 @@ function collidePlayerTwo(arenaTwo, playerTwo) {
 }
 
 
-  
+
 
 function createMatrixPlayerTwo(w, h) {
     const matrixPlayerTwo = [];
     while (h--) {
         matrixPlayerTwo.push(new Array(w).fill(0));
     }
-    
+
     return matrixPlayerTwo;
 }
 
@@ -228,35 +248,29 @@ function getHighestRow(arenaTwo) {
             return y;
         }
     }
-    
+
     return 0; // Return -1 if no tetromino is found in the field
 }
 
-function checkColumns(arenaTwo) {
-    const columnCount = arenaTwo[0].length; // Assuming all rows have the same length
-  
-    for (let x = 0; x < columnCount; x++) {
-      let hasGap = false;
-      for (let y = 0; y < 12; y++) {
-        if (arenaTwo[y][x] === 0) {
-          hasGap = true;
-          console.log("x="+x+ "y="+y)
-          break;
-        }
-        
-      }
-  
-      if (hasGap) {
-        console.log(`Column ${x} has a gap.`);
-        
-      } else {
-        console.log(`Column ${x} is complete.`);
-      }
-    }
-  }
-  
-  
-  
+// Check each column one by one to make sure there are no gaps in the column.
+// function countGaps(arenaTwo) {
+//     const columnCount = arenaTwo[0].length; // Assuming all rows have the same length
+//     const gapCounts = [];
+
+//     for (let x = 0; x < columnCount; x++) {
+//         let gapCount = 0;
+//         for (let y = 0; y < arenaTwo.length; y++) {
+//             if (arenaTwo[y][x] === 0) {
+//                 gapCount++;
+//             }
+//         }
+//         gapCounts.push(gapCount);
+//     }
+//     return gapCounts;
+// }
+
+
+
 
 function drawPlayerTwo() {
     contextPlayerTwo.fillStyle = '#000';
@@ -270,10 +284,7 @@ function drawPlayerTwo() {
     const highestRow = getHighestRow(arenaTwo);
     document.getElementById('highestRow').textContent = 'Highest Row: ' + highestRow;
 
-    checkColumns(arenaTwo);
-    
-    
-
+    // countGaps(arenaTwo);
 }
 
 function drawGhostPiecePlayerTwo() {
@@ -320,9 +331,9 @@ function playerDropPlayerTwo() {
     playerTwo.pos.y++;
     if (collidePlayerTwo(arenaTwo, playerTwo)) {
         playerTwo.pos.y--;
-        
+
         mergePlayerTwo(arenaTwo, playerTwo);
-        
+
         playerResetPlayerTwo();
         arenaSweepPlayerTwo();
         updateScorePlayerTwo();
@@ -362,7 +373,7 @@ function playerResetPlayerTwo() {
             playerTwo.highScore = localStorage.getItem('highScore');
         }
         playerTwo.score = 0;
-        dropIntervalPlayerTwo = 1000;
+        dropIntervalPlayerTwo = 100;
 
 
         updateScorePlayerTwo();
@@ -373,19 +384,27 @@ function playerResetPlayerTwo() {
 
 function playerRotateTwo(dir) {
     const pos = playerTwo.pos.x;
+    const originalMatrix = playerTwo.matrix;
     let offset = 1;
     rotatePlayerTwo(playerTwo.matrix, dir);
-    
+
     while (collidePlayerTwo(arenaTwo, playerTwo)) {
         playerTwo.pos.x += offset;
         offset = -(offset + (offset > 0 ? 1 : -1));
         if (offset > playerTwo.matrix[0].length) {
             rotatePlayerTwo(playerTwo.matrix, -dir);
+            playerTwo.matrix = originalMatrix;
             playerTwo.pos.x = pos;
             return;
         }
     }
+
+    playerTwo.orientation = (playerTwo.orientation + dir) % 4;
+    if (playerTwo.orientation < 0) {
+        playerTwo.orientation += 4;
+    }
 }
+
 
 function playerMoveBottomPlayerTwo() {
     while (!collidePlayerTwo(arenaTwo, playerTwo)) {
@@ -393,7 +412,7 @@ function playerMoveBottomPlayerTwo() {
     }
 
     playerTwo.pos.y--;
-    
+
     mergePlayerTwo(arenaTwo, playerTwo);
     playerResetPlayerTwo();
     arenaSweepPlayerTwo();
@@ -419,7 +438,7 @@ function rotatePlayerTwo(matrix, dir) {
 }
 
 let dropCounterPlayerTwo = 0;
-let dropIntervalPlayerTwo = 1000;
+let dropIntervalPlayerTwo = 100;
 
 let lastTimePlayerTwo = 0;
 
@@ -431,22 +450,19 @@ function updatePlayerTwo(time = 0) {
 
         dropCounterPlayerTwo += deltaTimePlayerTwo;
         if (dropCounterPlayerTwo > dropIntervalPlayerTwo) {
-            playerDropPlayerTwo();            
+            playerDropPlayerTwo();
 
         }
-
+        getPossibleMoves(arenaTwo, playerTwo);
         drawPlayerTwo();
-        // console.log("11:" + arenaTwo[19][11]);
-        // console.log("10:" + arenaTwo[19][10]);
-        // console.log("9:" + arenaTwo[19][9]);
-        // console.log("8:" + arenaTwo[19][8]);
+
     }
 
     requestAnimationFrame(updatePlayerTwo);
 }
 
 function testing() {
-    
+
 }
 
 function updateScorePlayerTwo() {
@@ -472,10 +488,12 @@ const arenaTwo = createMatrixPlayerTwo(12, 20);
 // The Player
 const playerTwo = {
     pos: { x: 0, y: 0 },
-    matrix: null,
+    // matrix: null,
+    matrix: [[0, 6, 6], [6, 6, 0], [0, 0, 0]],
     score: 0,
     highScore: localStorage.getItem('highScore'),
-    level: 0
+    level: 0,
+    orientation: 0
 };
 
 // Player Movements

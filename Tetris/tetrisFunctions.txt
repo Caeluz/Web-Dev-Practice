@@ -14,3 +14,17 @@ Not Implemented:
 3. Multiplayer Mode: Implement a multiplayer mode where players can compete against each other in real-time or take turns. This can add a competitive aspect and allow players to challenge their friends.
 4. Different Block Sets or Themes: Customize the appearance of the blocks or the overall visual theme of the game to give it a unique look and feel.
 5. Mobile Optimization: Adapt the game to be playable on mobile devices with touch controls. This can expand the potential audience and make the game accessible to more players.
+
+Bot:
+Do you want the Tetris bot to automatically play the game and make optimal moves, or do you want it to assist a human player by suggesting moves?
+what is the desired strategy or algorithm it should follow? 
+Should it prioritize clearing lines, maximizing score, or surviving as long as possible?
+
+Possible Moves: You should be able to generate a list of all possible moves that the bot can make in the current game state.
+This typically involves trying out different rotations and translations of the falling Tetrimino and checking if they are 
+valid (i.e., they do not result in collisions with existing blocks or the walls).
+
+Evaluation Function: You need to define an evaluation function that assigns a score or 
+fitness value to each possible move. The evaluation function should take into account various factors, 
+such as the number of lines cleared, the height of the stack of blocks, the number of holes 
+(empty spaces covered by blocks), and any other criteria you want the bot to optimize for.
