@@ -2,84 +2,88 @@ function getPossibleMoves(arena, player) {
   const possibleMoves = [];
   // Try all possible rotations and translations
   for (let rotation = 0; rotation < 4; rotation++) {
-      const originalMatrix = player.matrix;
-      player.orientation = rotation;
-      // rotatePlayerTwo(player.matrix, 1); // Rotate the matrix
-      playerRotateTwo(1); // Rotate the matrix
+    const originalMatrix = player.matrix;
+    player.orientation = rotation;
+    // rotatePlayerTwo(player.matrix, 1); // Rotate the matrix
+    playerRotateTwo(1); // Rotate the matrix
 
-      // Try moving left
-      player.pos.x--;
-      while (!collidePlayerTwo(arena, player)) {
-          player.pos.x--;
-      }
-      player.pos.x++;
-      possibleMoves.push({
-          matrix: player.matrix,
-          position: { x: player.pos.x, y: player.pos.y },
-          orientation: player.orientation
-      });
+    // Try moving left
+    player.pos.y--;
+    while (!collidePlayerTwo(arena, player)) {
+      player.pos.y--;
+    }
+    player.pos.y++;
+    possibleMoves.push({
+      matrix: player.matrix,
+      position: { x: player.pos.x, y: player.pos.y },
+      orientation: player.orientation,
+    });
 
-      // Try moving right
-      player.pos.x++;
-      while (!collidePlayerTwo(arena, player)) {
-          player.pos.x++;
-      }
-      player.pos.x--;
-      possibleMoves.push({
-          matrix: player.matrix,
-          position: { x: player.pos.x, y: player.pos.y },
-          orientation: player.orientation
-      });
+    // Try moving right
+    player.pos.y++;
+    while (!collidePlayerTwo(arena, player)) {
+      player.pos.y++;
+    }
+    player.pos.y--;
+    possibleMoves.push({
+      matrix: player.matrix,
+      position: { x: player.pos.x, y: player.pos.y },
+      orientation: player.orientation,
+    });
 
-      // Restore the original matrix and rotate it back
-      player.matrix = originalMatrix;
-      // rotatePlayerTwo(player.matrix, -1);
-      playerRotateTwo(-1);
+    // Restore the original matrix and rotate it back
+    player.matrix = originalMatrix;
+    // rotatePlayerTwo(player.matrix, -1);
+    playerRotateTwo(-1);
   }
-  
+
   return possibleMoves;
 }
 
+// class TetrisBot {
+//   constructor(arenaWidth, arenaHeight) {
+//     this.arenaWidth = arenaWidth;
+//     this.arenaHeight = arenaHeight;
+//   }
 
+//   evaluateMove(gameState) {
+//     const possibleMoves = this.getPossibleMoves(
+//       gameState.grid,
+//       gameState.fallingPiece
+//     );
 
+//     // If there are no possible moves, return a default move
+//     if (possibleMoves.length === 0) {
+//       return {
+//         matrix: gameState.fallingPiece.shape,
+//         position: {
+//           x: gameState.fallingPiece.position.x,
+//           y: gameState.fallingPiece.position.y,
+//         },
+//         orientation: gameState.fallingPiece.orientation,
+//         score: 0, // Adjust score based on your scoring strategy
+//       };
+//     }
 
+//     let bestMove = possibleMoves[0];
+//     let bestMoveScore = this.scoreMove(bestMove, gameState);
 
+//     // Evaluate all possible moves and choose the best one
+//     for (const move of possibleMoves) {
+//       const moveScore = this.scoreMove(move, gameState);
+//       if (moveScore > bestMoveScore) {
+//         bestMove = move;
+//         bestMoveScore = moveScore;
+//       }
+//     }
 
+//     return bestMove;
+//   }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// function getPossibleMoves(arena, player) {
-//   const possibleMoves = [];
-//   console.log(possibleMoves);
-//   // Try all possible rotations and translations
-//   for (let rotation = 0; rotation < 4; rotation++) {
+//   getPossibleMoves(arena, player) {
+//     const possibleMoves = [];
+//     // Try all possible rotations and translations
+//     for (let rotation = 0; rotation < 4; rotation++) {
 //       const originalMatrix = player.matrix;
 //       player.orientation = rotation;
 //       // rotatePlayerTwo(player.matrix, 1); // Rotate the matrix
@@ -88,157 +92,173 @@ function getPossibleMoves(arena, player) {
 //       // Try moving left
 //       player.pos.x--;
 //       while (!collidePlayerTwo(arena, player)) {
-//           player.pos.x--;
+//         player.pos.x--;
 //       }
 //       player.pos.x++;
 //       possibleMoves.push({
-//           matrix: player.matrix,
-//           position: { x: player.pos.x, y: player.pos.y },
-//           orientation: player.orientation
+//         matrix: player.matrix,
+//         position: { x: player.pos.x, y: player.pos.y },
+//         orientation: player.orientation,
 //       });
 
 //       // Try moving right
 //       player.pos.x++;
 //       while (!collidePlayerTwo(arena, player)) {
-//           player.pos.x++;
+//         player.pos.x++;
 //       }
 //       player.pos.x--;
 //       possibleMoves.push({
-//           matrix: player.matrix,
-//           position: { x: player.pos.x, y: player.pos.y },
-//           orientation: player.orientation
+//         matrix: player.matrix,
+//         position: { x: player.pos.x, y: player.pos.y },
+//         orientation: player.orientation,
 //       });
 
 //       // Restore the original matrix and rotate it back
 //       player.matrix = originalMatrix;
 //       // rotatePlayerTwo(player.matrix, -1);
 //       playerRotateTwo(-1);
+//     }
+
+//     return possibleMoves;
 //   }
 
-//   return possibleMoves;
-// }
-
-// function runBot(arena, piece, width, height) {
-//     let bestScore = -Infinity;
+//   getBestMove(possibleMoves, grid) {
 //     let bestMove = null;
-  
-//     for (let rotation = 0; rotation < 4; rotation++) {
-//       const pieceCopy = JSON.parse(JSON.stringify(piece));
-  
-//       for (let offsetX = -pieceCopy[0].length; offsetX < width; offsetX++) {
-//         const potentialMove = {
-//           pos: { x: offsetX, y: 0 },
-//           matrix: pieceCopy,
-//         };
-  
-//         while (!collidePlayerTwo(arena, potentialMove)) {
-//           potentialMove.pos.y++;
-//         }
-  
-//         potentialMove.pos.y--;
-  
-//         const score = evaluateMove(arena, potentialMove);
-  
-//         if (score > bestScore) {
-//           bestScore = score;
-//           bestMove = potentialMove;
+//     let bestScore = -Infinity;
+//     possibleMoves.forEach((move) => {
+//       const score = this.scoreMove(move, grid);
+//       if (score > bestScore) {
+//         bestMove = move;
+//         bestScore = score;
+//       }
+//     });
+//     return bestMove;
+//   }
+
+//   // Inside the TetrisBot class
+//   mergeWithArena(arena, piece, position, matrix) {
+//     for (let y = 0; y < matrix.length; y++) {
+//       for (let x = 0; x < matrix[y].length; x++) {
+//         if (matrix[y][x] !== 0) {
+//           arena[position.y + y][position.x + x] = matrix[y][x];
 //         }
 //       }
-  
-//       rotatePlayerTwo(pieceCopy, 1);
-//     }
-  
-//     if (bestMove) {
-//       playerTwo.matrix = bestMove.matrix;
-//       playerTwo.pos.x = bestMove.pos.x;
 //     }
 //   }
-  
-//   function evaluateMove(arena, move) {
-//     const originalPos = playerTwo.pos;
-//     playerTwo.pos = move.pos;
-  
-//     mergePlayerTwo(arena, playerTwo);
-//     arenaSweepPlayerTwo();
-  
-//     const score = playerTwo.score;
-  
-//     playerTwo.score = 0;
-//     playerTwo.pos = originalPos;
-  
+
+//   clearLines(arena) {
+//     let linesCleared = 0;
+//     outer: for (let y = arena.length - 1; y >= 0; y--) {
+//       for (let x = 0; x < arena[y].length; x++) {
+//         if (arena[y][x] === 0) {
+//           continue outer;
+//         }
+//       }
+//       const row = arena.splice(y, 1)[0].fill(0);
+//       arena.unshift(row);
+//       linesCleared++;
+//     }
+//     return linesCleared;
+//   }
+
+//   countHoles(arena) {
+//     let holesCount = 0;
+//     for (let x = 0; x < arena[0].length; x++) {
+//       let blockAboveHole = false;
+//       for (let y = arena.length - 1; y >= 0; y--) {
+//         if (arena[y][x] === 0 && blockAboveHole) {
+//           holesCount++;
+//         } else if (arena[y][x] !== 0) {
+//           blockAboveHole = true;
+//         }
+//       }
+//     }
+//     return holesCount;
+//   }
+
+//   calculateBumpiness(arena) {
+//     let bumpiness = 0;
+//     for (let x = 0; x < arena[0].length - 1; x++) {
+//       const columnHeight1 = this.getColumnHeight(arena, x);
+//       const columnHeight2 = this.getColumnHeight(arena, x + 1);
+//       bumpiness += Math.abs(columnHeight1 - columnHeight2);
+//     }
+//     return bumpiness;
+//   }
+
+//   getColumnHeight(arena, column) {
+//     for (let y = 0; y < arena.length; y++) {
+//       if (arena[y][column] !== 0) {
+//         return arena.length - y;
+//       }
+//     }
+//     return 0;
+//   }
+
+//   calculateMaxHeight(arena) {
+//     let maxHeight = 0;
+//     for (let x = 0; x < arena[0].length; x++) {
+//       const columnHeight = this.getColumnHeight(arena, x);
+//       maxHeight = Math.max(maxHeight, columnHeight);
+//     }
+//     return maxHeight;
+//   }
+
+//   scoreMove(move, gameState) {
+//     const { grid, fallingPiece } = gameState;
+
+//     const testArena = JSON.parse(JSON.stringify(gameState)); // Create a copy of the grid for testing the move
+//     // console.log(arenaTwo);
+//     // Merge the falling piece with the test arena based on the move
+//     this.mergeWithArena(testArena, fallingPiece, move.position, move.matrix);
+
+//     // Calculate the number of lines cleared by this move
+//     const linesCleared = this.clearLines(testArena);
+
+//     // Calculate the number of holes in the test arena
+//     const holesCount = this.countHoles(testArena);
+
+//     // Calculate the bumpiness of the test arena
+//     const bumpiness = this.calculateBumpiness(testArena);
+
+//     // Calculate the height of the tallest column in the test arena
+//     const maxHeight = this.calculateMaxHeight(testArena);
+
+//     // Define weights for each factor in the scoring strategy (adjust these based on your desired gameplay)
+//     const linesClearedWeight = 100;
+//     const holesCountWeight = -50;
+//     const bumpinessWeight = -10;
+//     const maxHeightWeight = -20;
+
+//     // Calculate the total score for the move based on the weights and factors
+//     const score =
+//       linesCleared * linesClearedWeight +
+//       holesCount * holesCountWeight +
+//       bumpiness * bumpinessWeight +
+//       maxHeight * maxHeightWeight;
+
 //     return score;
 //   }
-  
-
-// Testing
-// function getPossibleMoves(gameState) {
-//   const { fallingTetrimino, grid } = gameState;
-//   const possibleMoves = [];
-
-//   // Get the current position and orientation of the falling Tetrimino
-//   const { position, orientation } = fallingTetrimino;
-//   const { x, y } = position;
-
-//   // Generate all possible moves: left, right, down, and rotation
-//   const potentialMoves = [
-//     { x: x - 1, y },
-//     { x: x + 1, y },
-//     { x, y: y + 1 },
-//     { x, y, orientation: (orientation + 1) % 4 },
-//   ];
-
-//   // Check if each potential move is valid (within bounds and no collisions)
-//   potentialMoves.forEach(move => {
-//     if (isValidMove(move, gameState)) {
-//       possibleMoves.push(move);
-//     }
-//   });
-
-//   return possibleMoves;
 // }
 
-// function isValidMove(move, gameState) {
-//   // Check if the move is within the bounds of the grid
-//   if (
-//     move.x < 0 ||
-//     move.x >= gridWidth ||
-//     move.y < 0 ||
-//     move.y >= gridHeight
-//   ) {
-//     return false;
+// ... (rest of the code, including the existing game logic) ...
+
+// Example usage of the bot during the game loop
+// const bot = new TetrisBot(12, 20);
+
+// function updatePlayerTwo() {
+//   if (!isPausedPlayerTwo) {
+//     const currentGameState = gameState();
+//     const bestMove = bot.evaluateMove(currentGameState);
+
+//     // Make the bot perform the best move
+//     playerTwo.matrix = bestMove.matrix;
+//     playerTwo.pos.x = bestMove.position.x;
+//     playerTwo.pos.y = bestMove.position.y;
+//     playerTwo.orientation = bestMove.orientation;
+
+//     // ... (rest of the game loop) ...
+//     // ... (rest of the game loop) ...
 //   }
-
-//   const { fallingTetrimino, grid } = gameState;
-//   const { shape, orientation } = fallingTetrimino;
-
-//   // Get the rotated blocks of the Tetrimino based on the move's orientation
-//   const rotatedBlocks = rotateBlocks(shape, orientation);
-
-//   // Check for collisions with existing blocks in the grid
-//   for (let row = 0; row < rotatedBlocks.length; row++) {
-//     for (let col = 0; col < rotatedBlocks[row].length; col++) {
-//       const block = rotatedBlocks[row][col];
-
-//       if (block !== 0) {
-//         const gridRow = move.y + row;
-//         const gridCol = move.x + col;
-
-//         // Check if the move would collide with an existing block in the grid
-//         if (grid[gridRow][gridCol] !== 0) {
-//           return false;
-//         }
-//       }
-//     }
-//   }
-
-//   return true;
-// }
-
-// function rotateBlocks(shape, orientation) {
-//   // Return the rotated blocks of the Tetrimino based on the orientation
-//   // This is a placeholder implementation, you would need to define the rotation logic for each Tetrimino shape
-//   // You can represent each shape as a matrix of 0s and non-zero values to indicate the blocks
-//   // Rotate the matrix based on the orientation to get the rotated blocks
-//   // For example, a 2x2 square would be represented as [[1, 1], [1, 1]], and rotating it would yield [[1, 1], [1, 1]]
-//   // Implement the rotation logic for each Tetrimino shape accordingly
+//   requestAnimationFrame(updatePlayerTwo);
 // }
