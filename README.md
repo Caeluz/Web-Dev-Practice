@@ -1,9 +1,6 @@
-# js-games
-
-
-
+# js-practice
 
 Sources:
-Sounds: 
+Sounds:
 https://mixkit.co/free-sound-effects/
 https://opengameart.org/content/sound-effects-mini-pack15
