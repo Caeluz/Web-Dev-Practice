@@ -1,71 +1,81 @@
 body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    margin: 0;
-    background-color: #f1f1f1;
-    font-family: Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+  background-color: #f1f1f1;
+  font-family: Arial, sans-serif;
 }
 
 /* Main game container */
 #game-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    border: 2px solid #333;
-    padding: 20px;
-    border-radius: 8px;
-    background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border: 2px solid #333;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #fff;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
 }
 
 /* Game title */
 h1 {
-    font-size: 36px;
-    margin-bottom: 20px;
+  font-size: 36px;
+  margin-bottom: 20px;
 }
 
 /* Board container */
 #board {
-    display: grid;
-    grid-template-columns: repeat(3, 100px);
-    grid-gap: 4px;
-    width: 312px;
-    margin-bottom: 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 100px);
+  grid-gap: 4px;
+  width: 312px;
+  margin-bottom: 20px;
 }
 
 /* Board cells */
 #board div {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 40px;
-    width: 100px;
-    height: 100px;
-    border: 2px solid #333;
-    cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+  width: 100px;
+  height: 100px;
+  border: 2px solid #333;
+  cursor: pointer;
+}
+
+/* Button container */
+.button-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Adjust the gap as needed */
 }
 
 /* New Game button */
 button {
-    padding: 10px 20px;
-    font-size: 18px;
-    border: none;
-    border-radius: 4px;
-    background-color: #333;
-    color: #fff;
-    cursor: pointer;
-    transition: background-color 0.2s;
+  padding: 10px 20px;
+  font-size: 18px;
+  border: none;
+  border-radius: 4px;
+  background-color: #333;
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
 button:hover {
-    background-color: #555;
+  background-color: #555;
 }
 
 /* Game result message */
 #game-result {
-    font-size: 24px;
-    font-weight: bold;
-    margin-top: 10px;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 10px;
 }

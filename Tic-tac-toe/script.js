@@ -122,36 +122,36 @@ let isHumanTurn = true;
 let isBotTurn = false;
 
 // Function to handle cell click
-function handleCellClick(event) {
-  if (!isHumanTurn || isBotTurn) return; // Prevent clicking during the computer's turn
+// function handleCellClick(event) {
+//   if (!isHumanTurn || isBotTurn) return; // Prevent clicking during the computer's turn
 
-  const cell = event.target;
-  const row = parseInt(cell.getAttribute("data-row"));
-  const col = parseInt(cell.getAttribute("data-col"));
+//   const cell = event.target;
+//   const row = parseInt(cell.getAttribute("data-row"));
+//   const col = parseInt(cell.getAttribute("data-col"));
 
-  // Check if the cell is empty and the game is not over
-  if (board[row][col] === EMPTY_CELL && !gameIsOver) {
-    // Make the human player move
-    board[row][col] = PLAYER_X;
-    cell.textContent = PLAYER_X;
+//   // Check if the cell is empty and the game is not over
+//   if (board[row][col] === EMPTY_CELL && !gameIsOver) {
+//     // Make the human player move
+//     board[row][col] = PLAYER_X;
+//     cell.textContent = PLAYER_X;
 
-    // Check for a win or draw after the human player's move
-    if (checkForWin(PLAYER_X)) {
-      endGame(PLAYER_X + " wins!");
-      return;
-    } else if (checkForDraw()) {
-      endGame("It's a draw!");
-      return;
-    }
+//     // Check for a win or draw after the human player's move
+//     if (checkForWin(PLAYER_X)) {
+//       endGame(PLAYER_X + " wins!");
+//       return;
+//     } else if (checkForDraw()) {
+//       endGame("It's a draw!");
+//       return;
+//     }
 
-    // Disable clicking during the human player's turn
-    isHumanTurn = false;
-    isBotTurn = true;
+//     // Disable clicking during the human player's turn
+//     isHumanTurn = false;
+//     isBotTurn = true;
 
-    // Simulate the AI's move after a slight delay
-    setTimeout(aiMove, AI_MOVE_DELAY);
-  }
-}
+//     // Simulate the AI's move after a slight delay
+//     setTimeout(aiMove, AI_MOVE_DELAY);
+//   }
+// }
 
 // Function to simulate the AI's move
 function aiMove() {
@@ -250,21 +250,36 @@ function getBestMove() {
   return bestMove;
 }
 
+let isHumanFirst = true;
 // Function to start a new game
-function newGame() {
+function newGame(isHumanStarting) {
   // Clear the game result element
   const gameResultElement = document.getElementById("game-result");
   gameResultElement.textContent = "";
 
+  // Set who goes first based on the button click
+  isHumanFirst = isHumanStarting;
+
+  // Reset the board and start the game
   board = Array.from(Array(BOARD_SIZE), () =>
     Array(BOARD_SIZE).fill(EMPTY_CELL)
   );
   gameIsOver = false;
 
   initializeBoard();
+
+  // If the bot goes first, initiate the AI's move
+  if (!isHumanFirst) {
+    setTimeout(aiMove, AI_MOVE_DELAY);
+  }
 }
 
 // Initialize the game
 initializeBoard();
 
-// Optionally, you can add a button to start a new game
+// Add event listeners for the "Human First" and "Bot First" buttons
+const humanFirstButton = document.getElementById("human-first-button");
+humanFirstButton.addEventListener("click", () => newGame(true));
+
+const botFirstButton = document.getElementById("bot-first-button");
+botFirstButton.addEventListener("click", () => newGame(false));
