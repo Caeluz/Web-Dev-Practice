@@ -40,6 +40,7 @@ function initializeBoard() {
     }
   }
 }
+let currentPlayer = PLAYER_X; // Player 1 starts as "X"
 
 // Function to handle a cell click
 function handleCellClick(event) {
@@ -51,22 +52,37 @@ function handleCellClick(event) {
   // Check if the cell is empty
   if (board[row][col] === EMPTY_CELL) {
     // Update the board
-    board[row][col] = PLAYER_X;
+    board[row][col] = currentPlayer;
 
     // Update the UI
-    event.target.textContent = PLAYER_X;
+    event.target.textContent = currentPlayer;
 
     // Check for a win or draw
-    if (checkForWin(PLAYER_X)) {
-      endGame(PLAYER_X + " wins!");
-      return;
+    if (checkForWin(currentPlayer)) {
+      endGame(currentPlayer + " wins!");
     } else if (checkForDraw()) {
       endGame("It's a draw!");
-      return;
     }
 
-    // AI's move
-    setTimeout(aiMove, AI_MOVE_DELAY);
+    // if (checkForWin(PLAYER_O)) {
+    //   endGame(PLAYER_O + " wins!");
+    //   return;
+    // } else if (checkForDraw()) {
+    //   endGame("It's a draw!");
+    //   return;
+    // }
+
+    // // AI's move
+    // setTimeout(aiMove, AI_MOVE_DELAY);
+    // If it's PvE mode and it's the player's turn, trigger the AI move
+    if (isPvEMode && isHumanTurn) {
+      // isHumanTurn = false;
+      // isBotTurn = true;
+      setTimeout(aiMove, AI_MOVE_DELAY);
+    } else {
+      // Toggle to the other player
+      currentPlayer = currentPlayer === PLAYER_X ? PLAYER_O : PLAYER_X;
+    }
   }
 }
 
@@ -120,6 +136,7 @@ function endGame(message) {
 
 let isHumanTurn = true;
 let isBotTurn = false;
+let isPvEMode = true;
 
 // Function to handle cell click
 // function handleCellClick(event) {
@@ -250,7 +267,6 @@ function getBestMove() {
   return bestMove;
 }
 
-let isHumanFirst = true;
 // Function to start a new game
 function newGame(isHumanStarting) {
   // Clear the game result element
@@ -259,6 +275,10 @@ function newGame(isHumanStarting) {
 
   // Set who goes first based on the button click
   isHumanFirst = isHumanStarting;
+  isBotTurn = !isHumanStarting;
+  currentPlayer = PLAYER_X;
+
+  isPvEMode = true;
 
   // Reset the board and start the game
   board = Array.from(Array(BOARD_SIZE), () =>
@@ -272,6 +292,46 @@ function newGame(isHumanStarting) {
   if (!isHumanFirst) {
     setTimeout(aiMove, AI_MOVE_DELAY);
   }
+
+  // console.log(
+  //   "newGame",
+  //   "isHumanTurn: ",
+  //   isHumanTurn,
+  //   "isBotTurn: ",
+  //   isBotTurn,
+  //   "isPvEMode: ",
+  //   isPvEMode
+  // );
+}
+
+// Function to start a new PvP game
+function startPvPGame() {
+  // Clear the game result element
+  const gameResultElement = document.getElementById("game-result");
+  gameResultElement.textContent = "";
+  isPvEMode = false;
+  currentPlayer = PLAYER_X;
+
+  // Reset the board and start the game in PvP mode
+  board = Array.from(Array(BOARD_SIZE), () =>
+    Array(BOARD_SIZE).fill(EMPTY_CELL)
+  );
+  gameIsOver = false;
+  initializeBoard();
+
+  // Ensure that AI moves are disabled by setting isHumanTurn to true and isBotTurn to false
+  isHumanTurn = true;
+  isBotTurn = false;
+
+  // console.log(
+  //   "PvEGame",
+  //   "isHumanTurn: ",
+  //   isHumanTurn,
+  //   "isBotTurn: ",
+  //   isBotTurn,
+  //   "isPvEMode: ",
+  //   isPvEMode
+  // );
 }
 
 // Initialize the game
@@ -283,3 +343,25 @@ humanFirstButton.addEventListener("click", () => newGame(true));
 
 const botFirstButton = document.getElementById("bot-first-button");
 botFirstButton.addEventListener("click", () => newGame(false));
+
+// Add event listeners for the "Player vs. Player" button
+const pvpButton = document.getElementById("pvp-button");
+pvpButton.addEventListener("click", () => startPvPGame());
+
+// Function to highlight the clicked button and unhighlight others
+function highlightButton(clickedButton) {
+  const buttons = document.querySelectorAll(".highlight-on-click");
+
+  // Remove the 'highlighted-button' class from all buttons
+  buttons.forEach((button) => button.classList.remove("highlighted-button"));
+
+  // Add the 'highlighted-button' class to the clicked button
+  clickedButton.classList.add("highlighted-button");
+}
+
+// To ensure that "Human First" button is highlighted by default
+document.addEventListener("DOMContentLoaded", function () {
+  // Highlight the "Human First" button
+  const humanFirstButton = document.getElementById("human-first-button");
+  highlightButton(humanFirstButton);
+});

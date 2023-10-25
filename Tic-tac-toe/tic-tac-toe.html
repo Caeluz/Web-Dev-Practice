@@ -1,30 +1,52 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
     <title>Tic-Tac-Toe</title>
     <link rel="stylesheet" href="styles.css" />
     <script src="script.js" type="text/javascript" defer></script>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Tic-Tac-Toe</h1>
     <div id="game-container">
-        <div
-            id="board"
-            style="
-                display: grid;
-                grid-template-columns: repeat(3, 100px);
-                grid-gap: 4px;
-                width: 312px;
-            "
-        >
-            <!-- The game board will be created here -->
-        </div>
+      <div
+        id="board"
+        style="
+          display: grid;
+          grid-template-columns: repeat(3, 100px);
+          grid-gap: 4px;
+          width: 312px;
+        "
+      >
+        <!-- The game board will be created here -->
+      </div>
 
-        <div class="button-container">
-            <button id="human-first-button">Human First</button>
-            <button id="bot-first-button">Bot First</button>
-        </div>
+      <div class="button-container">
+        <button
+          id="human-first-button"
+          class="highlight-on-click highlighted-button"
+          onclick="highlightButton(this)"
+        >
+          Human First
+        </button>
+        <button
+          id="bot-first-button"
+          class="highlight-on-click"
+          onclick="highlightButton(this)"
+        >
+          Bot First
+        </button>
+        <button
+          id="pvp-button"
+          class="highlight-on-click"
+          onclick="highlightButton(this)"
+        >
+          Player vs. Player
+        </button>
+        <!-- <button onclick="console.log('hello')">Test</button> -->
+
+        <!-- New PvP button -->
+      </div>
     </div>
     <div id="game-result"></div>
-</body>
+  </body>
 </html>

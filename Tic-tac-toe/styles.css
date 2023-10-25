@@ -17,7 +17,7 @@ body {
   border: 2px solid #333;
   padding: 20px;
   border-radius: 8px;
-  background-color: #fff;
+  background-color: #ffffff;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   margin-top: 20px;
 }
@@ -32,6 +32,7 @@ h1 {
 #board {
   display: grid;
   grid-template-columns: repeat(3, 100px);
+  background-color: #000000;
   grid-gap: 4px;
   width: 312px;
   margin-bottom: 20px;
@@ -42,6 +43,7 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
+  background-color: #fcf4f4;
   font-size: 40px;
   width: 100px;
   height: 100px;
@@ -71,6 +73,11 @@ button {
 
 button:hover {
   background-color: #555;
+}
+
+.highlighted-button {
+  background-color: #008000; /* Change to the color you prefer */
+  color: #fff; /* Change to the text color you prefer */
 }
 
 /* Game result message */
