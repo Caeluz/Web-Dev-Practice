@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Pong Game</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Pong Game</h1>
+      <canvas id="pong" width="800" height="400"></canvas>
+      <div id="difficulty-buttons">
+        <button id="easy-button">Easy</button>
+        <button id="medium-button">Medium</button>
+        <button id="hard-button">Hard</button>
+      </div>
+      <div id="ball-speed-control">
+        <label for="ball-speed-range">Ball Speed:</label>
+        <input type="range" id="ball-speed-range" min="1" max="10" step="1" />
+      </div>
+      <div id="game-over" class="hidden">
+        <h2>Game Over</h2>
+        <p id="winner-text"></p>
+        <button id="start-button">Start New Game</button>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>
