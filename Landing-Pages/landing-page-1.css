@@ -1,26 +1,66 @@
-.menu-container {
-  color: #ffff;
-  background-color: #5995da;
-  padding: 20px 0;
-  display: flex;
-  justify-content: center;
+* {
+  padding: 0;
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  /* font-size: 2em; */
+  /* color: #5995da; */
 }
 
-.menu {
-  /* border: 1px solid #fff; For debugging */
-  width: 900px;
+.header-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px 0;
+}
+
+.header {
+  width: 95%;
   display: flex;
   justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  /* margin-left: 20px; */
 }
 
 .links {
-  /* border: 1px solid #fff; */
+  margin-right: 20px;
   display: flex;
-  justify-content: flex-end;
+  /* justify-content: flex-end; */
 }
 
-.login,
-.sign-up {
-  /* align-self: flex-end; */
-  margin-left: 20px;
+.links a {
+  margin-right: 40px;
+}
+
+.account {
+  margin-right: 20px;
+}
+
+.section-one {
+  background-color: #869095;
+  /* padding-top: 100vh; */
+
+  /* display: flex; */
+}
+
+.section-one,
+p {
+  color: #eccf87;
+  font-weight: bold;
+  letter-spacing: 0.2rem;
+}
+
+.section-one-h1 {
+  font-size: 2em;
+  color: #fffffd;
+  font-family: "Times New Roman", Times, serif;
+  font-weight: normal;
+}
+
+.section-one-scroll-down {
+  color: #fffffd;
+  font-size: 15px;
+  font-weight: normal;
 }
