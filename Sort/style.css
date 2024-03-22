@@ -1,0 +1,96 @@
+/* Reset default margin and padding */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+/* Set a background color */
+body {
+  background-color: #f5f5f5;
+  font-family: Arial, sans-serif; /* Choose a suitable font-family */
+}
+
+/* Center the main content vertically and horizontally */
+.main-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Style each sorting container */
+.container {
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: 20px;
+  padding: 20px;
+  width: 300px;
+}
+
+/* Style sorting container headings */
+.container h2 {
+  font-size: 1.2rem;
+  margin-bottom: 10px;
+}
+
+/* Style sorting container bars */
+.sort-container {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 200px;
+}
+
+/* Style individual sorting bars */
+.bar {
+  background-color: #4caf50; /* Adjust colors as needed */
+  margin: 0 1px;
+  flex: 1;
+}
+
+/* Style sorting buttons */
+.buttons-container {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.buttons-container button {
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.buttons-container button:hover {
+  background-color: #0056b3;
+}
+
+/* Dark mode styles */
+.dark-mode {
+  background-color: #222;
+  color: #eee;
+}
+
+.dark-mode .container {
+  background-color: #333;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode button */
+#darkModeToggle {
+  position: fixed;
+  top: 10px;
+  right: 10px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 16px;
+  cursor: pointer;
+}

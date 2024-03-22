@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sorting Visualizer</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="js/script.js" defer></script>
+  </head>
+  <body>
+    <div class="main-container">
+      <div class="container">
+        <h2>Bubble Sort</h2>
+        <span id="bubbleSortTime">(Sorting time: -- ms)</span>
+        <div id="bubble-sort-container" class="sort-container"></div>
+        <div class="buttons-container">
+          <button id="startBubbleSortButton">Start Bubble Sort</button>
+          <button id="resetBubbleSortButton">Reset Array</button>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2>Insertion Sort</h2>
+        <span id="insertionSortTime">(Sorting time: -- ms)</span>
+        <div id="insertion-sort-container" class="sort-container"></div>
+        <div class="buttons-container">
+          <button id="startInsertionSortButton">Start Insertion Sort</button>
+          <button id="resetInsertionSortButton">Reset Array</button>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2>Quick Sort</h2>
+        <span id="quickSortTime">(Sorting time: -- ms)</span>
+        <div id="quick-sort-container" class="sort-container"></div>
+        <div class="buttons-container">
+          <button id="startQuickSortButton">Start Quick Sort</button>
+          <button id="resetQuickSortButton">Reset Array</button>
+        </div>
+      </div>
+
+      <div class="container">
+        <h2>Merge Sort</h2>
+        <span id="mergeSortTime">(Sorting time: -- ms)</span>
+
+        <div id="merge-sort-container" class="sort-container"></div>
+        <div class="buttons-container">
+          <button id="startMergeSortButton">Start Merge Sort</button>
+          <button id="resetMergeSortButton">Reset Array</button>
+        </div>
+      </div>
+    </div>
+    <button id="darkModeToggle">Dark Mode</button>
+
+    <script type="module" src="js/script.js"></script>
+  </body>
+</html>
