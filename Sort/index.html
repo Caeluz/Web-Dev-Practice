@@ -8,50 +8,170 @@
     <script type="module" src="js/script.js" defer></script>
   </head>
   <body>
+    <nav>
+      <h1>Sorting Visualizer</h1>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="charts.html">Analytics</a></li>
+        <!-- <li><a href="pathfinding.html">Pathfinding</a></li> -->
+        <li><a href="about.html">About</a></li>
+        <!-- <button id="darkModeToggle">Dark Mode</button> -->
+        <li><a id="darkModeToggle">Dark Mode</a></li>
+      </ul>
+    </nav>
     <div class="main-container">
       <div class="container">
         <h2>Bubble Sort</h2>
-        <span id="bubbleSortTime">(Sorting time: -- ms)</span>
+        <span id="bubbleSortTime">(Sorting time: -- s)</span>
         <div id="bubble-sort-container" class="sort-container"></div>
         <div class="buttons-container">
           <button id="startBubbleSortButton">Start Bubble Sort</button>
           <button id="resetBubbleSortButton">Reset Array</button>
+          <button id="bubbleSortSettingsButton">*</button>
+        </div>
+
+        <!-- Bubble Sort Settings Modal -->
+        <div id="bubbleSortSettingsModal" class="modal">
+          <div class="modal-content">
+            <span class="close" data-modal-id="bubbleSortSettingsModal"
+              >&times;</span
+            >
+            <h3>Bubble Sort Settings</h3>
+            <!-- Input field for array length -->
+            <label for="bubbleSortArrayLength">Array Length:</label>
+            <input
+              type="number"
+              id="bubbleSortArrayLength"
+              name="bubbleSortArrayLength"
+              value="50"
+            />
+            <!-- Input field for animation speed -->
+            <label for="bubbleSortAnimationSpeed">Animation Speed (s):</label>
+            <input
+              type="number"
+              id="bubbleSortAnimationSpeed"
+              name="bubbleSortAnimationSpeed"
+              value="50"
+            />
+            <!-- Add more settings options specific to Bubble Sort if needed -->
+            <button id="applybubbleSortSettingsButton">Apply Settings</button>
+          </div>
         </div>
       </div>
 
       <div class="container">
         <h2>Insertion Sort</h2>
-        <span id="insertionSortTime">(Sorting time: -- ms)</span>
+        <span id="insertionSortTime">(Sorting time: -- s)</span>
         <div id="insertion-sort-container" class="sort-container"></div>
         <div class="buttons-container">
           <button id="startInsertionSortButton">Start Insertion Sort</button>
           <button id="resetInsertionSortButton">Reset Array</button>
+          <button id="insertionSortSettingsButton">*</button>
+        </div>
+
+        <div id="insertionSortSettingsModal" class="modal">
+          <div class="modal-content">
+            <span class="close" data-modal-id="insertionSortSettingsModal"
+              >&times;</span
+            >
+            <h3>Insertion Sort Settings</h3>
+            <label for="insertionSortArrayLength">Array Length:</label>
+            <input
+              type="number"
+              id="insertionSortArrayLength"
+              name="insertionSortArrayLength"
+              value="50"
+            />
+            <label for="insertionSortAnimationSpeed"
+              >Animation Speed (s):</label
+            >
+            <input
+              type="number"
+              id="insertionSortAnimationSpeed"
+              name="insertionSortAnimationSpeed"
+              value="50"
+            />
+            <button id="applyinsertionSortSettingsButton">
+              Apply Settings
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="container">
         <h2>Quick Sort</h2>
-        <span id="quickSortTime">(Sorting time: -- ms)</span>
+        <span id="quickSortTime">(Sorting time: -- s)</span>
         <div id="quick-sort-container" class="sort-container"></div>
         <div class="buttons-container">
           <button id="startQuickSortButton">Start Quick Sort</button>
           <button id="resetQuickSortButton">Reset Array</button>
+          <button id="quickSortSettingsButton">*</button>
         </div>
+        <div id="quickSortSettingsModal" class="modal">
+          <div class="modal-content">
+            <span class="close" data-modal-id="quickSortSettingsModal"
+              >&times;</span
+            >
+            <h3>Quick Sort Settings</h3>
+            <label for="quickSortArrayLength">Array Length:</label>
+            <input
+              type="number"
+              id="quickSortArrayLength"
+              name="quickSortArrayLength"
+              value="50"
+            />
+            <label for="quickSortAnimationSpeed">Animation Speed (s):</label>
+            <input
+              type="number"
+              id="quickSortAnimationSpeed"
+              name="quickSortAnimationSpeed"
+              value="50"
+            />
+            <button id="applyquickSortSettingsButton">Apply Settings</button>
+          </div>
+        </div>        
       </div>
 
       <div class="container">
         <h2>Merge Sort</h2>
-        <span id="mergeSortTime">(Sorting time: -- ms)</span>
+        <span id="mergeSortTime">(Sorting time: -- s)</span>
 
         <div id="merge-sort-container" class="sort-container"></div>
         <div class="buttons-container">
           <button id="startMergeSortButton">Start Merge Sort</button>
           <button id="resetMergeSortButton">Reset Array</button>
+          <button id="mergeSortSettingsButton">*</button>
         </div>
+
+         <div id="mergeSortSettingsModal" class="modal">
+          <div class="modal-content">
+            <span class="close" data-modal-id="mergeSortSettingsModal"
+              >&times;</span
+            >
+            <h3>Merge Sort Settings</h3>
+            <label for="mergeSortArrayLength">Array Length:</label>
+            <input
+              type="number"
+              id="mergeSortArrayLength"
+              name="mergeSortArrayLength"
+              value="50"
+            />
+            <label for="mergeSortAnimationSpeed">Animation Speed (s):</label>
+            <input
+              type="number"
+              id="mergeSortAnimationSpeed"
+              name="mergeSortAnimationSpeed"
+              value="50"
+            />
+            <button id="applymergeSortSettingsButton">Apply Settings</button>
+          </div>
       </div>
     </div>
-    <button id="darkModeToggle">Dark Mode</button>
+
+    <!-- Settings modal -->
 
     <script type="module" src="js/script.js"></script>
+    <script type="module" src="js/modal.js"></script>
+    <!-- <script src="js/sortingSetup.js" defer></script> -->
   </body>
 </html>

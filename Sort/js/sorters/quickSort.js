@@ -1,10 +1,23 @@
+import {
+  // generateRandomArray,
+  runWithTimer,
+  sleep,
+  renderBars,
+} from "../utils.js";
 let quickSortArray = [];
 let quickSortLength = 0;
+
+const quickSortSettings = {
+  name: "quickSort",
+  arrayLength: 50, // Default array length
+  animationSpeed: 50, // Default animation speed in milliseconds
+};
 
 // Function to generate random array for quick sort
 function generateQuickSortArray() {
   quickSortArray = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < quickSortSettings.arrayLength; i++) {
+    // Use arrayLength from settings
     quickSortArray.push(Math.floor(Math.random() * 100) + 1);
   }
   quickSortLength = quickSortArray.length - 1;
@@ -17,31 +30,16 @@ function renderQuickSortBars() {
   renderBars(container, quickSortArray);
 }
 
-function renderBars(container, array) {
-  const maxValue = Math.max(...array);
-  const scaleFactor = container.clientHeight / (maxValue * 1.05);
-  const barWidth = container.clientWidth / array.length;
-  array.forEach((value) => {
-    const bar = document.createElement("div");
-    bar.classList.add("bar");
-    bar.style.height = `${value * scaleFactor}px`;
-    bar.style.width = `${barWidth}px`;
-    container.appendChild(bar);
-  });
-}
-
 // Quick sort algorithm
 async function quickSort(left = 0, right = quickSortArray.length - 1) {
-  const startTime = performance.now(); // Start time
+  const sortingTime = await runWithTimer(async () => {
+    if (left < right) {
+      const partitionIndex = await partition(left, right);
+      await quickSort(left, partitionIndex - 1);
+      await quickSort(partitionIndex + 1, right);
+    }
+  });
 
-  if (left < right) {
-    const partitionIndex = await partition(left, right);
-    await quickSort(left, partitionIndex - 1);
-    await quickSort(partitionIndex + 1, right);
-  }
-
-  const endTime = performance.now(); // End time
-  const sortingTime = endTime - startTime; // Sorting time in milliseconds
   const sortingTimeInSeconds = sortingTime / 1000; // Convert milliseconds to seconds
   const quickSortTimeElement = document.getElementById("quickSortTime");
   quickSortTimeElement.textContent = `(Sorting time: ${sortingTimeInSeconds.toFixed(
@@ -64,7 +62,7 @@ async function partition(left, right) {
 }
 
 async function quickSortSwap(idx1, idx2) {
-  await sleep(50);
+  await sleep(quickSortSettings.animationSpeed); // Use animationSpeed from settings
   let temp = quickSortArray[idx1];
   quickSortArray[idx1] = quickSortArray[idx2];
   quickSortArray[idx2] = temp;
@@ -72,9 +70,9 @@ async function quickSortSwap(idx1, idx2) {
   // console.log(quickSortArray);
 }
 
-// Function for delay
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export { generateQuickSortArray, renderQuickSortBars, quickSort };
+export {
+  quickSortSettings,
+  generateQuickSortArray,
+  renderQuickSortBars,
+  quickSort,
+};

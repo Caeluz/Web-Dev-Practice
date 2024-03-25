@@ -1,10 +1,17 @@
+import { runWithTimer, sleep, renderBars } from "../utils.js";
 let mergeSortArray = [];
 let sortingInProgress = true; // Flag variable to track sorting process
+
+const mergeSortSettings = {
+  name: "mergeSort",
+  arrayLength: 50, // Default array length
+  animationSpeed: 50, // Default animation speed in milliseconds
+};
 
 // Function to generate random array for merge sort
 function generateMergeSortArray() {
   mergeSortArray = [];
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < mergeSortSettings.arrayLength; i++) {
     mergeSortArray.push(Math.floor(Math.random() * 100) + 1);
   }
 }
@@ -16,44 +23,29 @@ function renderMergeSortBars() {
   renderBars(container, mergeSortArray);
 }
 
-// Function to render bars
-function renderBars(container, array) {
-  const maxValue = Math.max(...array);
-  const scaleFactor = container.clientHeight / (maxValue * 1.05);
-  const barWidth = container.clientWidth / array.length;
-  array.forEach((value) => {
-    const bar = document.createElement("div");
-    bar.classList.add("bar");
-    bar.style.height = `${value * scaleFactor}px`;
-    bar.style.width = `${barWidth}px`;
-    container.appendChild(bar);
-  });
-}
-
 // Merge sort algorithm
 async function mergeSort(left = 0, right = mergeSortArray.length - 1) {
-  const startTime = performance.now();
-  if (right - left <= 0 || !sortingInProgress) {
-    return;
-  }
+  const sortingTime = await runWithTimer(async () => {
+    if (right - left <= 0 || !sortingInProgress) {
+      return;
+    }
 
-  // Split the array into two halves
-  const middle = Math.floor((right + left) / 2);
+    // Split the array into two halves
+    const middle = Math.floor((right + left) / 2);
 
-  // Recursively sort each half
-  await mergeSort(left, middle);
-  await mergeSort(middle + 1, right);
+    // Recursively sort each half
+    await mergeSort(left, middle);
+    await mergeSort(middle + 1, right);
 
-  // Merge the sorted halves
-  await merge(left, middle, right);
+    // Merge the sorted halves
+    await merge(left, middle, right);
 
-  // Render the bars after each merge
-  renderMergeSortBars();
-  // Add a delay to visualize the sorting process
-  await sleep(50); // Adjust the delay time as needed
+    // Render the bars after each merge
+    renderMergeSortBars();
+    // Add a delay to visualize the sorting process
+    await sleep(mergeSortSettings.animationSpeed); // Adjust the delay time as needed
+  });
 
-  const endTime = performance.now(); // End time
-  const sortingTime = endTime - startTime; // Sorting time in milliseconds
   const sortingTimeInSeconds = sortingTime / 1000; // Convert milliseconds to seconds
   const bubbleSortTimeElement = document.getElementById("mergeSortTime");
   bubbleSortTimeElement.textContent = `(Sorting time: ${sortingTimeInSeconds.toFixed(
@@ -96,9 +88,9 @@ function merge(left, middle, right) {
   }
 }
 
-// Function for delay
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-export { generateMergeSortArray, renderMergeSortBars, mergeSort };
+export {
+  mergeSortSettings,
+  generateMergeSortArray,
+  renderMergeSortBars,
+  mergeSort,
+};

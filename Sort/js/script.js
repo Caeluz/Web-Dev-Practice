@@ -2,22 +2,23 @@ import {
   generateBubbleSortArray,
   renderBubbleSortBars,
   bubbleSort,
-} from "./bubbleSort.js";
+} from "./sorters/bubbleSort.js";
 import {
   generateInsertionSortArray,
   renderInsertionSortBars,
   insertionSort,
-} from "./insertionSort.js";
+} from "./sorters/insertionSort.js";
 import {
   generateQuickSortArray,
   renderQuickSortBars,
   quickSort,
-} from "./quickSort.js";
+  quickSortSettings,
+} from "./sorters/quickSort.js";
 import {
   generateMergeSortArray,
   renderMergeSortBars,
   mergeSort,
-} from "./mergeSort.js";
+} from "./sorters/mergeSort.js";
 
 // Function to start bubble sort
 async function startBubbleSort() {
@@ -31,7 +32,7 @@ async function startInsertionSort() {
 
 // Function to start quick sort
 async function startQuickSort() {
-  await quickSort(0, 49);
+  await quickSort(0, quickSortSettings.arrayLength - 1);
 }
 
 // Function to start merge sort
