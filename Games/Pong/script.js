@@ -10,7 +10,7 @@ const botSpeed = 3;
 const winningScore = 5;
 const ballSpeedRange = document.getElementById("ball-speed-range");
 
-let gameActive = true;
+let gameActive = false; // Initially, the game is not active
 let leftPaddleY = canvas.height / 2 - paddleHeight / 2;
 let rightPaddleY = canvas.height / 2 - paddleHeight / 2;
 let ballX = canvas.width / 2;
@@ -31,44 +31,69 @@ document.addEventListener("keydown", keyDownHandler);
 document.addEventListener("keyup", keyUpHandler);
 
 function keyDownHandler(e) {
-  if (e.key == "Up" || e.key == "ArrowUp") {
+  if (e.key == "Up" || e.key == "ArrowUp" || e.key == "w") {
     upPressed = true;
-  } else if (e.key == "Down" || e.key == "ArrowDown") {
+  } else if (e.key == "Down" || e.key == "ArrowDown" || e.key == "s") {
     downPressed = true;
   }
 }
 
 function keyUpHandler(e) {
-  if (e.key == "Up" || e.key == "ArrowUp") {
+  if (e.key == "Up" || e.key == "ArrowUp" || e.key == "w") {
     upPressed = false;
-  } else if (e.key == "Down" || e.key == "ArrowDown") {
+  } else if (e.key == "Down" || e.key == "ArrowDown" || e.key == "s") {
     downPressed = false;
   }
 }
 
 // Move the bot (right paddle) based on the ball's position
 function moveBot() {
+  let predictedBallY = ballY;
+
+  // Predict the future position of the ball based on its current trajectory
+  if (ballSpeedX > 0) {
+    // Ball is moving towards the bot
+    const timeToReachPaddle = (canvas.width - paddleWidth - ballX) / ballSpeedX;
+    predictedBallY = ballY + ballSpeedY * timeToReachPaddle;
+
+    // Handle ball bouncing off the top and bottom walls
+    while (predictedBallY < 0 || predictedBallY > canvas.height) {
+      if (predictedBallY < 0) {
+        predictedBallY = -predictedBallY;
+      } else if (predictedBallY > canvas.height) {
+        predictedBallY = 2 * canvas.height - predictedBallY;
+      }
+    }
+  }
+
   if (botDifficulty === "easy") {
-    // Easy: Bot follows the ball with a slight delay
-    if (ballY < rightPaddleY + paddleHeight / 2) {
-      rightPaddleY -= botSpeed;
-    } else if (ballY > rightPaddleY + paddleHeight / 2) {
-      rightPaddleY += botSpeed;
+    // Easy: Bot follows the ball with a significant delay and reduced speed
+    if (predictedBallY < rightPaddleY + paddleHeight / 2) {
+      rightPaddleY -= botSpeed * 0.5; // Reduced speed
+    } else if (predictedBallY > rightPaddleY + paddleHeight / 2) {
+      rightPaddleY += botSpeed * 0.5; // Reduced speed
     }
   } else if (botDifficulty === "medium") {
     // Medium: Bot follows the ball with moderate speed
-    if (ballY < rightPaddleY + paddleHeight / 2) {
-      rightPaddleY -= botSpeed;
-    } else if (ballY > rightPaddleY + paddleHeight / 2) {
-      rightPaddleY += botSpeed;
+    if (predictedBallY < rightPaddleY + paddleHeight / 2) {
+      rightPaddleY -= botSpeed * 1.5;
+    } else if (predictedBallY > rightPaddleY + paddleHeight / 2) {
+      rightPaddleY += botSpeed * 1.5;
     }
   } else if (botDifficulty === "hard") {
     // Hard: Bot tracks the ball very closely
-    if (ballY < rightPaddleY + paddleHeight / 2) {
+    if (predictedBallY < rightPaddleY + paddleHeight / 2) {
       rightPaddleY -= botSpeed * 2; // Faster response
-    } else if (ballY > rightPaddleY + paddleHeight / 2) {
+    } else if (predictedBallY > rightPaddleY + paddleHeight / 2) {
       rightPaddleY += botSpeed * 2; // Faster response
     }
+  }
+
+  // Ensure the paddle stays within the canvas boundaries
+  if (rightPaddleY < 0) {
+    rightPaddleY = 0;
+  } else if (rightPaddleY + paddleHeight > canvas.height) {
+    rightPaddleY = canvas.height - paddleHeight;
   }
 }
 
@@ -109,10 +134,12 @@ function update() {
   if (ballX - ballSize < 0) {
     // Ball went past the left paddle (player missed)
     botScore++;
+    triggerScoreEffect();
     resetBall();
   } else if (ballX + ballSize > canvas.width) {
     // Ball went past the right paddle (bot missed)
     playerScore++;
+    triggerScoreEffect();
     resetBall();
   }
 
@@ -139,7 +166,14 @@ function resetBall() {
 function resetGame() {
   playerScore = 0;
   botScore = 0;
+  leftPaddleY = canvas.height / 2 - paddleHeight / 2;
+  rightPaddleY = canvas.height / 2 - paddleHeight / 2;
   resetBall();
+  gameActive = false;
+  playButton.hidden = false;
+  winningPlayer = null;
+  cancelAnimationFrame(gameLoopId);
+  updateGameStatus("Not Started");
 }
 
 // Render the game
@@ -181,14 +215,66 @@ function draw() {
   }
 }
 
+let gameLoopId; // Variable to store the requestAnimationFrame ID
+
 // Game loop
 function gameLoop() {
-  update();
-  draw();
-  requestAnimationFrame(gameLoop);
+  if (gameActive) {
+    update();
+    draw();
+    gameLoopId = requestAnimationFrame(gameLoop);
+  }
 }
 
-gameLoop();
+// Function to start the game
+function startGame() {
+  gameActive = true;
+  playButton.hidden = true;
+  updateGameStatus("Playing");
+  gameLoopId = requestAnimationFrame(gameLoop);
+}
+
+// Function for reset button, it would reset game then start it
+function resetAndStartGame() {
+  resetGame();
+  startGame();
+}
+
+function pauseGame() {
+  gameActive = !gameActive;
+  if (gameActive) {
+    updateGameStatus("Playing");
+    startGame();
+    pauseButton.textContent = "Pause";
+  } else {
+    updateGameStatus("Paused");
+    pauseButton.textContent = "Resume";
+  }
+}
+
+// Function to trigger a score effect
+function triggerScoreEffect() {
+  const container = document.querySelector("#pong");
+  container.classList.add("score-effect");
+  setTimeout(() => {
+    container.classList.remove("score-effect");
+  }, 1000);
+}
+
+const gameStatus = document.getElementById("game-status");
+
+function updateGameStatus(status) {
+  gameStatus.textContent = `Game Status: ${status}`;
+}
+
+const pauseButton = document.getElementById("pause-button");
+pauseButton.addEventListener("click", pauseGame);
+
+const resetButton = document.getElementById("reset-button");
+resetButton.addEventListener("click", resetAndStartGame);
+
+const playButton = document.getElementById("play-button");
+playButton.addEventListener("click", startGame);
 
 const easyButton = document.getElementById("easy-button");
 const mediumButton = document.getElementById("medium-button");

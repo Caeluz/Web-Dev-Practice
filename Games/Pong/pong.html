@@ -3,10 +3,20 @@
   <head>
     <title>Pong Game</title>
     <link rel="stylesheet" type="text/css" href="styles.css" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
   </head>
   <body>
     <div class="container">
       <h1>Pong Game</h1>
+      <div id="game-status">Game Status: Not Started</div>
+      <div id="control-buttons">
+        <button id="play-button">Play</button>
+        <button id="pause-button">Pause</button>
+        <button id="reset-button">Reset</button>
+      </div>
       <canvas id="pong" width="800" height="400"></canvas>
       <div id="difficulty-buttons">
         <button id="easy-button">Easy</button>
