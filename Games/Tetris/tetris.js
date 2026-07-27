@@ -8,10 +8,14 @@ const blockPreviewContext = blockPreviewCanvas.getContext("2d");
 context.scale(20, 20);
 
 let isPaused = false;
+let isClearing = false;
+let clearingRows = [];
+let clearAnimationTimer = 0;
+let clearRowCount = 0;
 let nextBlockPreviewValue = null;
 let nextPieceMatrix = null;
-const pieces = "ILJOTSZ";
-// const pieces = 'I'; // Testing purposes
+// const pieces = "ILJOTSZ";
+const pieces = 'I'; // Testing purposes
 
 // Sounds
 const pointsUpSound = document.getElementById("sound-points-up");
@@ -45,6 +49,11 @@ function pause() {
 
 function restart() {
   // Reset the game to the initial state
+  isClearing = false;
+  clearingRows = [];
+  clearAnimationTimer = 0;
+  clearRowCount = 0;
+  canvas.classList.remove("line-clear-effect");
   playerReset();
   arena.forEach((row) => row.fill(0));
   player.score = 0;
@@ -86,7 +95,7 @@ function drawBlockPreview() {
 }
 
 function arenaSweep() {
-  let rowCount = 0;
+  const completedRows = [];
 
   outer: for (let y = arena.length - 1; y >= 0; --y) {
     for (let x = 0; x < arena[y].length; ++x) {
@@ -94,61 +103,64 @@ function arenaSweep() {
         continue outer;
       }
     }
-    const row = arena.splice(y, 1)[0].fill(0);
-    arena.unshift(row);
-    ++y;
-
-    rowCount++;
-
-    // If Player scores, they will hear this sound
-    // const pointsUpSound = document.getElementById('sound-points-up');
-    pointsUpSound.play();
-    pointsSoundVar = true;
+    completedRows.push(y);
   }
 
-  if (pointsSoundVar === false) {
+  if (completedRows.length === 0) {
     dropBlocksSound.play();
+    return;
   }
+
+  clearingRows = completedRows;
+  clearRowCount = completedRows.length;
+  clearAnimationTimer = 300;
+  isClearing = true;
+  // the shake effect is applied to the canvas when a line is cleared
+  canvas.classList.add("line-clear-effect");
+  pointsUpSound.play();
+}
+
+function finishLineClear() {
+  // Remove every completed row in one pass so rows above all fall together.
+  const rowsToRemove = new Set(clearingRows);
+  const remainingRows = arena.filter(
+    (_row, rowIndex) => !rowsToRemove.has(rowIndex)
+  );
+
+  while (remainingRows.length < arena.length) {
+    remainingRows.unshift(new Array(arena[0].length).fill(0));
+  }
+
+  arena.splice(0, arena.length, ...remainingRows);
 
   let previousScore = player.score;
-  if (rowCount === 4) {
-    // Display "Tetris!" announcer
+  if (clearRowCount === 4) {
     displayAnnouncer("Tetris!");
     player.score += 70;
-    //
-
     comboPointsUpSound.play();
   } else {
-    player.score += rowCount * 10;
+    player.score += clearRowCount * 10;
   }
 
-  let isSpeedUp = true;
-
-  // If player clears 10 rows, the speed will increase.
-  // Bug cannot level up... when player score up by 10 when it's 100 it levels up
-  // while (player.score - previousScore >= 100 && isSpeedUp) {
-
-  //     increaseSpeed(); // Call the function to increase the speed
-  //     isSpeedUp = false;
-  // }
-
-  while (
-    Math.floor(player.score / 100) > Math.floor(previousScore / 100) &&
-    isSpeedUp
-  ) {
-    increaseSpeed(); // Call the function to increase the speed
-    previousScore = Math.floor(player.score / 100) * 100; // Update previousScore
+  while (Math.floor(player.score / 100) > Math.floor(previousScore / 100)) {
+    increaseSpeed();
+    previousScore += 100;
   }
 
-  function increaseSpeed() {
-    dropInterval -= 100;
-    if (dropInterval < 0) {
-      dropInterval = 100; // Limit the drop interval to 0
-    }
-    player.level += 1; // Decrease the drop interval to increase the speed
-  }
-
+  clearingRows = [];
+  clearRowCount = 0;
+  clearAnimationTimer = 0;
+  isClearing = false;
+  canvas.classList.remove("line-clear-effect");
   updateScore();
+}
+
+function increaseSpeed() {
+  dropInterval -= 100;
+  if (dropInterval < 100) {
+    dropInterval = 100;
+  }
+  player.level += 1;
 }
 
 function displayAnnouncer(text) {
@@ -240,6 +252,17 @@ function draw() {
   drawMatrix(arena, { x: 0, y: 0 });
   drawMatrix(player.matrix, player.pos);
   drawGhostPiece();
+
+  if (isClearing) {
+    context.fillStyle = Math.floor(clearAnimationTimer / 60) % 2 === 0
+      ? "#ffffff"
+      : "#ffe138";
+    context.globalAlpha = 0.85;
+    clearingRows.forEach((row) => {
+      context.fillRect(0, row, arena[0].length, 1);
+    });
+    context.globalAlpha = 1;
+  }
 }
 
 // function drawMatrix(matrix, offset) {
@@ -285,6 +308,7 @@ function drawMatrix(matrix, offset, isGhost) {
   });
 }
 
+// Permanently places the landed piece into the main game board.
 function merge(arena, player) {
   player.matrix.forEach((row, y) => {
     row.forEach((value, x) => {
@@ -296,6 +320,7 @@ function merge(arena, player) {
 }
 
 function playerDrop() {
+  if (isClearing) return;
   player.pos.y++;
   if (collide(arena, player)) {
     player.pos.y--;
@@ -308,6 +333,7 @@ function playerDrop() {
 }
 
 function playerMove(dir) {
+  if (isClearing) return;
   player.pos.x += dir;
   if (collide(arena, player)) {
     player.pos.x -= dir;
@@ -347,6 +373,7 @@ function playerReset() {
 }
 
 function playerRotate(dir) {
+  if (isClearing) return;
   const pos = player.pos.x;
   let offset = 1;
   rotate(player.matrix, dir);
@@ -362,6 +389,7 @@ function playerRotate(dir) {
 }
 
 function playerMoveBottom() {
+  if (isClearing) return;
   while (!collide(arena, player)) {
     player.pos.y++;
   }
@@ -400,7 +428,12 @@ function update(time = 0) {
     lastTime = time;
 
     dropCounter += deltaTime;
-    if (dropCounter > dropInterval) {
+    if (isClearing) {
+      clearAnimationTimer -= deltaTime;
+      if (clearAnimationTimer <= 0) {
+        finishLineClear();
+      }
+    } else if (dropCounter > dropInterval) {
       playerDrop();
     }
 

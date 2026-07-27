@@ -170,6 +170,24 @@ canvas {
   user-select: none;
 }
 
+@keyframes lineClearShake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-1px);
+  }
+
+  75% {
+    transform: translateX(1px);
+  }
+}
+
+#tetris.line-clear-effect {
+  animation: lineClearShake 0.3s ease-in-out;
+}
+
 @media (max-width: 600px) {
   body {
     padding: 6px;
