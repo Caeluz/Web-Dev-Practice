@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>Tetris</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
     <!-- <script src="bot.js" type="text/javascript" defer></script> -->
     <link rel="stylesheet" type="text/css" href="tetris.css" />
@@ -25,13 +26,14 @@
   </head>
 
   <body>
-    <!-- <h1>Tetris</h1> -->
-    <div id="scoreboard">
-      <div id="announcer"></div>
-      <div id="high-score">High Score: 0</div>
-      <div id="score">Score: 0</div>
-      <div id="level">Level: 0</div>
-    </div>
+    <main class="game-layout">
+      <aside class="sidebar">
+        <div id="scoreboard">
+          <div id="announcer"></div>
+          <div id="high-score">High Score: 0</div>
+          <div id="score">Score: 0</div>
+          <div id="level">Level: 0</div>
+        </div>
 
     <!-- <div id="scoreboard-player-two">
     <div id="announcer-player-two"></div>
@@ -42,35 +44,47 @@
 
   </div> -->
 
-    <div class="instructions">
-      <p>Instructions:</p>
-      <p>Use arrow keys to move, rotate, and drop the blocks.</p>
-      <p>Space = drop, Up = rotate</p>
-      <p>R = restart, T = pause, Q = play</p>
-    </div>
+        <div class="instructions">
+          <p>Instructions</p>
+          <p>← → Move &nbsp; ↓ Drop &nbsp; ↑ Rotate</p>
+          <p>Space: Hard drop</p>
+          <p>R: Restart &nbsp; T: Pause &nbsp; Q: Play</p>
+        </div>
+      </aside>
 
-    <div class="canvas-container">
-      <div class="canvas-player-one">
-        <canvas id="tetris" width="240" height="400"></canvas>
-        <canvas id="blockPreview" width="80" height="80"></canvas>
-      </div>
+      <section class="game-area">
+        <div class="canvas-container">
+          <div class="canvas-player-one">
+            <canvas id="tetris" width="240" height="400"></canvas>
+            <canvas id="blockPreview" width="80" height="80"></canvas>
+          </div>
 
-      <!-- <div>
-        <canvas id="tetris-player-two" width="240" height="400"></canvas>
-        <canvas id="blockPreviewPlayerTwo" width="80" height="80"></canvas>
-      </div> -->
-    </div>
+          <!-- <div>
+            <canvas id="tetris-player-two" width="240" height="400"></canvas>
+            <canvas id="blockPreviewPlayerTwo" width="80" height="80"></canvas>
+          </div> -->
+        </div>
 
-    <div class="button-container">
-      <button id="playButton">Play</button>
-      <button id="pauseButton">Pause</button>
-      <button id="restartButton">Restart</button>
-      <button id="muteButton" onclick="toggleMute()">Mute</button>
+        <div class="touch-controls" aria-label="Touch controls">
+          <button id="moveLeftButton" aria-label="Move left">←</button>
+          <button id="rotateButton" aria-label="Rotate">↻</button>
+          <button id="moveRightButton" aria-label="Move right">→</button>
+          <button id="dropButton" aria-label="Soft drop">↓</button>
+          <button id="hardDropButton" aria-label="Hard drop">⤓</button>
+        </div>
+
+        <div class="button-container">
+          <button id="playButton">Play</button>
+          <button id="pauseButton">Pause</button>
+          <button id="restartButton">Restart</button>
+          <button id="muteButton" onclick="toggleMute()">Mute</button>
       <!-- <button id="singlePlayerButton" onclick="disableTetrisPlayerTwo()">
         SinglePlayer
       </button> -->
       <!-- <button id="multiPlayerButton" onclick="">MultiPlayer</button> -->
-      <!-- <button id="botButton">Bot</button> -->
-    </div>
+          <!-- <button id="botButton">Bot</button> -->
+        </div>
+      </section>
+    </main>
   </body>
 </html>

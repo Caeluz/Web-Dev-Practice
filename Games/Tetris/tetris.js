@@ -437,7 +437,7 @@ const player = {
   pos: { x: 0, y: 0 },
   matrix: null,
   score: 0,
-  highScore: localStorage.getItem("highScore"),
+  highScore: localStorage.getItem("highScore") || 0,
   level: 0,
 };
 
@@ -450,7 +450,34 @@ playButton.addEventListener("click", play);
 pauseButton.addEventListener("click", pause);
 restartButton.addEventListener("click", restart);
 
+function addTouchControl(id, action) {
+  document.getElementById(id).addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    if (!isPaused) {
+      action();
+    }
+  });
+}
+
+addTouchControl("moveLeftButton", () => playerMove(-1));
+addTouchControl("moveRightButton", () => playerMove(1));
+addTouchControl("rotateButton", () => playerRotate(1));
+addTouchControl("dropButton", () => playerDrop());
+addTouchControl("hardDropButton", () => playerMoveBottom());
+
 document.addEventListener("keydown", (event) => {
+  const gameKeys = [
+    "ArrowLeft",
+    "ArrowRight",
+    "ArrowDown",
+    "ArrowUp",
+    " ",
+  ];
+
+  if (gameKeys.includes(event.key)) {
+    event.preventDefault();
+  }
+
   if (isPaused) {
     return; // If paused, do not process key events
   }
