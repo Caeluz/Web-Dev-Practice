@@ -9,6 +9,7 @@ const ballSize = 10;
 const botSpeed = 3;
 const winningScore = 5;
 const ballSpeedRange = document.getElementById("ball-speed-range");
+let botReactionTimer = 0;
 
 let gameActive = false; // Initially, the game is not active
 let leftPaddleY = canvas.height / 2 - paddleHeight / 2;
@@ -46,6 +47,30 @@ function keyUpHandler(e) {
   }
 }
 
+// Allow mobile and pointer users to move the player's paddle by dragging.
+function movePlayerToPointer(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleY = canvas.height / rect.height;
+  const pointerY = (e.clientY - rect.top) * scaleY;
+
+  leftPaddleY = pointerY - paddleHeight / 2;
+  leftPaddleY = Math.max(
+    0,
+    Math.min(canvas.height - paddleHeight, leftPaddleY),
+  );
+}
+
+canvas.addEventListener("pointerdown", (e) => {
+  canvas.setPointerCapture(e.pointerId);
+  movePlayerToPointer(e);
+});
+
+canvas.addEventListener("pointermove", (e) => {
+  if (e.buttons > 0) {
+    movePlayerToPointer(e);
+  }
+});
+
 // Move the bot (right paddle) based on the ball's position
 function moveBot() {
   let predictedBallY = ballY;
@@ -67,11 +92,20 @@ function moveBot() {
   }
 
   if (botDifficulty === "easy") {
-    // Easy: Bot follows the ball with a significant delay and reduced speed
-    if (predictedBallY < rightPaddleY + paddleHeight / 2) {
-      rightPaddleY -= botSpeed * 0.5; // Reduced speed
-    } else if (predictedBallY > rightPaddleY + paddleHeight / 2) {
-      rightPaddleY += botSpeed * 0.5; // Reduced speed
+    // Easy: do not predict the ball, react less often, and leave a large gap.
+    botReactionTimer++;
+    if (botReactionTimer < 12) {
+      return;
+    }
+    botReactionTimer = 0;
+
+    const paddleCenter = rightPaddleY + paddleHeight / 2;
+    const deadZone = 35;
+
+    if (ballY < paddleCenter - deadZone) {
+      rightPaddleY -= botSpeed * 0.8;
+    } else if (ballY > paddleCenter + deadZone) {
+      rightPaddleY += botSpeed * 0.8;
     }
   } else if (botDifficulty === "medium") {
     // Medium: Bot follows the ball with moderate speed
@@ -188,7 +222,7 @@ function draw() {
     canvas.width - paddleWidth,
     rightPaddleY,
     paddleWidth,
-    paddleHeight
+    paddleHeight,
   );
 
   // Draw ball
@@ -210,7 +244,7 @@ function draw() {
     ctx.fillText(
       `${winningPlayer} wins!`,
       canvas.width / 2 - 100,
-      canvas.height / 2
+      canvas.height / 2,
     );
   }
 }

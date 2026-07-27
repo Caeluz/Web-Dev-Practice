@@ -1,15 +1,22 @@
+* {
+  box-sizing: border-box;
+}
+
 body {
   background-color: #1e1e1e;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
+  min-height: 100dvh;
+  padding: 10px;
   margin: 0;
   font-family: "Roboto", sans-serif;
   color: #f0f0f0;
+  overflow-x: hidden;
 }
 
 .container {
+  width: min(100%, 820px);
   text-align: center;
   padding: 10px;
   background-color: rgba(255, 255, 255, 0.1);
@@ -18,7 +25,7 @@ body {
 }
 
 h1 {
-  font-size: 36px;
+  font-size: clamp(24px, 8vw, 36px);
   margin: 0 0 20px;
   color: #ff6f61;
 }
@@ -32,8 +39,12 @@ h1 {
 canvas {
   background-color: #000;
   display: block;
+  width: 100%;
+  max-width: 800px;
+  height: auto;
   margin: 0 auto;
   border: 2px solid #ff6f61;
+  touch-action: none;
 }
 
 #difficulty-buttons {
@@ -44,8 +55,8 @@ button {
   background-color: #ff6f61;
   color: white;
   border: none;
-  padding: 10px 20px;
-  font-size: 18px;
+  padding: 10px 14px;
+  font-size: 16px;
   margin: 5px;
   cursor: pointer;
   border-radius: 5px;
@@ -100,7 +111,19 @@ button:hover {
 }
 
 #ball-speed-range {
-  width: 200px;
+  width: min(200px, 80vw);
+}
+
+@media (max-width: 600px) {
+  #control-buttons,
+  #difficulty-buttons,
+  #ball-speed-control {
+    margin: 10px 0;
+  }
+
+  #game-status {
+    font-size: 16px;
+  }
 }
 
 @keyframes scoreEffect {
