@@ -35,6 +35,7 @@ let targetCharacters = [];
 let characterElements = wordDisplay.querySelectorAll("span");
 let sentenceWords = [];
 let awardedWordCount = 0;
+let committedLength = 0;
 let combo = 0;
 let lastInputWasIncorrect = false;
 const updateScoreDisplay = () => {
@@ -186,6 +187,7 @@ const renderSentence = () => {
     targetText = sentenceWords.join(" ");
     targetCharacters = Array.from(targetText);
     awardedWordCount = 0;
+    committedLength = 0;
     wordDisplay.replaceChildren(...targetCharacters.map((character) => {
         const span = document.createElement("span");
         span.textContent = character;
@@ -219,6 +221,7 @@ const awardCompletedWords = (typedText) => {
             const points = BASE_WORD_POINTS + Math.floor(combo / 5);
             score += points;
             awardedWordCount = index + 1;
+            committedLength = wordEnd;
             // Change this for the reward-popup location
             const wordAnchorIndex = wordEnd - 2 - (index < sentenceWords.length - 1 ? 1 : 0);
             showRewardPopup(`+${points}`, false, wordAnchorIndex);
@@ -236,6 +239,12 @@ updateScoreDisplay();
 updateComboDisplay();
 renderSentence();
 input.addEventListener("keydown", (event) => {
+    if (event.key === "Backspace" &&
+        input.selectionStart !== null &&
+        input.selectionStart <= committedLength) {
+        event.preventDefault();
+        return;
+    }
     if (event.key === " " && input.value.length === 0) {
         event.preventDefault();
     }
