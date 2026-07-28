@@ -7,11 +7,11 @@ const wordDisplay = document.querySelector("#word-display");
 if (!wordDisplay) {
     throw new Error("Could not find the word display");
 }
-const timerDisplay = document.querySelector("#timer-display");
+// const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
 const scoreDisplay = document.querySelector("#score-display");
 const timerProgress = document.querySelector("#timer-progress");
 const statusDisplay = document.querySelector("#status-display");
-if (!timerDisplay || !scoreDisplay || !timerProgress || !statusDisplay) {
+if (!scoreDisplay || !timerProgress || !statusDisplay) {
     throw new Error("Could not find the game status elements");
 }
 const START_DELAY = 500;
@@ -33,7 +33,7 @@ const updateScoreDisplay = () => {
 };
 const updateTimerDisplay = () => {
     const percentage = (timeRemaining / TOTAL_TIME) * 100;
-    timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    // timerDisplay.textContent = `Time: ${timeRemaining}s`;
     timerProgress.style.width = `${percentage}%`;
     timerProgress.classList.toggle("warning", percentage <= 50 && percentage > 25);
     timerProgress.classList.toggle("danger", percentage <= 25);

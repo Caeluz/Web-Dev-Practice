@@ -1,8 +1,11 @@
 #hud {
     display: flex;
     font-size: 1rem;
-    justify-content: space-between;
-    margin-bottom: 1rem;
+    justify-content: center;
+    left: 50%;
+    position: fixed;
+    top: 4.5rem;
+    transform: translateX(-50%);
 }
 
 #timer-display,
@@ -49,6 +52,8 @@
 #word-display {
     font-size: 3rem;
     letter-spacing: 0.08em;
+    margin-inline: auto;
+    max-width: 85rem;
     white-space: pre-wrap;
 }
 
@@ -75,18 +80,25 @@
 }
 
 body {
-    align-items: center;
     background: #323437;
     color: #d1d0c5;
-    display: flex;
     font-family: Arial, sans-serif;
-    justify-content: center;
     margin: 0;
     min-height: 100vh;
+    overflow: hidden;
 }
 
 main {
+    align-items: center;
+    display: grid;
+    min-height: 100vh;
+    width: 100%;
+}
+
+#typing-area {
+    padding: 0 1rem;
     text-align: center;
+    width: 100%;
 }
 
 #typing-input {
