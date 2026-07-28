@@ -1,0 +1,29 @@
+{
+  "devDependencies": {
+    "typescript": "^7.0.2"
+  },
+  "name": "web-dev-practice",
+  "version": "1.0.0",
+  "description": "Sources:\r Sounds:\r https://mixkit.co/free-sound-effects/\r https://opengameart.org/content/sound-effects-mini-pack15",
+  "main": "index.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "watch": "tsc --watch"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Caeluz/Web-Dev-Practice.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Caeluz/Web-Dev-Practice/issues"
+  },
+  "homepage": "https://github.com/Caeluz/Web-Dev-Practice#readme"
+}

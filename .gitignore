@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# TypeScript generated files
+*.js.map
+*.d.ts
+*.d.ts.map
+
+# Environment files
+.env
+.env.*
+
+# Editor/OS files
+.vscode/*
+!.vscode/settings.json
+.DS_Store
+Thumbs.db
