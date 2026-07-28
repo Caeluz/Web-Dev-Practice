@@ -16,7 +16,22 @@ const scoreDisplay = document.querySelector("#score-display");
 const comboDisplay = document.querySelector("#combo-display");
 const timerProgress = document.querySelector("#timer-progress");
 const statusDisplay = document.querySelector("#status-display");
-if (!scoreDisplay || !comboDisplay || !timerProgress || !statusDisplay) {
+const gameOverOverlay = document.querySelector("#game-over-overlay");
+const finalScoreDisplay = document.querySelector("#final-score");
+const finalWordsDisplay = document.querySelector("#final-words");
+const finalAccuracyDisplay = document.querySelector("#final-accuracy");
+const finalComboDisplay = document.querySelector("#final-combo");
+const restartButton = document.querySelector("#restart-button");
+if (!scoreDisplay ||
+    !comboDisplay ||
+    !timerProgress ||
+    !statusDisplay ||
+    !gameOverOverlay ||
+    !finalScoreDisplay ||
+    !finalWordsDisplay ||
+    !finalAccuracyDisplay ||
+    !finalComboDisplay ||
+    !restartButton) {
     throw new Error("Could not find the game status elements");
 }
 const START_DELAY = 500;
@@ -30,6 +45,7 @@ let timerAnimationId;
 let gameStarted = false;
 let gameOver = false;
 let timerEndTime = 0;
+let startupTimeoutId;
 let targetText = "";
 let targetCharacters = [];
 let characterElements = wordDisplay.querySelectorAll("span");
@@ -38,6 +54,10 @@ let awardedWordCount = 0;
 let committedLength = 0;
 let combo = 0;
 let lastInputWasIncorrect = false;
+let wordsCompletedThisRun = 0;
+let typedCharacters = 0;
+let correctCharacters = 0;
+let highestCombo = 0;
 const updateScoreDisplay = () => {
     scoreDisplay.textContent = `Score: ${score}`;
 };
@@ -62,6 +82,15 @@ const endGame = () => {
     input.disabled = true;
     input.blur();
     statusDisplay.textContent = `Time's up! Final score: ${score}`;
+    const accuracy = typedCharacters > 0
+        ? Math.round((correctCharacters / typedCharacters) * 100)
+        : 0;
+    finalScoreDisplay.textContent = `Score: ${score}`;
+    finalWordsDisplay.textContent = `${wordsCompletedThisRun}`;
+    finalAccuracyDisplay.textContent = `${accuracy}%`;
+    finalComboDisplay.textContent = `${highestCombo}`;
+    gameOverOverlay.hidden = false;
+    // restartButton.focus();
 };
 const startTimer = () => {
     if (gameStarted || gameOver) {
@@ -83,12 +112,45 @@ const startTimer = () => {
     };
     timerAnimationId = window.requestAnimationFrame(animateTimer);
 };
+const scheduleInputReady = () => {
+    input.disabled = true;
+    statusDisplay.textContent = "Get ready...";
+    if (startupTimeoutId !== undefined) {
+        window.clearTimeout(startupTimeoutId);
+    }
+    startupTimeoutId = window.setTimeout(() => {
+        input.disabled = false;
+        input.focus();
+        statusDisplay.textContent = "Ready - start typing";
+    }, START_DELAY);
+};
+const resetRun = () => {
+    if (timerAnimationId !== undefined) {
+        window.cancelAnimationFrame(timerAnimationId);
+    }
+    timeRemaining = TOTAL_TIME;
+    score = 0;
+    gameStarted = false;
+    gameOver = false;
+    timerEndTime = 0;
+    awardedWordCount = 0;
+    committedLength = 0;
+    combo = 0;
+    lastInputWasIncorrect = false;
+    wordsCompletedThisRun = 0;
+    typedCharacters = 0;
+    correctCharacters = 0;
+    highestCombo = 0;
+    input.value = "";
+    gameOverOverlay.hidden = true;
+    updateTimerDisplay();
+    updateScoreDisplay();
+    updateComboDisplay();
+    renderSentence();
+    scheduleInputReady();
+};
 // Wait for the page to finish loading before accepting keyboard input.
-setTimeout(() => {
-    input.disabled = false;
-    input.focus();
-    statusDisplay.textContent = "Ready - start typing";
-}, START_DELAY);
+scheduleInputReady();
 const WORDS = [
     "time", "people", "year", "way", "day", "man", "thing", "woman", "life", "child",
     "world", "school", "state", "family", "student", "group", "country", "problem", "hand", "part",
@@ -218,6 +280,8 @@ const awardCompletedWords = (typedText) => {
         const completedWord = typedText.slice(0, wordEnd) === targetText.slice(0, wordEnd);
         if (typedText.length >= wordEnd && completedWord) {
             combo += 1;
+            wordsCompletedThisRun += 1;
+            highestCombo = Math.max(highestCombo, combo);
             const points = BASE_WORD_POINTS + Math.floor(combo / 5);
             score += points;
             awardedWordCount = index + 1;
@@ -247,6 +311,14 @@ input.addEventListener("keydown", (event) => {
     }
     if (event.key === " " && input.value.length === 0) {
         event.preventDefault();
+        return;
+    }
+    if (event.key.length === 1) {
+        const typedIndex = input.value.length;
+        typedCharacters += 1;
+        if (event.key === targetCharacters[typedIndex]) {
+            correctCharacters += 1;
+        }
     }
 });
 input.addEventListener("input", () => {
@@ -277,6 +349,16 @@ input.addEventListener("input", () => {
         statusDisplay.textContent = `Sentence complete! +${SENTENCE_BONUS}`;
         input.value = "";
         renderSentence();
+    }
+});
+restartButton.addEventListener("click", resetRun);
+document.addEventListener("keydown", (event) => {
+    if (!gameOver) {
+        return;
+    }
+    if (event.key === "Enter" || event.key.toLowerCase() === "r") {
+        event.preventDefault();
+        resetRun();
     }
 });
 //# sourceMappingURL=script.js.map

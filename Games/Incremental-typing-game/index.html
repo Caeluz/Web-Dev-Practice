@@ -21,6 +21,21 @@
             <div id="status-display" aria-live="polite">Get ready...</div>
         </section>
     </main>
+    <section id="game-over-overlay" hidden aria-labelledby="game-over-title">
+        <div id="game-over-card">
+            <h1 id="game-over-title">Time's up!</h1>
+            <p id="final-score">Score: 0</p>
+            <div id="run-stats">
+                <p>Words completed: <span id="final-words">0</span></p>
+                <p>Accuracy: <span id="final-accuracy">0%</span></p>
+                <p>Highest combo: <span id="final-combo">0</span></p>
+            </div>
+            <div id="game-over-actions">
+                <button id="restart-button" type="button">Play again - Enter</button>
+                <button id="upgrades-button" type="button" disabled>Upgrades - Coming soon</button>
+            </div>
+        </div>
+    </section>
     <input id="typing-input" autocomplete="off" disabled>
     <script src="script.js"></script>
 </body>
