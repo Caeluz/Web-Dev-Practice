@@ -12,6 +12,19 @@ Gameplay:
     - Some upgrades would give a little bit more time, when the word is completed
     - Can sometimes buy themes, typing effects, like words are falling
 
+Start timer
+→ User types sentence
+→ Sentence completed
+→ Add points (every sentence completed, and words completed)
+→ Generate new sentence
+→ Reset input
+→ Continue until timer reaches zero
+
+Upgrades
+- timer length
+
+in the endgame, or challenge
+- Sentence/word length?
 
 Design:
 - At the center would be the words

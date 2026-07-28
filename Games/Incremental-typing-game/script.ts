@@ -10,13 +10,81 @@ if (!wordDisplay) {
     throw new Error("Could not find the word display");
 }
 
+const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
+const scoreDisplay = document.querySelector<HTMLDivElement>("#score-display");
+const timerProgress = document.querySelector<HTMLDivElement>("#timer-progress");
+const statusDisplay = document.querySelector<HTMLDivElement>("#status-display");
+
+if (!timerDisplay || !scoreDisplay || !timerProgress || !statusDisplay) {
+    throw new Error("Could not find the game status elements");
+}
+
 const START_DELAY = 500;
+const TOTAL_TIME = 15;
+const WORD_POINTS = 1;
+const SENTENCE_BONUS = 10;
+
+let timeRemaining = TOTAL_TIME;
+let score = 0;
+let timerId: number | undefined;
+let gameStarted = false;
+let gameOver = false;
+
+let targetText = "";
+let targetCharacters: string[] = [];
+let characterElements: NodeListOf<HTMLSpanElement> = wordDisplay.querySelectorAll("span");
+let sentenceWords: string[] = [];
+let awardedWordCount = 0;
+
+const updateScoreDisplay = (): void => {
+    scoreDisplay.textContent = `Score: ${score}`;
+};
+
+const updateTimerDisplay = (): void => {
+    const percentage = (timeRemaining / TOTAL_TIME) * 100;
+
+    timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    timerProgress.style.width = `${percentage}%`;
+    timerProgress.classList.toggle("warning", percentage <= 50 && percentage > 25);
+    timerProgress.classList.toggle("danger", percentage <= 25);
+};
+
+const endGame = (): void => {
+    gameOver = true;
+    timeRemaining = 0;
+    updateTimerDisplay();
+
+    if (timerId !== undefined) {
+        window.clearInterval(timerId);
+    }
+
+    input.disabled = true;
+    input.blur();
+    statusDisplay.textContent = `Time's up! Final score: ${score}`;
+};
+
+const startTimer = (): void => {
+    if (gameStarted || gameOver) {
+        return;
+    }
+
+    gameStarted = true;
+    statusDisplay.textContent = "Typing...";
+    timerId = window.setInterval(() => {
+        timeRemaining -= 1;
+        updateTimerDisplay();
+
+        if (timeRemaining <= 0) {
+            endGame();
+        }
+    }, 1000);
+};
 
 // Wait for the page to finish loading before accepting keyboard input.
 setTimeout(() => {
     input.disabled = false;
     input.focus();
-    console.log("Ready - start typing");
+    statusDisplay.textContent = "Ready - start typing";
 }, START_DELAY);
 
 
@@ -68,23 +136,25 @@ const getRandomizeSentence = (words: string[], length: number): string[] => {
     return sentence
 }
 
-const sentence = getRandomizeSentence(WORDS, 20);
-const targetText = sentence.join(" ");
-const targetCharacters = Array.from(targetText);
+const renderSentence = (): void => {
+    sentenceWords = getRandomizeSentence(WORDS, 20);
+    targetText = sentenceWords.join(" ");
+    targetCharacters = Array.from(targetText);
+    awardedWordCount = 0;
 
-wordDisplay.replaceChildren(
-    ...targetCharacters.map((character) => {
-        const span = document.createElement("span");
-        span.textContent = character;
-        return span;
-    })
-);
+    wordDisplay.replaceChildren(
+        ...targetCharacters.map((character) => {
+            const span = document.createElement("span");
+            span.textContent = character;
+            return span;
+        })
+    );
 
-const characterElements = wordDisplay.querySelectorAll("span");
+    characterElements = wordDisplay.querySelectorAll("span");
+    updateCharacterDisplay("");
+};
 
-input.addEventListener("input", () => {
-    const typedText = input.value;
-
+const updateCharacterDisplay = (typedText: string): void => {
     characterElements.forEach((character, index) => {
         character.className = "";
 
@@ -98,6 +168,42 @@ input.addEventListener("input", () => {
             character.classList.add("current");
         }
     });
+};
+
+const awardCompletedWords = (typedText: string): void => {
+    for (let index = awardedWordCount; index < sentenceWords.length; index++) {
+        const wordEnd = sentenceWords
+            .slice(0, index + 1)
+            .join(" ")
+            .length + (index < sentenceWords.length - 1 ? 1 : 0);
+
+        const completedWord = typedText.slice(0, wordEnd) === targetText.slice(0, wordEnd);
+
+        if (typedText.length >= wordEnd && completedWord) {
+            score += WORD_POINTS;
+            awardedWordCount = index + 1;
+        } else {
+            break;
+        }
+    }
+
+    updateScoreDisplay();
+};
+
+updateTimerDisplay();
+updateScoreDisplay();
+renderSentence();
+
+input.addEventListener("input", () => {
+    if (gameOver) {
+        return;
+    }
+
+    startTimer();
+
+    const typedText = input.value;
+    updateCharacterDisplay(typedText);
+    awardCompletedWords(typedText);
 
     if (targetText.startsWith(typedText)) {
         console.log("Correct so far");
@@ -106,6 +212,10 @@ input.addEventListener("input", () => {
     }
 
     if (typedText === targetText) {
-        console.log("Completed!");
+        score += SENTENCE_BONUS;
+        updateScoreDisplay();
+        statusDisplay.textContent = `Sentence complete! +${SENTENCE_BONUS}`;
+        input.value = "";
+        renderSentence();
     }
 });

@@ -8,7 +8,15 @@
 </head>
 <body>
     <main>
+        <section id="hud" aria-label="Game status">
+            <div id="timer-display" aria-live="polite">Time: 15s</div>
+            <div id="score-display" aria-live="polite">Score: 0</div>
+        </section>
+        <div id="timer-bar" aria-hidden="true">
+            <div id="timer-progress"></div>
+        </div>
         <div id="word-display" aria-live="polite">Testing</div>
+        <div id="status-display" aria-live="polite">Get ready...</div>
     </main>
     <input id="typing-input" autocomplete="off" disabled>
     <script src="script.js"></script>

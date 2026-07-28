@@ -1,7 +1,61 @@
+#hud {
+    display: flex;
+    font-size: 1rem;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+#timer-display,
+#score-display {
+    color: #d1d0c5;
+}
+
+#timer-display {
+    background: #2c2e31;
+    border: 1px solid #646669;
+    bottom: 1.30rem;
+    left: 50%;
+    padding: 0.5rem 1rem;
+    position: fixed;
+    transform: translateX(-50%);
+}
+
+#timer-bar {
+    background: #646669;
+    bottom: 0;
+    /* height: 0.5rem; */
+    height: 1rem;
+    left: 0;
+    margin: 0;
+    position: fixed;
+    width: 100vw;
+}
+
+#timer-progress {
+    background: #7bc043;
+    height: 100%;
+    transition: background-color 200ms ease, width 1000ms linear;
+    width: 100%;
+}
+
+#timer-progress.warning {
+    background: #e2a72e;
+}
+
+#timer-progress.danger {
+    background: #ca4754;
+}
+
 #word-display {
     font-size: 3rem;
     letter-spacing: 0.08em;
     white-space: pre-wrap;
+}
+
+#status-display {
+    color: #646669;
+    font-size: 0.9rem;
+    margin-top: 1.5rem;
 }
 
 #word-display span {
