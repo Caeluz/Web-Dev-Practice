@@ -42,7 +42,7 @@
 #timer-progress {
     background: #7bc043;
     height: 100%;
-    transition: background-color 200ms ease, width 1000ms linear;
+    transition: background-color 200ms ease;
     width: 100%;
 }
 

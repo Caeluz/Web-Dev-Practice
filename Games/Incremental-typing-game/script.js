@@ -20,15 +20,16 @@ if (!scoreDisplay || !comboDisplay || !timerProgress || !statusDisplay) {
     throw new Error("Could not find the game status elements");
 }
 const START_DELAY = 500;
-const TOTAL_TIME = 15;
+const TOTAL_TIME = 5;
 const SENTENCE_LENGTH = 8;
 const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
 let timeRemaining = TOTAL_TIME;
 let score = 0;
-let timerId;
+let timerAnimationId;
 let gameStarted = false;
 let gameOver = false;
+let timerEndTime = 0;
 let targetText = "";
 let targetCharacters = [];
 let characterElements = wordDisplay.querySelectorAll("span");
@@ -42,8 +43,7 @@ const updateScoreDisplay = () => {
 const updateComboDisplay = () => {
     comboDisplay.textContent = `Combo: ${combo}`;
 };
-const updateTimerDisplay = () => {
-    const percentage = (timeRemaining / TOTAL_TIME) * 100;
+const updateTimerDisplay = (percentage = (timeRemaining / TOTAL_TIME) * 100) => {
     if (timerDisplay) {
         timerDisplay.textContent = `Time: ${timeRemaining}s`;
     }
@@ -55,8 +55,8 @@ const endGame = () => {
     gameOver = true;
     timeRemaining = 0;
     updateTimerDisplay();
-    if (timerId !== undefined) {
-        window.clearInterval(timerId);
+    if (timerAnimationId !== undefined) {
+        window.cancelAnimationFrame(timerAnimationId);
     }
     input.disabled = true;
     input.blur();
@@ -68,13 +68,19 @@ const startTimer = () => {
     }
     gameStarted = true;
     statusDisplay.textContent = "Typing...";
-    timerId = window.setInterval(() => {
-        timeRemaining -= 1;
-        updateTimerDisplay();
-        if (timeRemaining <= 0) {
+    timerEndTime = performance.now() + TOTAL_TIME * 1000;
+    const animateTimer = (currentTime) => {
+        const millisecondsRemaining = Math.max(0, timerEndTime - currentTime);
+        const percentage = (millisecondsRemaining / (TOTAL_TIME * 1000)) * 100;
+        timeRemaining = Math.ceil(millisecondsRemaining / 1000);
+        updateTimerDisplay(percentage);
+        if (millisecondsRemaining <= 0) {
             endGame();
+            return;
         }
-    }, 1000);
+        timerAnimationId = window.requestAnimationFrame(animateTimer);
+    };
+    timerAnimationId = window.requestAnimationFrame(animateTimer);
 };
 // Wait for the page to finish loading before accepting keyboard input.
 setTimeout(() => {
@@ -229,6 +235,11 @@ updateTimerDisplay();
 updateScoreDisplay();
 updateComboDisplay();
 renderSentence();
+input.addEventListener("keydown", (event) => {
+    if (event.key === " " && input.value.length === 0) {
+        event.preventDefault();
+    }
+});
 input.addEventListener("input", () => {
     if (gameOver) {
         return;
