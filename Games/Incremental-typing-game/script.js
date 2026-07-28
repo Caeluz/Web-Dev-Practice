@@ -25,9 +25,11 @@ const finalComboDisplay = document.querySelector("#final-combo");
 const restartButton = document.querySelector("#restart-button");
 const upgradesButton = document.querySelector("#upgrades-button");
 const upgradeOverlay = document.querySelector("#upgrade-overlay");
+const upgradeViewport = document.querySelector("#upgrade-viewport");
 const upgradeTree = document.querySelector("#upgrade-tree");
 const bankedPointsDisplay = document.querySelector("#banked-points");
 const backToTypingButton = document.querySelector("#back-to-typing");
+const resetViewButton = document.querySelector("#reset-view-button");
 const resetProgressButton = document.querySelector("#reset-progress-button");
 if (!mainUpgradesButton ||
     !scoreDisplay ||
@@ -42,15 +44,17 @@ if (!mainUpgradesButton ||
     !restartButton ||
     !upgradesButton ||
     !upgradeOverlay ||
+    !upgradeViewport ||
     !upgradeTree ||
     !bankedPointsDisplay ||
     !backToTypingButton ||
+    !resetViewButton ||
     !resetProgressButton) {
     throw new Error("Could not find the game status elements");
 }
 const START_DELAY = 500;
 const TOTAL_TIME = 5;
-const SENTENCE_LENGTH = 8;
+const SENTENCE_LENGTH = 3;
 const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
 const UPGRADE_STORAGE_KEY = "incremental-typing-game-upgrades";
@@ -66,7 +70,10 @@ const UPGRADE_NODES = [
     { id: "double-dip", group: "bottom", name: "Double Dip", effect: "+1 sentence point", cost: 150, requires: "sentence-value" },
     { id: "reroll-token", group: "left", name: "Reroll Token", effect: "Press X to reroll once", cost: 25 },
     { id: "second-wind", group: "left", name: "Second Wind", effect: "+3 seconds at zero", cost: 75, requires: "reroll-token" },
-    { id: "lucky-word", group: "left", name: "Lucky Word", effect: "10% chance to double", cost: 150, requires: "second-wind" }
+    { id: "lucky-word", group: "left", name: "Lucky Word", effect: "10% chance to double", cost: 150, requires: "second-wind" },
+    { id: "sentence-medium", group: "length", name: "Longer Sentences", effect: "3 → 5 words", cost: 25 },
+    { id: "sentence-long", group: "length", name: "Full Sentences", effect: "5 → 8 words", cost: 75, requires: "sentence-medium" },
+    { id: "sentence-marathon", group: "length", name: "Marathon Sentences", effect: "8 → 12 words", cost: 150, requires: "sentence-long" }
 ];
 let timeRemaining = TOTAL_TIME;
 let score = 0;
@@ -94,6 +101,17 @@ let wordsCompletedThisRun = 0;
 let typedCharacters = 0;
 let correctCharacters = 0;
 let highestCombo = 0;
+const MIN_UPGRADE_ZOOM = 0.65;
+const MAX_UPGRADE_ZOOM = 1.5;
+const DEFAULT_UPGRADE_ZOOM = 1;
+let upgradePanX = 0;
+let upgradePanY = 0;
+let upgradeZoom = DEFAULT_UPGRADE_ZOOM;
+let dragPointerId;
+let dragStartX = 0;
+let dragStartY = 0;
+let dragStartPanX = 0;
+let dragStartPanY = 0;
 const hasUpgrade = (id) => purchasedUpgrades.includes(id);
 const loadUpgradeState = () => {
     try {
@@ -126,8 +144,52 @@ const getBaseWordPoints = () => BASE_WORD_POINTS + (hasUpgrade("word-value") ? 1
 const getSentenceBonus = () => SENTENCE_BONUS
     + (hasUpgrade("sentence-value") ? 5 : 0)
     + (hasUpgrade("double-dip") ? 1 : 0);
+const getSentenceLength = () => SENTENCE_LENGTH
+    + (hasUpgrade("sentence-medium") ? 2 : 0)
+    + (hasUpgrade("sentence-long") ? 3 : 0)
+    + (hasUpgrade("sentence-marathon") ? 4 : 0);
 const updateBankedPointsDisplay = () => {
     bankedPointsDisplay.textContent = `${bankedPoints}`;
+};
+const applyUpgradeView = () => {
+    upgradeTree.style.transform = `translate(${upgradePanX}px, ${upgradePanY}px) scale(${upgradeZoom})`;
+};
+const resetUpgradeView = () => {
+    upgradePanX = 0;
+    upgradePanY = 0;
+    upgradeZoom = DEFAULT_UPGRADE_ZOOM;
+    applyUpgradeView();
+};
+const clampUpgradeZoom = (zoom) => Math.min(MAX_UPGRADE_ZOOM, Math.max(MIN_UPGRADE_ZOOM, zoom));
+const isBlankUpgradeCanvasTarget = (target) => {
+    if (target instanceof Element && target.closest(".upgrade-node")) {
+        return false;
+    }
+    return target === upgradeViewport || target === upgradeTree;
+};
+const stopUpgradeDragging = (pointerId) => {
+    if (pointerId !== undefined && dragPointerId !== pointerId) {
+        return;
+    }
+    const activePointerId = dragPointerId;
+    dragPointerId = undefined;
+    upgradeViewport.classList.remove("dragging");
+    if (activePointerId !== undefined && upgradeViewport.hasPointerCapture(activePointerId)) {
+        upgradeViewport.releasePointerCapture(activePointerId);
+    }
+};
+const zoomUpgradeTree = (event) => {
+    event.preventDefault();
+    const viewportRect = upgradeViewport.getBoundingClientRect();
+    const cursorX = event.clientX - viewportRect.left;
+    const cursorY = event.clientY - viewportRect.top;
+    const treeX = (cursorX - upgradePanX) / upgradeZoom;
+    const treeY = (cursorY - upgradePanY) / upgradeZoom;
+    const nextZoom = clampUpgradeZoom(upgradeZoom * Math.exp(-event.deltaY * 0.001));
+    upgradeZoom = nextZoom;
+    upgradePanX = cursorX - treeX * upgradeZoom;
+    upgradePanY = cursorY - treeY * upgradeZoom;
+    applyUpgradeView();
 };
 const isPurchased = (id) => purchasedUpgrades.includes(id);
 const renderUpgradeTree = () => {
@@ -136,7 +198,7 @@ const renderUpgradeTree = () => {
     core.className = "upgrade-core upgrade-node purchased";
     core.textContent = "CORE";
     upgradeTree.append(core);
-    const groups = ["top", "right", "bottom", "left"];
+    const groups = ["top", "right", "bottom", "left", "length"];
     groups.forEach((group) => {
         const branch = document.createElement("div");
         branch.className = `upgrade-branch branch-${group}`;
@@ -181,6 +243,7 @@ const showUpgradeTree = () => {
     gameOverOverlay.hidden = true;
     upgradeOverlay.hidden = false;
     renderUpgradeTree();
+    applyUpgradeView();
     upgradeTree.querySelector(".available")?.focus();
 };
 const hideUpgradeTree = () => {
@@ -413,7 +476,7 @@ const pulseCompletedWord = (wordIndex) => {
     }
 };
 const renderSentence = () => {
-    sentenceWords = getRandomizeSentence(WORDS, SENTENCE_LENGTH);
+    sentenceWords = getRandomizeSentence(WORDS, getSentenceLength());
     targetText = sentenceWords.join(" ");
     targetCharacters = Array.from(targetText);
     awardedWordCount = 0;
@@ -553,6 +616,32 @@ upgradesButton.addEventListener("click", showUpgradeTree);
 backToTypingButton.addEventListener("click", hideUpgradeTree);
 resetProgressButton.addEventListener("click", resetProgress);
 mainUpgradesButton.addEventListener("click", showUpgradeTree);
+resetViewButton.addEventListener("click", resetUpgradeView);
+upgradeViewport.addEventListener("pointerdown", (event) => {
+    if (!isBlankUpgradeCanvasTarget(event.target)) {
+        return;
+    }
+    dragPointerId = event.pointerId;
+    dragStartX = event.clientX;
+    dragStartY = event.clientY;
+    dragStartPanX = upgradePanX;
+    dragStartPanY = upgradePanY;
+    upgradeViewport.setPointerCapture(event.pointerId);
+    upgradeViewport.classList.add("dragging");
+});
+upgradeViewport.addEventListener("pointermove", (event) => {
+    if (dragPointerId !== event.pointerId) {
+        return;
+    }
+    upgradePanX = dragStartPanX + event.clientX - dragStartX;
+    upgradePanY = dragStartPanY + event.clientY - dragStartY;
+    applyUpgradeView();
+});
+upgradeViewport.addEventListener("pointerup", (event) => stopUpgradeDragging(event.pointerId));
+upgradeViewport.addEventListener("pointercancel", (event) => stopUpgradeDragging(event.pointerId));
+upgradeViewport.addEventListener("lostpointercapture", () => stopUpgradeDragging());
+upgradeViewport.addEventListener("wheel", zoomUpgradeTree, { passive: false });
+applyUpgradeView();
 const focusUpgradeDirection = (direction) => {
     upgradeTree
         .querySelector(`.branch-${direction} .upgrade-node:not(:disabled)`)

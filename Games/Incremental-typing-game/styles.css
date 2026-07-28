@@ -276,6 +276,18 @@ main {
     width: min(94vw, 75rem);
 }
 
+#upgrade-hint {
+    bottom: 4.8rem;
+    color: #646669;
+    font-size: 0.8rem;
+    left: 50%;
+    margin: 0;
+    pointer-events: none;
+    position: absolute;
+    transform: translateX(-50%);
+    z-index: 3;
+}
+
 #upgrade-header {
     align-items: center;
     display: flex;
@@ -294,12 +306,33 @@ main {
     font-size: 1.25rem;
 }
 
-#upgrade-tree {
+#upgrade-viewport {
     bottom: 4.5rem;
     left: 50%;
+    overflow: hidden;
     position: absolute;
+    right: 0;
     top: 5rem;
+    touch-action: none;
     transform: translateX(-50%);
+    width: 100%;
+}
+
+#upgrade-viewport {
+    cursor: grab;
+    user-select: none;
+}
+
+#upgrade-viewport.dragging {
+    cursor: grabbing;
+}
+
+#upgrade-tree {
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    transform-origin: 0 0;
     width: 100%;
 }
 
@@ -382,12 +415,26 @@ main {
     right: 0;
 }
 
+.branch-length {
+    flex-direction: column;
+    right: 0;
+    top: calc(50% + 4.5rem);
+}
+
 .branch-left::before,
-.branch-right::before {
+.branch-right::before,
+.branch-length::before {
     height: 2px;
     left: 0;
     top: 50%;
     width: 100%;
+}
+
+.branch-length::before {
+    height: 100%;
+    left: 50%;
+    top: 0;
+    width: 2px;
 }
 
 .upgrade-node {
@@ -400,8 +447,10 @@ main {
     font: inherit;
     min-height: 4.5rem;
     padding: 0.6rem;
+    position: relative;
     text-align: center;
     width: 8.5rem;
+    z-index: 2;
 }
 
 .upgrade-node strong,
@@ -435,7 +484,7 @@ main {
 
 .upgrade-node:disabled {
     cursor: not-allowed;
-    opacity: 0.55;
+    opacity: 1;
 }
 
 #upgrade-actions {
@@ -448,6 +497,7 @@ main {
 }
 
 #back-to-typing,
+#reset-view-button,
 #reset-progress-button {
     background: #e2b714;
     border: 0;
@@ -465,16 +515,16 @@ main {
 
 @media (max-width: 55rem) {
     #upgrade-screen {
-        overflow: auto;
+        overflow: hidden;
     }
 
-    #upgrade-tree {
-        bottom: auto;
-        height: auto;
-        min-height: 38rem;
-        position: relative;
-        top: auto;
+    #upgrade-viewport {
+        bottom: 4.5rem;
+        left: 1rem;
+        right: 1rem;
+        top: 5rem;
         transform: none;
+        width: auto;
     }
 
     .upgrade-core {
@@ -489,5 +539,10 @@ main {
         min-height: 4.5rem;
         padding: 0.4rem;
         width: 6.5rem;
+    }
+
+    #upgrade-actions {
+        flex-wrap: wrap;
+        justify-content: center;
     }
 }
