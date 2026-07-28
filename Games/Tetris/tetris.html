@@ -52,6 +52,7 @@
           <p>Instructions</p>
           <p>← → Move &nbsp; ↓ Drop &nbsp; ↑ Rotate</p>
           <p>Space: Hard drop</p>
+          <p>C: Hold piece</p>
           <p>R: Restart &nbsp; T: Pause &nbsp; Q: Play</p>
         </div>
       </aside>
@@ -60,9 +61,15 @@
         <div class="canvas-container">
           <div class="canvas-player-one">
             <canvas id="tetris" width="240" height="400"></canvas>
-            <div class="preview-panel">
-              <div class="preview-label">NEXT PIECE</div>
-              <canvas id="blockPreview" width="80" height="80"></canvas>
+            <div class="preview-stack">
+              <div class="preview-panel">
+                <div class="preview-label">NEXT PIECE</div>
+                <canvas id="blockPreview" width="80" height="80"></canvas>
+              </div>
+              <div class="preview-panel">
+                <div class="preview-label">HOLD</div>
+                <canvas id="holdPreview" width="80" height="80"></canvas>
+              </div>
             </div>
           </div>
 
@@ -73,6 +80,7 @@
         </div>
 
         <div class="touch-controls" aria-label="Touch controls">
+          <button id="holdButton" aria-label="Hold piece">HOLD</button>
           <button id="moveLeftButton" aria-label="Move left">←</button>
           <button id="rotateButton" aria-label="Rotate">↻</button>
           <button id="moveRightButton" aria-label="Move right">→</button>

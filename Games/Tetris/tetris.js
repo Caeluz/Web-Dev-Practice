@@ -5,6 +5,8 @@ const context = canvas.getContext("2d");
 // Block Preview
 const blockPreviewCanvas = document.getElementById("blockPreview");
 const blockPreviewContext = blockPreviewCanvas.getContext("2d");
+const holdPreviewCanvas = document.getElementById("holdPreview");
+const holdPreviewContext = holdPreviewCanvas.getContext("2d");
 context.scale(20, 20);
 
 let isPaused = false;
@@ -12,6 +14,8 @@ let isClearing = false;
 let clearingRows = [];
 let clearAnimationTimer = 0;
 let clearRowCount = 0;
+let heldPieceMatrix = null;
+let canHold = true;
 let nextBlockPreviewValue = null;
 let nextPieceMatrix = null;
 const pieces = "ILJOTSZ";
@@ -53,7 +57,10 @@ function restart() {
   clearingRows = [];
   clearAnimationTimer = 0;
   clearRowCount = 0;
+  heldPieceMatrix = null;
+  canHold = true;
   canvas.classList.remove("line-clear-effect");
+  drawHoldPreview();
   playerReset();
   arena.forEach((row) => row.fill(0));
   player.score = 0;
@@ -64,25 +71,22 @@ function restart() {
   update();
 }
 
-function drawBlockPreview() {
-  blockPreviewContext.fillStyle = "#000";
-  blockPreviewContext.fillRect(
-    0,
-    0,
-    blockPreviewCanvas.width,
-    blockPreviewCanvas.height
-  );
+function drawPreview(previewContext, previewCanvas, matrix) {
+  previewContext.fillStyle = "#000";
+  previewContext.fillRect(0, 0, previewCanvas.width, previewCanvas.height);
+
+  if (!matrix) return;
 
   const blockSize = Math.min(
-    blockPreviewCanvas.width / nextPieceMatrix[0].length,
-    blockPreviewCanvas.height / nextPieceMatrix.length
+    previewCanvas.width / matrix[0].length,
+    previewCanvas.height / matrix.length
   );
 
-  nextPieceMatrix.forEach((row, y) => {
+  matrix.forEach((row, y) => {
     row.forEach((value, x) => {
       if (value !== 0) {
-        blockPreviewContext.fillStyle = colors[value];
-        blockPreviewContext.fillRect(
+        previewContext.fillStyle = colors[value];
+        previewContext.fillRect(
           x * blockSize,
           y * blockSize,
           blockSize,
@@ -91,7 +95,40 @@ function drawBlockPreview() {
       }
     });
   });
+}
+
+function drawBlockPreview() {
+  drawPreview(blockPreviewContext, blockPreviewCanvas, nextPieceMatrix);
   nextBlockPreviewValue = nextPieceMatrix;
+}
+
+function drawHoldPreview() {
+  drawPreview(holdPreviewContext, holdPreviewCanvas, heldPieceMatrix);
+}
+
+function cloneMatrix(matrix) {
+  return matrix.map((row) => [...row]);
+}
+
+function holdPiece() {
+  if (isPaused || isClearing || !canHold) return;
+
+  if (heldPieceMatrix === null) {
+    heldPieceMatrix = cloneMatrix(player.matrix);
+    playerReset();
+  } else {
+    const currentPiece = cloneMatrix(player.matrix);
+    player.matrix = cloneMatrix(heldPieceMatrix);
+    heldPieceMatrix = currentPiece;
+
+    player.pos.y = 0;
+    player.pos.x =
+      ((arena[0].length / 2) | 0) -
+      ((player.matrix[0].length / 2) | 0);
+  }
+
+  canHold = false;
+  drawHoldPreview();
 }
 
 function arenaSweep() {
@@ -327,6 +364,7 @@ function playerDrop() {
     merge(arena, player);
     playerReset();
     arenaSweep();
+    canHold = true;
     updateScore();
   }
   dropCounter = 0;
@@ -358,6 +396,9 @@ function playerReset() {
     ((arena[0].length / 2) | 0) - ((player.matrix[0].length / 2) | 0);
   if (collide(arena, player)) {
     arena.forEach((row) => row.fill(0));
+    heldPieceMatrix = null;
+    canHold = true;
+    drawHoldPreview();
 
     if (player.score > player.highScore) {
       localStorage.setItem("highScore", player.score);
@@ -399,6 +440,7 @@ function playerMoveBottom() {
   merge(arena, player);
   playerReset();
   arenaSweep();
+  canHold = true;
   updateScore();
   dropCounter = 0;
 }
@@ -540,6 +582,7 @@ function addTouchControl(id, action, repeat = false) {
 addTouchControl("moveLeftButton", () => playerMove(-1), true);
 addTouchControl("moveRightButton", () => playerMove(1), true);
 addTouchControl("rotateButton", () => playerRotate(1));
+addTouchControl("holdButton", () => holdPiece());
 addTouchControl("dropButton", () => playerDrop(), true);
 addTouchControl("hardDropButton", () => playerMoveBottom());
 
@@ -575,6 +618,8 @@ document.addEventListener("keydown", (event) => {
     playerRotate(1);
   } else if (key === "Control") {
     playerRotate(-1);
+  } else if (key === "c") {
+    holdPiece();
   } else if (key === " ") {
     event.preventDefault();
     playerMoveBottom();

@@ -49,6 +49,12 @@ body {
   gap: 8px;
 }
 
+.preview-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .preview-panel {
   text-align: center;
   color: #00ff00;
@@ -153,7 +159,7 @@ canvas {
   grid-template-columns: repeat(3, 56px);
   grid-template-areas:
     "left rotate right"
-    ". drop hard";
+    "hold drop hard";
   justify-content: center;
   gap: 8px;
   max-width: 300px;
@@ -176,6 +182,7 @@ canvas {
 #moveLeftButton { grid-area: left; }
 #rotateButton { grid-area: rotate; }
 #moveRightButton { grid-area: right; }
+#holdButton { grid-area: hold; }
 #dropButton { grid-area: drop; }
 #hardDropButton { grid-area: hard; }
 
@@ -245,7 +252,8 @@ canvas {
     max-width: 70vw;
   }
 
-  #blockPreview {
+  #blockPreview,
+  #holdPreview {
     width: 56px;
     height: 56px;
   }
