@@ -8,6 +8,7 @@
 </head>
 <body>
     <main>
+        <button id="main-upgrades-button" type="button">Upgrade tree</button>
         <section id="hud" aria-label="Game status">
             <!-- <div id="timer-display" aria-live="polite">Time: 15s</div> -->
             <div id="score-display" aria-live="polite">Score: 0</div>
@@ -32,7 +33,20 @@
             </div>
             <div id="game-over-actions">
                 <button id="restart-button" type="button">Play again - Enter</button>
-                <button id="upgrades-button" type="button" disabled>Upgrades - Coming soon</button>
+                <button id="upgrades-button" type="button">Upgrade tree</button>
+            </div>
+        </div>
+    </section>
+    <section id="upgrade-overlay" hidden aria-labelledby="upgrade-title">
+        <div id="upgrade-screen">
+            <header id="upgrade-header">
+                <h1 id="upgrade-title">Upgrade Tree</h1>
+                <p>Points: <span id="banked-points">0</span></p>
+            </header>
+            <div id="upgrade-tree" aria-label="Radial upgrade tree"></div>
+            <div id="upgrade-actions">
+                <button id="back-to-typing" type="button">Back to typing</button>
+                <button id="reset-progress-button" type="button">Reset progress</button>
             </div>
         </div>
     </section>

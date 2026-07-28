@@ -8,6 +8,20 @@
     transform: translateX(-50%);
 }
 
+#main-upgrades-button {
+    background: #e2b714;
+    border: 0;
+    border-radius: 0;
+    color: #323437;
+    cursor: pointer;
+    font: inherit;
+    padding: 0.6rem 0.9rem;
+    position: fixed;
+    right: 1.5rem;
+    top: 1.5rem;
+    z-index: 2;
+}
+
 #timer-display,
 #score-display,
 #combo-display {
@@ -238,4 +252,242 @@ main {
     background: #646669;
     color: #323437;
     cursor: not-allowed;
+}
+
+#upgrade-overlay {
+    align-items: center;
+    background: #323437;
+    display: flex;
+    inset: 0;
+    justify-content: center;
+    position: fixed;
+    z-index: 11;
+}
+
+#upgrade-overlay[hidden] {
+    display: none;
+}
+
+#upgrade-screen {
+    height: min(90vh, 52rem);
+    max-width: 75rem;
+    padding: 1rem;
+    position: relative;
+    width: min(94vw, 75rem);
+}
+
+#upgrade-header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+#upgrade-header h1 {
+    color: #e2b714;
+    margin: 0;
+}
+
+#upgrade-header p {
+    color: #d1d0c5;
+    font-size: 1.25rem;
+}
+
+#upgrade-tree {
+    bottom: 4.5rem;
+    left: 50%;
+    position: absolute;
+    top: 5rem;
+    transform: translateX(-50%);
+    width: 100%;
+}
+
+.upgrade-core,
+.upgrade-branch {
+    position: absolute;
+}
+
+.upgrade-core {
+    align-items: center;
+    display: flex;
+    height: 4.5rem;
+    justify-content: center;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 8.5rem;
+    z-index: 1;
+}
+
+.upgrade-branch {
+    display: flex;
+    gap: 0.75rem;
+    z-index: 1;
+}
+
+.upgrade-branch::before {
+    background: #646669;
+    content: "";
+    position: absolute;
+    z-index: -1;
+}
+
+.branch-top,
+.branch-bottom {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.branch-top {
+    flex-direction: column-reverse;
+}
+
+.branch-bottom {
+    flex-direction: column;
+}
+
+.branch-top {
+    bottom: calc(50% + 3.5rem);
+    top: auto;
+}
+
+.branch-bottom {
+    bottom: auto;
+    top: calc(50% + 3.5rem);
+}
+
+.branch-top::before,
+.branch-bottom::before {
+    height: 100%;
+    left: 50%;
+    top: 0;
+    width: 2px;
+}
+
+.branch-left,
+.branch-right {
+    align-items: center;
+    flex-direction: row;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.branch-left {
+    flex-direction: row-reverse;
+    left: 0;
+}
+
+.branch-right {
+    right: 0;
+}
+
+.branch-left::before,
+.branch-right::before {
+    height: 2px;
+    left: 0;
+    top: 50%;
+    width: 100%;
+}
+
+.upgrade-node {
+    background: #252628;
+    border: 1px solid #646669;
+    border-radius: 0;
+    box-sizing: border-box;
+    color: #9fa0a2;
+    cursor: pointer;
+    font: inherit;
+    min-height: 4.5rem;
+    padding: 0.6rem;
+    text-align: center;
+    width: 8.5rem;
+}
+
+.upgrade-node strong,
+.upgrade-node small {
+    display: block;
+}
+
+.upgrade-node strong {
+    color: #d1d0c5;
+    margin-bottom: 0.25rem;
+}
+
+.upgrade-node small {
+    font-size: 0.75rem;
+    line-height: 1.25;
+}
+
+.upgrade-node.available {
+    border-color: #e2b714;
+}
+
+.upgrade-node.purchased {
+    background: #40542f;
+    border-color: #7bc043;
+    color: #d1d0c5;
+}
+
+.upgrade-node.purchased strong {
+    color: #e2b714;
+}
+
+.upgrade-node:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+#upgrade-actions {
+    bottom: 0;
+    display: flex;
+    gap: 0.75rem;
+    left: 50%;
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+#back-to-typing,
+#reset-progress-button {
+    background: #e2b714;
+    border: 0;
+    border-radius: 0;
+    color: #323437;
+    cursor: pointer;
+    font: inherit;
+    padding: 0.7rem 1rem;
+}
+
+#reset-progress-button {
+    background: #ca4754;
+    color: #d1d0c5;
+}
+
+@media (max-width: 55rem) {
+    #upgrade-screen {
+        overflow: auto;
+    }
+
+    #upgrade-tree {
+        bottom: auto;
+        height: auto;
+        min-height: 38rem;
+        position: relative;
+        top: auto;
+        transform: none;
+    }
+
+    .upgrade-core {
+        top: 50%;
+    }
+
+    .upgrade-branch {
+        gap: 0.4rem;
+    }
+
+    .upgrade-node {
+        min-height: 4.5rem;
+        padding: 0.4rem;
+        width: 6.5rem;
+    }
 }

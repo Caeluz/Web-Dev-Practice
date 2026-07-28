@@ -16,6 +16,7 @@ if (!typingArea) {
     throw new Error("Could not find the typing area");
 }
 
+const mainUpgradesButton = document.querySelector<HTMLButtonElement>("#main-upgrades-button");
 const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
 const scoreDisplay = document.querySelector<HTMLDivElement>("#score-display");
 const comboDisplay = document.querySelector<HTMLDivElement>("#combo-display");
@@ -27,8 +28,15 @@ const finalWordsDisplay = document.querySelector<HTMLSpanElement>("#final-words"
 const finalAccuracyDisplay = document.querySelector<HTMLSpanElement>("#final-accuracy");
 const finalComboDisplay = document.querySelector<HTMLSpanElement>("#final-combo");
 const restartButton = document.querySelector<HTMLButtonElement>("#restart-button");
+const upgradesButton = document.querySelector<HTMLButtonElement>("#upgrades-button");
+const upgradeOverlay = document.querySelector<HTMLElement>("#upgrade-overlay");
+const upgradeTree = document.querySelector<HTMLDivElement>("#upgrade-tree");
+const bankedPointsDisplay = document.querySelector<HTMLSpanElement>("#banked-points");
+const backToTypingButton = document.querySelector<HTMLButtonElement>("#back-to-typing");
+const resetProgressButton = document.querySelector<HTMLButtonElement>("#reset-progress-button");
 
 if (
+    !mainUpgradesButton ||
     !scoreDisplay ||
     !comboDisplay ||
     !timerProgress ||
@@ -38,7 +46,13 @@ if (
     !finalWordsDisplay ||
     !finalAccuracyDisplay ||
     !finalComboDisplay ||
-    !restartButton
+    !restartButton ||
+    !upgradesButton ||
+    !upgradeOverlay ||
+    !upgradeTree ||
+    !bankedPointsDisplay ||
+    !backToTypingButton ||
+    !resetProgressButton
 ) {
     throw new Error("Could not find the game status elements");
 }
@@ -48,6 +62,52 @@ const TOTAL_TIME = 5;
 const SENTENCE_LENGTH = 8;
 const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
+const UPGRADE_STORAGE_KEY = "incremental-typing-game-upgrades";
+
+type UpgradeId =
+    | "combo-spark"
+    | "combo-guard"
+    | "combo-surge"
+    | "extra-breath"
+    | "time-reserve"
+    | "sentence-time"
+    | "word-value"
+    | "sentence-value"
+    | "double-dip"
+    | "reroll-token"
+    | "second-wind"
+    | "lucky-word";
+
+type UpgradeGroup = "top" | "right" | "bottom" | "left";
+
+interface UpgradeNodeDefinition {
+    id: UpgradeId;
+    group: UpgradeGroup;
+    name: string;
+    effect: string;
+    cost: number;
+    requires?: UpgradeId;
+}
+
+interface UpgradeSaveData {
+    bankedPoints: number;
+    purchased: UpgradeId[];
+}
+
+const UPGRADE_NODES: UpgradeNodeDefinition[] = [
+    { id: "combo-spark", group: "top", name: "Combo Spark", effect: "Combo tier every 4 words", cost: 25 },
+    { id: "combo-guard", group: "top", name: "Combo Guard", effect: "First mistake keeps combo", cost: 75, requires: "combo-spark" },
+    { id: "combo-surge", group: "top", name: "Combo Surge", effect: "+2 points per combo tier", cost: 150, requires: "combo-guard" },
+    { id: "extra-breath", group: "right", name: "Extra Breath", effect: "+1 starting second", cost: 25 },
+    { id: "time-reserve", group: "right", name: "Time Reserve", effect: "+1 starting second", cost: 75, requires: "extra-breath" },
+    { id: "sentence-time", group: "right", name: "Sentence Time", effect: "+1 second per sentence", cost: 150, requires: "time-reserve" },
+    { id: "word-value", group: "bottom", name: "Word Value", effect: "+1 base word point", cost: 25 },
+    { id: "sentence-value", group: "bottom", name: "Sentence Value", effect: "+5 sentence points", cost: 75, requires: "word-value" },
+    { id: "double-dip", group: "bottom", name: "Double Dip", effect: "+1 sentence point", cost: 150, requires: "sentence-value" },
+    { id: "reroll-token", group: "left", name: "Reroll Token", effect: "Press X to reroll once", cost: 25 },
+    { id: "second-wind", group: "left", name: "Second Wind", effect: "+3 seconds at zero", cost: 75, requires: "reroll-token" },
+    { id: "lucky-word", group: "left", name: "Lucky Word", effect: "10% chance to double", cost: 150, requires: "second-wind" }
+];
 
 let timeRemaining = TOTAL_TIME;
 let score = 0;
@@ -56,6 +116,13 @@ let gameStarted = false;
 let gameOver = false;
 let timerEndTime = 0;
 let startupTimeoutId: number | undefined;
+let totalTime = TOTAL_TIME;
+let bankedPoints = 0;
+let purchasedUpgrades: UpgradeId[] = [];
+let runBanked = false;
+let mistakeShieldUsed = false;
+let secondWindUsed = false;
+let rerollUsed = false;
 
 let targetText = "";
 let targetCharacters: string[] = [];
@@ -70,6 +137,146 @@ let typedCharacters = 0;
 let correctCharacters = 0;
 let highestCombo = 0;
 
+const hasUpgrade = (id: UpgradeId): boolean => purchasedUpgrades.includes(id);
+
+const loadUpgradeState = (): void => {
+    try {
+        const saved = localStorage.getItem(UPGRADE_STORAGE_KEY);
+
+        if (!saved) {
+            return;
+        }
+
+        const data = JSON.parse(saved) as Partial<UpgradeSaveData>;
+        bankedPoints = typeof data.bankedPoints === "number" ? data.bankedPoints : 0;
+        purchasedUpgrades = Array.isArray(data.purchased)
+            ? data.purchased.filter((id): id is UpgradeId =>
+                UPGRADE_NODES.some((upgrade) => upgrade.id === id)
+            )
+            : [];
+    } catch {
+        bankedPoints = 0;
+        purchasedUpgrades = [];
+    }
+};
+
+const saveUpgradeState = (): void => {
+    const data: UpgradeSaveData = { bankedPoints, purchased: purchasedUpgrades };
+    localStorage.setItem(UPGRADE_STORAGE_KEY, JSON.stringify(data));
+};
+
+const getStartingTime = (): number => {
+    return TOTAL_TIME
+        + (hasUpgrade("extra-breath") ? 1 : 0)
+        + (hasUpgrade("time-reserve") ? 1 : 0);
+};
+
+const getComboThreshold = (): number => hasUpgrade("combo-spark") ? 4 : 5;
+
+const getBaseWordPoints = (): number => BASE_WORD_POINTS + (hasUpgrade("word-value") ? 1 : 0);
+
+const getSentenceBonus = (): number => SENTENCE_BONUS
+    + (hasUpgrade("sentence-value") ? 5 : 0)
+    + (hasUpgrade("double-dip") ? 1 : 0);
+
+const updateBankedPointsDisplay = (): void => {
+    bankedPointsDisplay.textContent = `${bankedPoints}`;
+};
+
+const isPurchased = (id: UpgradeId): boolean => purchasedUpgrades.includes(id);
+
+const renderUpgradeTree = (): void => {
+    upgradeTree.replaceChildren();
+
+    const core = document.createElement("div");
+    core.className = "upgrade-core upgrade-node purchased";
+    core.textContent = "CORE";
+    upgradeTree.append(core);
+
+    const groups: UpgradeGroup[] = ["top", "right", "bottom", "left"];
+
+    groups.forEach((group) => {
+        const branch = document.createElement("div");
+        branch.className = `upgrade-branch branch-${group}`;
+
+        UPGRADE_NODES.filter((upgrade) => upgrade.group === group).forEach((upgrade) => {
+            const node = document.createElement("button");
+            const purchased = isPurchased(upgrade.id);
+            const prerequisiteMet = !upgrade.requires || isPurchased(upgrade.requires);
+            const canBuy = !purchased && prerequisiteMet && bankedPoints >= upgrade.cost;
+
+            node.className = "upgrade-node";
+            node.classList.add(purchased ? "purchased" : canBuy ? "available" : "locked");
+            node.disabled = purchased || !prerequisiteMet || bankedPoints < upgrade.cost;
+            node.type = "button";
+            node.dataset.upgradeId = upgrade.id;
+            node.innerHTML = `<strong>${upgrade.name}</strong><small>${upgrade.effect}</small><small>${purchased ? "Purchased" : `${upgrade.cost} points`}</small>`;
+            node.addEventListener("click", () => purchaseUpgrade(upgrade.id));
+            branch.append(node);
+        });
+
+        upgradeTree.append(branch);
+    });
+
+    updateBankedPointsDisplay();
+};
+
+const purchaseUpgrade = (id: UpgradeId): void => {
+    const upgrade = UPGRADE_NODES.find((item) => item.id === id);
+
+    if (!upgrade || isPurchased(id) || bankedPoints < upgrade.cost) {
+        return;
+    }
+
+    if (upgrade.requires && !isPurchased(upgrade.requires)) {
+        return;
+    }
+
+    bankedPoints -= upgrade.cost;
+    purchasedUpgrades.push(id);
+    saveUpgradeState();
+    renderUpgradeTree();
+};
+
+const showUpgradeTree = (): void => {
+    if (gameStarted && !gameOver) {
+        statusDisplay.textContent = "Finish this run to open upgrades.";
+        return;
+    }
+
+    input.disabled = true;
+    input.blur();
+    gameOverOverlay.hidden = true;
+    upgradeOverlay.hidden = false;
+    renderUpgradeTree();
+    upgradeTree.querySelector<HTMLButtonElement>(".available")?.focus();
+};
+
+const hideUpgradeTree = (): void => {
+    upgradeOverlay.hidden = true;
+
+    if (gameOver) {
+        gameOverOverlay.hidden = false;
+        upgradesButton.focus();
+    } else {
+        gameOverOverlay.hidden = true;
+        scheduleInputReady();
+    }
+};
+
+const resetProgress = (): void => {
+    if (!window.confirm("Reset all banked points and purchased upgrades?")) {
+        return;
+    }
+
+    bankedPoints = 0;
+    purchasedUpgrades = [];
+    saveUpgradeState();
+    renderUpgradeTree();
+};
+
+loadUpgradeState();
+
 const updateScoreDisplay = (): void => {
     scoreDisplay.textContent = `Score: ${score}`;
 };
@@ -78,7 +285,7 @@ const updateComboDisplay = (): void => {
     comboDisplay.textContent = `Combo: ${combo}`;
 };
 
-const updateTimerDisplay = (percentage = (timeRemaining / TOTAL_TIME) * 100): void => {
+const updateTimerDisplay = (percentage = (timeRemaining / totalTime) * 100): void => {
 
     if (timerDisplay) {
         timerDisplay.textContent = `Time: ${timeRemaining}s`;
@@ -101,6 +308,12 @@ const endGame = (): void => {
     input.blur();
     statusDisplay.textContent = `Time's up! Final score: ${score}`;
 
+    if (!runBanked) {
+        bankedPoints += score;
+        runBanked = true;
+        saveUpgradeState();
+    }
+
     const accuracy = typedCharacters > 0
         ? Math.round((correctCharacters / typedCharacters) * 100)
         : 0;
@@ -109,6 +322,7 @@ const endGame = (): void => {
     finalWordsDisplay.textContent = `${wordsCompletedThisRun}`;
     finalAccuracyDisplay.textContent = `${accuracy}%`;
     finalComboDisplay.textContent = `${highestCombo}`;
+    upgradesButton.disabled = false;
     gameOverOverlay.hidden = false;
     // restartButton.focus();
 };
@@ -120,15 +334,25 @@ const startTimer = (): void => {
 
     gameStarted = true;
     statusDisplay.textContent = "Typing...";
-    timerEndTime = performance.now() + TOTAL_TIME * 1000;
+    timerEndTime = performance.now() + totalTime * 1000;
 
     const animateTimer = (currentTime: number): void => {
         const millisecondsRemaining = Math.max(0, timerEndTime - currentTime);
-        const percentage = (millisecondsRemaining / (TOTAL_TIME * 1000)) * 100;
+        const percentage = Math.min(100, (millisecondsRemaining / (totalTime * 1000)) * 100);
         timeRemaining = Math.ceil(millisecondsRemaining / 1000);
         updateTimerDisplay(percentage);
 
         if (millisecondsRemaining <= 0) {
+            if (hasUpgrade("second-wind") && !secondWindUsed) {
+                secondWindUsed = true;
+                totalTime += 3;
+                timeRemaining = 3;
+                timerEndTime = currentTime + 3000;
+                statusDisplay.textContent = "Second Wind! +3 seconds";
+                timerAnimationId = window.requestAnimationFrame(animateTimer);
+                return;
+            }
+
             endGame();
             return;
         }
@@ -159,11 +383,13 @@ const resetRun = (): void => {
         window.cancelAnimationFrame(timerAnimationId);
     }
 
-    timeRemaining = TOTAL_TIME;
+    totalTime = getStartingTime();
+    timeRemaining = totalTime;
     score = 0;
     gameStarted = false;
     gameOver = false;
     timerEndTime = 0;
+    runBanked = false;
     awardedWordCount = 0;
     committedLength = 0;
     combo = 0;
@@ -172,8 +398,13 @@ const resetRun = (): void => {
     typedCharacters = 0;
     correctCharacters = 0;
     highestCombo = 0;
+    mistakeShieldUsed = false;
+    secondWindUsed = false;
+    rerollUsed = false;
     input.value = "";
     gameOverOverlay.hidden = true;
+    upgradeOverlay.hidden = true;
+    upgradesButton.disabled = true;
     updateTimerDisplay();
     updateScoreDisplay();
     updateComboDisplay();
@@ -348,7 +579,14 @@ const awardCompletedWords = (typedText: string): void => {
             combo += 1;
             wordsCompletedThisRun += 1;
             highestCombo = Math.max(highestCombo, combo);
-            const points = BASE_WORD_POINTS + Math.floor(combo / 5);
+            const comboTierPoints = hasUpgrade("combo-surge") ? 2 : 1;
+            let points = getBaseWordPoints()
+                + Math.floor(combo / getComboThreshold()) * comboTierPoints;
+
+            if (hasUpgrade("lucky-word") && Math.random() < 0.1) {
+                points *= 2;
+            }
+
             score += points;
             awardedWordCount = index + 1;
             committedLength = wordEnd;
@@ -369,8 +607,25 @@ updateTimerDisplay();
 updateScoreDisplay();
 updateComboDisplay();
 renderSentence();
+totalTime = getStartingTime();
+timeRemaining = totalTime;
+updateTimerDisplay();
 
 input.addEventListener("keydown", (event) => {
+    if (
+        !gameOver &&
+        event.key.toLowerCase() === "x" &&
+        hasUpgrade("reroll-token") &&
+        !rerollUsed
+    ) {
+        event.preventDefault();
+        rerollUsed = true;
+        input.value = "";
+        renderSentence();
+        statusDisplay.textContent = "Reroll used";
+        return;
+    }
+
     if (
         event.key === "Backspace" &&
         input.selectionStart !== null &&
@@ -413,7 +668,11 @@ input.addEventListener("input", () => {
         console.log("Correct so far");
     } else {
         if (!lastInputWasIncorrect) {
-            combo = 0;
+            if (hasUpgrade("combo-guard") && !mistakeShieldUsed) {
+                mistakeShieldUsed = true;
+            } else {
+                combo = 0;
+            }
             updateComboDisplay();
         }
         lastInputWasIncorrect = true;
@@ -421,18 +680,59 @@ input.addEventListener("input", () => {
     }
 
     if (typedText === targetText) {
-        score += SENTENCE_BONUS;
+        const sentenceBonus = getSentenceBonus();
+        score += sentenceBonus;
         updateScoreDisplay();
-        showRewardPopup(`+${SENTENCE_BONUS}`, true, targetText.length - 1);
-        statusDisplay.textContent = `Sentence complete! +${SENTENCE_BONUS}`;
+        showRewardPopup(`+${sentenceBonus}`, true, targetText.length - 1);
+        statusDisplay.textContent = `Sentence complete! +${sentenceBonus}`;
+
+        if (hasUpgrade("sentence-time") && gameStarted) {
+            totalTime += 1;
+            timerEndTime += 1000;
+        }
+
         input.value = "";
         renderSentence();
     }
 });
 
 restartButton.addEventListener("click", resetRun);
+upgradesButton.addEventListener("click", showUpgradeTree);
+backToTypingButton.addEventListener("click", hideUpgradeTree);
+resetProgressButton.addEventListener("click", resetProgress);
+mainUpgradesButton.addEventListener("click", showUpgradeTree);
+
+const focusUpgradeDirection = (direction: UpgradeGroup): void => {
+    upgradeTree
+        .querySelector<HTMLButtonElement>(`.branch-${direction} .upgrade-node:not(:disabled)`)
+        ?.focus();
+};
 
 document.addEventListener("keydown", (event) => {
+    if (!upgradeOverlay.hidden) {
+        const directionKeys: Partial<Record<string, UpgradeGroup>> = {
+            ArrowUp: "top",
+            ArrowRight: "right",
+            ArrowDown: "bottom",
+            ArrowLeft: "left"
+        };
+
+        if (event.key === "Escape") {
+            event.preventDefault();
+            hideUpgradeTree();
+            return;
+        }
+
+        const direction = directionKeys[event.key];
+
+        if (direction) {
+            event.preventDefault();
+            focusUpgradeDirection(direction);
+        }
+
+        return;
+    }
+
     if (!gameOver) {
         return;
     }
