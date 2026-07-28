@@ -14,8 +14,8 @@ let clearAnimationTimer = 0;
 let clearRowCount = 0;
 let nextBlockPreviewValue = null;
 let nextPieceMatrix = null;
-// const pieces = "ILJOTSZ";
-const pieces = 'I'; // Testing purposes
+const pieces = "ILJOTSZ";
+// const pieces = 'I'; // Testing purposes
 
 // Sounds
 const pointsUpSound = document.getElementById("sound-points-up");
@@ -449,6 +449,11 @@ function updateScore() {
     "High Score: " + player.highScore;
   document.getElementById("level").textContent = "Level: " + player.level;
 
+  const progress = player.score % 100;
+  document.getElementById("level-progress").value = progress;
+  document.getElementById("level-progress-label").textContent =
+    `${progress} / 100 to next level`;
+
   // drawBlockPreview();
 }
 
@@ -483,20 +488,63 @@ playButton.addEventListener("click", play);
 pauseButton.addEventListener("click", pause);
 restartButton.addEventListener("click", restart);
 
-function addTouchControl(id, action) {
-  document.getElementById(id).addEventListener("pointerdown", (event) => {
+const heldControls = new Map();
+
+function startHeldControl(id, action) {
+  if (heldControls.has(id)) return;
+
+  action();
+  const intervalId = setInterval(() => {
+    if (!isPaused && !isClearing) {
+      action();
+    }
+  }, 200);
+
+  heldControls.set(id, intervalId);
+}
+
+function stopHeldControl(id) {
+  const intervalId = heldControls.get(id);
+  if (intervalId === undefined) return;
+
+  clearInterval(intervalId);
+  heldControls.delete(id);
+}
+
+function stopAllHeldControls() {
+  heldControls.forEach((intervalId) => clearInterval(intervalId));
+  heldControls.clear();
+}
+
+function addTouchControl(id, action, repeat = false) {
+  const button = document.getElementById(id);
+
+  button.addEventListener("pointerdown", (event) => {
     event.preventDefault();
-    if (!isPaused) {
+    button.setPointerCapture(event.pointerId);
+
+    if (repeat) {
+      startHeldControl(`pointer:${id}`, action);
+    } else if (!isPaused && !isClearing) {
       action();
     }
   });
+
+  ["pointerup", "pointercancel", "pointerleave"].forEach((eventName) => {
+    button.addEventListener(eventName, () => {
+      stopHeldControl(`pointer:${id}`);
+    });
+  });
 }
 
-addTouchControl("moveLeftButton", () => playerMove(-1));
-addTouchControl("moveRightButton", () => playerMove(1));
+addTouchControl("moveLeftButton", () => playerMove(-1), true);
+addTouchControl("moveRightButton", () => playerMove(1), true);
 addTouchControl("rotateButton", () => playerRotate(1));
-addTouchControl("dropButton", () => playerDrop());
+addTouchControl("dropButton", () => playerDrop(), true);
 addTouchControl("hardDropButton", () => playerMoveBottom());
+
+window.addEventListener("blur", stopAllHeldControls);
+document.addEventListener("visibilitychange", stopAllHeldControls);
 
 document.addEventListener("keydown", (event) => {
   const gameKeys = [
@@ -515,38 +563,33 @@ document.addEventListener("keydown", (event) => {
     return; // If paused, do not process key events
   }
 
-  if (event.key === "a" || event.key === "A" || event.key === "ArrowLeft") {
-    playerMove(-1);
-  } else if (
-    event.key === "d" ||
-    event.key === "D" ||
-    event.key === "ArrowRight"
-  ) {
-    playerMove(1);
-  } else if (
-    event.key === "s" ||
-    event.key === "S" ||
-    event.key === "ArrowDown"
-  ) {
-    playerDrop();
-  } else if (
-    event.key === "w" ||
-    event.key === "W" ||
-    event.key === "ArrowUp"
-  ) {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+
+  if (key === "a" || key === "ArrowLeft") {
+    startHeldControl(`key:${key}`, () => playerMove(-1));
+  } else if (key === "d" || key === "ArrowRight") {
+    startHeldControl(`key:${key}`, () => playerMove(1));
+  } else if (key === "s" || key === "ArrowDown") {
+    startHeldControl(`key:${key}`, () => playerDrop());
+  } else if (key === "w" || key === "ArrowUp") {
     playerRotate(1);
-  } else if (event.key === "Control") {
+  } else if (key === "Control") {
     playerRotate(-1);
-  } else if (event.key === " ") {
+  } else if (key === " ") {
     event.preventDefault();
     playerMoveBottom();
-  } else if (event.key === "q" || event.key === "Q") {
+  } else if (key === "q") {
     play();
-  } else if (event.key === "t" || event.key === "T") {
+  } else if (key === "t") {
     pause();
-  } else if (event.key === "r" || event.key === "R") {
+  } else if (key === "r") {
     restart();
   }
+});
+
+document.addEventListener("keyup", (event) => {
+  const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+  stopHeldControl(`key:${key}`);
 });
 
 const muteButton = document.getElementById("muteButton");
