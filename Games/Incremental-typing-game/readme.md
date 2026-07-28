@@ -16,7 +16,7 @@ Start timer
 → User types sentence
 → Sentence completed
 → Add points (every sentence completed, and words completed)
-→ Generate new sentence
+→ Generate new sentence (if upgraded, for now 1 sentence or timer lost)
 → Reset input
 → Continue until timer reaches zero
 

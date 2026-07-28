@@ -10,18 +10,26 @@ if (!wordDisplay) {
     throw new Error("Could not find the word display");
 }
 
-// const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
+const typingArea = document.querySelector<HTMLElement>("#typing-area");
+
+if (!typingArea) {
+    throw new Error("Could not find the typing area");
+}
+
+const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
 const scoreDisplay = document.querySelector<HTMLDivElement>("#score-display");
+const comboDisplay = document.querySelector<HTMLDivElement>("#combo-display");
 const timerProgress = document.querySelector<HTMLDivElement>("#timer-progress");
 const statusDisplay = document.querySelector<HTMLDivElement>("#status-display");
 
-if (!scoreDisplay || !timerProgress || !statusDisplay) {
+if (!scoreDisplay || !comboDisplay || !timerProgress || !statusDisplay) {
     throw new Error("Could not find the game status elements");
 }
 
 const START_DELAY = 500;
 const TOTAL_TIME = 15;
-const WORD_POINTS = 1;
+const SENTENCE_LENGTH = 8;
+const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
 
 let timeRemaining = TOTAL_TIME;
@@ -35,15 +43,23 @@ let targetCharacters: string[] = [];
 let characterElements: NodeListOf<HTMLSpanElement> = wordDisplay.querySelectorAll("span");
 let sentenceWords: string[] = [];
 let awardedWordCount = 0;
+let combo = 0;
+let lastInputWasIncorrect = false;
 
 const updateScoreDisplay = (): void => {
     scoreDisplay.textContent = `Score: ${score}`;
 };
 
+const updateComboDisplay = (): void => {
+    comboDisplay.textContent = `Combo: ${combo}`;
+};
+
 const updateTimerDisplay = (): void => {
     const percentage = (timeRemaining / TOTAL_TIME) * 100;
 
-    // timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    if (timerDisplay) {
+        timerDisplay.textContent = `Time: ${timeRemaining}s`;
+    }
     timerProgress.style.width = `${percentage}%`;
     timerProgress.classList.toggle("warning", percentage <= 50 && percentage > 25);
     timerProgress.classList.toggle("danger", percentage <= 25);
@@ -136,8 +152,75 @@ const getRandomizeSentence = (words: string[], length: number): string[] => {
     return sentence
 }
 
+const showRewardPopup = (
+    text: string,
+    isSentenceReward = false,
+    anchorIndex?: number
+): void => {
+    const popup = document.createElement("div");
+    popup.className = isSentenceReward
+        ? "reward-popup sentence-reward"
+        : "reward-popup";
+    popup.textContent = text;
+    typingArea.append(popup);
+
+    const anchor = anchorIndex === undefined
+        ? undefined
+        : characterElements[anchorIndex];
+    const areaRect = typingArea.getBoundingClientRect();
+
+    if (anchor) {
+        const anchorRect = anchor.getBoundingClientRect();
+        const rightLeft = anchorRect.right - areaRect.left + 10;
+        const leftLeft = anchorRect.left - areaRect.left - popup.offsetWidth - 10;
+        const fitsOnRight = rightLeft + popup.offsetWidth <= areaRect.width - 8;
+        const left = fitsOnRight ? rightLeft : Math.max(8, leftLeft);
+        const popupFitsAbove = anchorRect.top >= popup.offsetHeight + 12;
+        const top = popupFitsAbove
+            ? anchorRect.top - areaRect.top - popup.offsetHeight - 8
+            : anchorRect.bottom - areaRect.top + 8;
+
+        popup.style.left = `${left}px`;
+        popup.style.top = `${top}px`;
+    } else {
+        popup.style.left = `${areaRect.width / 2 - popup.offsetWidth / 2}px`;
+        popup.style.top = `${areaRect.height / 2 - popup.offsetHeight / 2}px`;
+    }
+
+    window.setTimeout(() => {
+        popup.remove();
+    }, 700);
+};
+
+const pulseCompletedWord = (wordIndex: number): void => {
+    const word = sentenceWords[wordIndex];
+
+
+    if (!word) {
+        return;
+    }
+
+    const wordStart = sentenceWords
+        .slice(0, wordIndex)
+        .join(" ")
+        .length + (wordIndex > 0 ? 1 : 0);
+    const wordEnd = wordStart + word.length;
+
+    for (let index = wordStart; index < wordEnd; index++) {
+        const character = characterElements[index];
+
+        if (!character) {
+            continue;
+        }
+
+        character.classList.remove("word-pulse");
+        void character.offsetWidth;
+        character.classList.add("word-pulse");
+    }
+};
+
 const renderSentence = (): void => {
-    sentenceWords = getRandomizeSentence(WORDS, 20);
+    sentenceWords = getRandomizeSentence(WORDS, SENTENCE_LENGTH);
     targetText = sentenceWords.join(" ");
     targetCharacters = Array.from(targetText);
     awardedWordCount = 0;
@@ -180,18 +263,26 @@ const awardCompletedWords = (typedText: string): void => {
         const completedWord = typedText.slice(0, wordEnd) === targetText.slice(0, wordEnd);
 
         if (typedText.length >= wordEnd && completedWord) {
-            score += WORD_POINTS;
+            combo += 1;
+            const points = BASE_WORD_POINTS + Math.floor(combo / 5);
+            score += points;
             awardedWordCount = index + 1;
+            // Change this for the reward-popup location
+            const wordAnchorIndex = wordEnd - 2 - (index < sentenceWords.length - 1 ? 1 : 0);
+            showRewardPopup(`+${points}`, false, wordAnchorIndex);
+            pulseCompletedWord(index);
         } else {
             break;
         }
     }
 
     updateScoreDisplay();
+    updateComboDisplay();
 };
 
 updateTimerDisplay();
 updateScoreDisplay();
+updateComboDisplay();
 renderSentence();
 
 input.addEventListener("input", () => {
@@ -205,15 +296,24 @@ input.addEventListener("input", () => {
     updateCharacterDisplay(typedText);
     awardCompletedWords(typedText);
 
-    if (targetText.startsWith(typedText)) {
+    const isCorrectPrefix = targetText.startsWith(typedText);
+
+    if (isCorrectPrefix) {
+        lastInputWasIncorrect = false;
         console.log("Correct so far");
     } else {
+        if (!lastInputWasIncorrect) {
+            combo = 0;
+            updateComboDisplay();
+        }
+        lastInputWasIncorrect = true;
         console.log("Mistake");
     }
 
     if (typedText === targetText) {
         score += SENTENCE_BONUS;
         updateScoreDisplay();
+        showRewardPopup(`+${SENTENCE_BONUS}`, true, targetText.length - 1);
         statusDisplay.textContent = `Sentence complete! +${SENTENCE_BONUS}`;
         input.value = "";
         renderSentence();

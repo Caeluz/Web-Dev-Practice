@@ -9,8 +9,13 @@
 }
 
 #timer-display,
-#score-display {
+#score-display,
+#combo-display {
     color: #d1d0c5;
+}
+
+#hud {
+    gap: 2rem;
 }
 
 #timer-display {
@@ -65,6 +70,7 @@
 
 #word-display span {
     color: #646669;
+    display: inline-block;
 }
 
 #word-display span.correct {
@@ -96,9 +102,67 @@ main {
 }
 
 #typing-area {
+    position: relative;
     padding: 0 1rem;
     text-align: center;
     width: 100%;
+}
+
+.reward-popup {
+    color: #e2b714;
+    font-size: 1rem;
+    font-weight: bold;
+    left: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    transform: none;
+    animation: reward-pop 700ms ease-out forwards;
+}
+
+.reward-popup.sentence-reward {
+    color: #7bc043;
+    font-size: 1.35rem;
+    top: 0;
+}
+
+#word-display span.word-pulse {
+    animation: word-pulse 250ms ease-out;
+}
+
+@keyframes reward-pop {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateY(-1rem) scale(1.05);
+    }
+}
+
+@keyframes word-pulse {
+    0% {
+        transform: scale(1);
+        text-shadow: none;
+    }
+
+    35% {
+        /* color: #e2b714; */
+        transform: scale(1.2);
+        /* text-shadow: 0 0 18px #e2b714; */
+    }
+
+    65% {
+        transform: scale(1.08);
+    }
+
+    100% {
+        color: inherit;
+        transform: scale(1);
+        text-shadow: none;
+    }
 }
 
 #typing-input {
