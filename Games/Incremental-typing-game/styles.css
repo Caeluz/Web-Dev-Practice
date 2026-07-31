@@ -102,6 +102,13 @@
     margin-top: 1.5rem;
 }
 
+#caps-lock-warning {
+    color: #ca4754;
+    font-size: 0.85rem;
+    font-weight: bold;
+    margin-top: 0.75rem;
+}
+
 #word-display span {
     color: #646669;
     display: inline-block;
@@ -326,6 +333,46 @@ main {
     font-size: 1.25rem;
 }
 
+#difficulty-panel {
+    align-items: center;
+    background: #2c2e31;
+    border: 1px solid #46484b;
+    display: flex;
+    gap: 1rem;
+    justify-content: space-between;
+    margin: 1rem auto 0;
+    max-width: 70rem;
+    padding: 0.75rem 1rem;
+}
+
+#difficulty-panel h2 {
+    color: #e2b714;
+    font-size: 1rem;
+    margin: 0 0 0.25rem;
+}
+
+#difficulty-panel p {
+    color: #9fa0a2;
+    font-size: 0.85rem;
+    margin: 0;
+}
+
+#difficulty-panel label {
+    color: #d1d0c5;
+    display: flex;
+    flex-direction: column;
+    font-size: 0.75rem;
+    gap: 0.25rem;
+}
+
+#difficulty-select {
+    background: #252628;
+    border: 1px solid #e2b714;
+    color: #d1d0c5;
+    font: inherit;
+    padding: 0.45rem 0.6rem;
+}
+
 #upgrade-viewport {
     bottom: 4.5rem;
     left: 0;
@@ -333,7 +380,7 @@ main {
     padding: 0.5rem;
     position: absolute;
     right: 0;
-    top: 5rem;
+    top: 10rem;
 }
 
 #upgrade-tree {
@@ -470,12 +517,17 @@ main {
         bottom: 4.5rem;
         left: 1rem;
         right: 1rem;
-        top: 5rem;
+        top: 10rem;
         width: auto;
     }
 
     #upgrade-tree {
         grid-template-columns: 1fr;
+    }
+
+    #difficulty-panel {
+        align-items: stretch;
+        flex-direction: column;
     }
 
     .upgrade-branch-nodes {

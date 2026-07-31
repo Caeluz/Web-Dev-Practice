@@ -21,6 +21,7 @@
         <section id="typing-area">
             <div id="word-display" aria-live="polite">Testing</div>
             <div id="status-display" aria-live="polite">Get ready...</div>
+            <div id="caps-lock-warning" role="status" aria-live="polite" hidden>Caps Lock is on. Your typing may be marked incorrect.</div>
         </section>
     </main>
     <section id="game-over-overlay" hidden aria-labelledby="game-over-title">
@@ -44,6 +45,20 @@
                 <h1 id="upgrade-title">Upgrade Tree</h1>
                 <p>Points: <span id="banked-points">0</span></p>
             </header>
+            <section id="difficulty-panel" aria-labelledby="difficulty-title">
+                <div>
+                    <h2 id="difficulty-title">Difficulty</h2>
+                    <p id="difficulty-description">Lowercase words with no punctuation.</p>
+                </div>
+                <label for="difficulty-select">Mode
+                    <select id="difficulty-select">
+                        <option value="warm-up">Warm-up · 1x points</option>
+                        <option value="standard">Standard · 1.25x points</option>
+                        <option value="precise">Precise · 1.5x points</option>
+                        <option value="expert">Expert · 2x points</option>
+                    </select>
+                </label>
+            </section>
             <p id="upgrade-hint">Follow each branch from left to right</p>
             <div id="upgrade-viewport">
                 <div id="upgrade-tree" aria-label="Upgrade paths"></div>

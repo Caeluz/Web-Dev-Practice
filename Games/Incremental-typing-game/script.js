@@ -18,6 +18,7 @@ const scoreDisplay = document.querySelector("#score-display");
 const comboDisplay = document.querySelector("#combo-display");
 const timerProgress = document.querySelector("#timer-progress");
 const statusDisplay = document.querySelector("#status-display");
+const capsLockWarning = document.querySelector("#caps-lock-warning");
 const gameOverOverlay = document.querySelector("#game-over-overlay");
 const finalScoreDisplay = document.querySelector("#final-score");
 const finalWordsDisplay = document.querySelector("#final-words");
@@ -30,12 +31,15 @@ const upgradeTree = document.querySelector("#upgrade-tree");
 const bankedPointsDisplay = document.querySelector("#banked-points");
 const backToTypingButton = document.querySelector("#back-to-typing");
 const resetProgressButton = document.querySelector("#reset-progress-button");
+const difficultySelect = document.querySelector("#difficulty-select");
+const difficultyDescription = document.querySelector("#difficulty-description");
 if (!mainUpgradesButton ||
     !focusModeToggle ||
     !scoreDisplay ||
     !comboDisplay ||
     !timerProgress ||
     !statusDisplay ||
+    !capsLockWarning ||
     !gameOverOverlay ||
     !finalScoreDisplay ||
     !finalWordsDisplay ||
@@ -47,7 +51,9 @@ if (!mainUpgradesButton ||
     !upgradeTree ||
     !bankedPointsDisplay ||
     !backToTypingButton ||
-    !resetProgressButton) {
+    !resetProgressButton ||
+    !difficultySelect ||
+    !difficultyDescription) {
     throw new Error("Could not find the game status elements");
 }
 const START_DELAY = 500;
@@ -57,6 +63,13 @@ const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
 const UPGRADE_STORAGE_KEY = "incremental-typing-game-upgrades";
 const FOCUS_MODE_STORAGE_KEY = "incremental-typing-game-focus-mode";
+const DIFFICULTY_STORAGE_KEY = "incremental-typing-game-difficulty";
+const DIFFICULTIES = {
+    "warm-up": { name: "Warm-up", description: "Lowercase words with no punctuation.", multiplier: 1 },
+    standard: { name: "Standard", description: "The first word is capitalized.", multiplier: 1.25 },
+    precise: { name: "Precise", description: "Capitalization plus punctuation at the end.", multiplier: 1.5 },
+    expert: { name: "Expert", description: "Capitalization, punctuation, and random commas or quotes.", multiplier: 2 }
+};
 const UPGRADE_NODES = [
     { id: "combo-spark", group: "top", name: "Combo Spark", effect: "Combo tier every 4 words", cost: 25 },
     { id: "combo-guard", group: "top", name: "Combo Guard", effect: "First mistake keeps combo", cost: 75, requires: "combo-spark" },
@@ -87,14 +100,15 @@ let runBanked = false;
 let mistakeShieldUsed = false;
 let secondWindUsed = false;
 let focusModeEnabled = false;
+let difficultyId = "warm-up";
 let targetText = "";
 let targetCharacters = [];
 let characterElements = wordDisplay.querySelectorAll("span");
 let sentenceWords = [];
-let awardedWordCount = 0;
+let awardedWordIndices = new Set();
+let incorrectWordIndices = new Set();
 let committedLength = 0;
 let combo = 0;
-let lastInputWasIncorrect = false;
 let wordsCompletedThisRun = 0;
 let typedCharacters = 0;
 let correctCharacters = 0;
@@ -112,6 +126,23 @@ const toggleFocusMode = () => {
     localStorage.setItem(FOCUS_MODE_STORAGE_KEY, `${focusModeEnabled}`);
     updateFocusModeToggle();
 };
+const loadDifficulty = () => {
+    const saved = localStorage.getItem(DIFFICULTY_STORAGE_KEY);
+    if (saved && saved in DIFFICULTIES) {
+        difficultyId = saved;
+    }
+};
+const updateDifficultyUI = () => {
+    const difficulty = DIFFICULTIES[difficultyId];
+    difficultySelect.value = difficultyId;
+    difficultyDescription.textContent = difficulty.description;
+};
+const setDifficulty = () => {
+    difficultyId = difficultySelect.value;
+    localStorage.setItem(DIFFICULTY_STORAGE_KEY, difficultyId);
+    updateDifficultyUI();
+};
+const getDifficultyMultiplier = () => DIFFICULTIES[difficultyId].multiplier;
 const loadUpgradeState = () => {
     try {
         const saved = localStorage.getItem(UPGRADE_STORAGE_KEY);
@@ -237,11 +268,16 @@ const resetProgress = () => {
 loadUpgradeState();
 loadFocusMode();
 updateFocusModeToggle();
+loadDifficulty();
+updateDifficultyUI();
 const updateScoreDisplay = () => {
     scoreDisplay.textContent = `Score: ${score}`;
 };
 const updateComboDisplay = () => {
     comboDisplay.textContent = `Combo: ${combo}`;
+};
+const updateCapsLockWarning = (event) => {
+    capsLockWarning.hidden = !event.getModifierState("CapsLock");
 };
 const updateTimerDisplay = (percentage = (timeRemaining / totalTime) * 100) => {
     if (timerDisplay) {
@@ -333,10 +369,10 @@ const resetRun = () => {
     gameOver = false;
     timerEndTime = 0;
     runBanked = false;
-    awardedWordCount = 0;
+    awardedWordIndices = new Set();
+    incorrectWordIndices = new Set();
     committedLength = 0;
     combo = 0;
-    lastInputWasIncorrect = false;
     wordsCompletedThisRun = 0;
     typedCharacters = 0;
     correctCharacters = 0;
@@ -396,6 +432,41 @@ const getRandomizeSentence = (words, length) => {
     }
     return sentence;
 };
+const applyDifficulty = (words) => {
+    const adjustedWords = [...words];
+    if (difficultyId !== "warm-up") {
+        const firstWord = adjustedWords[0];
+        if (firstWord) {
+            adjustedWords[0] = `${firstWord[0]?.toUpperCase() ?? ""}${firstWord.slice(1)}`;
+        }
+    }
+    if (difficultyId === "precise" || difficultyId === "expert") {
+        const lastIndex = adjustedWords.length - 1;
+        const lastWord = adjustedWords[lastIndex];
+        if (lastWord) {
+            const punctuation = [".", "?", "!"][Math.floor(Math.random() * 3)] ?? ".";
+            adjustedWords[lastIndex] = `${lastWord}${punctuation}`;
+        }
+    }
+    if (difficultyId === "expert") {
+        const useComma = Math.random() < 0.5;
+        if (useComma && adjustedWords.length > 1) {
+            const commaIndex = Math.floor(Math.random() * (adjustedWords.length - 1));
+            const commaWord = adjustedWords[commaIndex];
+            if (commaWord) {
+                adjustedWords[commaIndex] = `${commaWord},`;
+            }
+        }
+        else {
+            const quoteIndex = Math.floor(Math.random() * adjustedWords.length);
+            const quoteWord = adjustedWords[quoteIndex];
+            if (quoteWord) {
+                adjustedWords[quoteIndex] = `"${quoteWord}"`;
+            }
+        }
+    }
+    return adjustedWords;
+};
 const showRewardPopup = (text, isSentenceReward = false, anchorIndex) => {
     const popup = document.createElement("div");
     popup.className = isSentenceReward
@@ -449,10 +520,11 @@ const pulseCompletedWord = (wordIndex) => {
     }
 };
 const renderSentence = () => {
-    sentenceWords = getRandomizeSentence(WORDS, getSentenceLength());
+    sentenceWords = applyDifficulty(getRandomizeSentence(WORDS, getSentenceLength()));
     targetText = sentenceWords.join(" ");
     targetCharacters = Array.from(targetText);
-    awardedWordCount = 0;
+    awardedWordIndices = new Set();
+    incorrectWordIndices = new Set();
     committedLength = 0;
     wordDisplay.replaceChildren(...targetCharacters.map((character) => {
         const span = document.createElement("span");
@@ -476,33 +548,52 @@ const updateCharacterDisplay = (typedText) => {
     });
 };
 const awardCompletedWords = (typedText) => {
-    for (let index = awardedWordCount; index < sentenceWords.length; index++) {
-        const wordEnd = sentenceWords
-            .slice(0, index + 1)
+    for (let index = 0; index < sentenceWords.length; index++) {
+        if (awardedWordIndices.has(index)) {
+            continue;
+        }
+        const word = sentenceWords[index];
+        if (!word) {
+            continue;
+        }
+        const wordStart = sentenceWords
+            .slice(0, index)
             .join(" ")
-            .length + (index < sentenceWords.length - 1 ? 1 : 0);
-        const completedWord = typedText.slice(0, wordEnd) === targetText.slice(0, wordEnd);
-        if (typedText.length >= wordEnd && completedWord) {
-            combo += 1;
-            wordsCompletedThisRun += 1;
-            highestCombo = Math.max(highestCombo, combo);
-            const comboTierPoints = hasUpgrade("combo-surge") ? 2 : 1;
-            let points = getBaseWordPoints()
-                + Math.floor(combo / getComboThreshold()) * comboTierPoints;
-            if (hasUpgrade("lucky-word") && Math.random() < 0.1) {
-                points *= 2;
+            .length + (index > 0 ? 1 : 0);
+        const wordEnd = wordStart + word.length;
+        const wordBoundaryEnd = wordEnd + (index < sentenceWords.length - 1 ? 1 : 0);
+        if (typedText.length < wordBoundaryEnd) {
+            continue;
+        }
+        const completedWord = typedText.slice(wordStart, wordEnd) === word;
+        if (!completedWord) {
+            if (!incorrectWordIndices.has(index)) {
+                incorrectWordIndices.add(index);
+                if (hasUpgrade("combo-guard") && !mistakeShieldUsed) {
+                    mistakeShieldUsed = true;
+                }
+                else {
+                    combo = 0;
+                }
+                updateComboDisplay();
             }
-            score += points;
-            awardedWordCount = index + 1;
-            committedLength = wordEnd;
-            // Change this for the reward-popup location
-            const wordAnchorIndex = wordEnd - 2 - (index < sentenceWords.length - 1 ? 1 : 0);
-            showRewardPopup(`+${points}`, false, wordAnchorIndex);
-            pulseCompletedWord(index);
+            continue;
         }
-        else {
-            break;
+        awardedWordIndices.add(index);
+        combo += 1;
+        wordsCompletedThisRun += 1;
+        highestCombo = Math.max(highestCombo, combo);
+        const comboTierPoints = hasUpgrade("combo-surge") ? 2 : 1;
+        let points = Math.round((getBaseWordPoints()
+            + Math.floor(combo / getComboThreshold()) * comboTierPoints)
+            * getDifficultyMultiplier());
+        if (hasUpgrade("lucky-word") && Math.random() < 0.1) {
+            points *= 2;
         }
+        score += points;
+        committedLength = Math.max(committedLength, wordBoundaryEnd);
+        showRewardPopup(`+${points}`, false, wordEnd - 1);
+        pulseCompletedWord(index);
     }
     updateScoreDisplay();
     updateComboDisplay();
@@ -533,6 +624,8 @@ input.addEventListener("keydown", (event) => {
         }
     }
 });
+document.addEventListener("keydown", updateCapsLockWarning);
+document.addEventListener("keyup", updateCapsLockWarning);
 input.addEventListener("input", () => {
     if (gameOver) {
         return;
@@ -541,26 +634,8 @@ input.addEventListener("input", () => {
     const typedText = input.value;
     updateCharacterDisplay(typedText);
     awardCompletedWords(typedText);
-    const isCorrectPrefix = targetText.startsWith(typedText);
-    if (isCorrectPrefix) {
-        lastInputWasIncorrect = false;
-        console.log("Correct so far");
-    }
-    else {
-        if (!lastInputWasIncorrect) {
-            if (hasUpgrade("combo-guard") && !mistakeShieldUsed) {
-                mistakeShieldUsed = true;
-            }
-            else {
-                combo = 0;
-            }
-            updateComboDisplay();
-        }
-        lastInputWasIncorrect = true;
-        console.log("Mistake");
-    }
     if (typedText === targetText) {
-        const sentenceBonus = getSentenceBonus();
+        const sentenceBonus = Math.round(getSentenceBonus() * getDifficultyMultiplier());
         score += sentenceBonus;
         updateScoreDisplay();
         showRewardPopup(`+${sentenceBonus}`, true, targetText.length - 1);
@@ -579,6 +654,7 @@ upgradesButton.addEventListener("click", showUpgradeTree);
 backToTypingButton.addEventListener("click", hideUpgradeTree);
 resetProgressButton.addEventListener("click", resetProgress);
 mainUpgradesButton.addEventListener("click", showUpgradeTree);
+difficultySelect.addEventListener("change", setDifficulty);
 document.addEventListener("keydown", (event) => {
     if (!upgradeOverlay.hidden) {
         if (event.key === "Escape") {
