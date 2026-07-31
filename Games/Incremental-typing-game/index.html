@@ -8,6 +8,7 @@
 </head>
 <body>
     <main>
+        <button id="focus-mode-toggle" type="button" aria-pressed="false">Focus mode: Off</button>
         <button id="main-upgrades-button" type="button">Upgrade tree</button>
         <section id="hud" aria-label="Game status">
             <!-- <div id="timer-display" aria-live="polite">Time: 15s</div> -->
@@ -43,13 +44,12 @@
                 <h1 id="upgrade-title">Upgrade Tree</h1>
                 <p>Points: <span id="banked-points">0</span></p>
             </header>
-            <p id="upgrade-hint">Drag empty space to move • Scroll to zoom</p>
+            <p id="upgrade-hint">Follow each branch from left to right</p>
             <div id="upgrade-viewport">
-                <div id="upgrade-tree" aria-label="Radial upgrade tree"></div>
+                <div id="upgrade-tree" aria-label="Upgrade paths"></div>
             </div>
             <div id="upgrade-actions">
                 <button id="back-to-typing" type="button">Back to typing</button>
-                <button id="reset-view-button" type="button">Reset view</button>
                 <button id="reset-progress-button" type="button">Reset progress</button>
             </div>
         </div>

@@ -17,6 +17,7 @@ if (!typingArea) {
 }
 
 const mainUpgradesButton = document.querySelector<HTMLButtonElement>("#main-upgrades-button");
+const focusModeToggle = document.querySelector<HTMLButtonElement>("#focus-mode-toggle");
 const timerDisplay = document.querySelector<HTMLDivElement>("#timer-display");
 const scoreDisplay = document.querySelector<HTMLDivElement>("#score-display");
 const comboDisplay = document.querySelector<HTMLDivElement>("#combo-display");
@@ -30,15 +31,14 @@ const finalComboDisplay = document.querySelector<HTMLSpanElement>("#final-combo"
 const restartButton = document.querySelector<HTMLButtonElement>("#restart-button");
 const upgradesButton = document.querySelector<HTMLButtonElement>("#upgrades-button");
 const upgradeOverlay = document.querySelector<HTMLElement>("#upgrade-overlay");
-const upgradeViewport = document.querySelector<HTMLDivElement>("#upgrade-viewport");
 const upgradeTree = document.querySelector<HTMLDivElement>("#upgrade-tree");
 const bankedPointsDisplay = document.querySelector<HTMLSpanElement>("#banked-points");
 const backToTypingButton = document.querySelector<HTMLButtonElement>("#back-to-typing");
-const resetViewButton = document.querySelector<HTMLButtonElement>("#reset-view-button");
 const resetProgressButton = document.querySelector<HTMLButtonElement>("#reset-progress-button");
 
 if (
     !mainUpgradesButton ||
+    !focusModeToggle ||
     !scoreDisplay ||
     !comboDisplay ||
     !timerProgress ||
@@ -51,11 +51,9 @@ if (
     !restartButton ||
     !upgradesButton ||
     !upgradeOverlay ||
-    !upgradeViewport ||
     !upgradeTree ||
     !bankedPointsDisplay ||
     !backToTypingButton ||
-    !resetViewButton ||
     !resetProgressButton
 ) {
     throw new Error("Could not find the game status elements");
@@ -67,6 +65,7 @@ const SENTENCE_LENGTH = 3;
 const BASE_WORD_POINTS = 1;
 const SENTENCE_BONUS = 10;
 const UPGRADE_STORAGE_KEY = "incremental-typing-game-upgrades";
+const FOCUS_MODE_STORAGE_KEY = "incremental-typing-game-focus-mode";
 
 type UpgradeId =
     | "combo-spark"
@@ -78,7 +77,6 @@ type UpgradeId =
     | "word-value"
     | "sentence-value"
     | "double-dip"
-    | "reroll-token"
     | "second-wind"
     | "lucky-word"
     | "sentence-medium"
@@ -111,8 +109,7 @@ const UPGRADE_NODES: UpgradeNodeDefinition[] = [
     { id: "word-value", group: "bottom", name: "Word Value", effect: "+1 base word point", cost: 25 },
     { id: "sentence-value", group: "bottom", name: "Sentence Value", effect: "+5 sentence points", cost: 75, requires: "word-value" },
     { id: "double-dip", group: "bottom", name: "Double Dip", effect: "+1 sentence point", cost: 150, requires: "sentence-value" },
-    { id: "reroll-token", group: "left", name: "Reroll Token", effect: "Press X to reroll once", cost: 25 },
-    { id: "second-wind", group: "left", name: "Second Wind", effect: "+3 seconds at zero", cost: 75, requires: "reroll-token" },
+    { id: "second-wind", group: "left", name: "Second Wind", effect: "+3 seconds at zero", cost: 75 },
     { id: "lucky-word", group: "left", name: "Lucky Word", effect: "10% chance to double", cost: 150, requires: "second-wind" },
     { id: "sentence-medium", group: "length", name: "Longer Sentences", effect: "3 → 5 words", cost: 25 },
     { id: "sentence-long", group: "length", name: "Full Sentences", effect: "5 → 8 words", cost: 75, requires: "sentence-medium" },
@@ -132,7 +129,7 @@ let purchasedUpgrades: UpgradeId[] = [];
 let runBanked = false;
 let mistakeShieldUsed = false;
 let secondWindUsed = false;
-let rerollUsed = false;
+let focusModeEnabled = false;
 
 let targetText = "";
 let targetCharacters: string[] = [];
@@ -147,19 +144,22 @@ let typedCharacters = 0;
 let correctCharacters = 0;
 let highestCombo = 0;
 
-const MIN_UPGRADE_ZOOM = 0.65;
-const MAX_UPGRADE_ZOOM = 1.5;
-const DEFAULT_UPGRADE_ZOOM = 1;
-let upgradePanX = 0;
-let upgradePanY = 0;
-let upgradeZoom = DEFAULT_UPGRADE_ZOOM;
-let dragPointerId: number | undefined;
-let dragStartX = 0;
-let dragStartY = 0;
-let dragStartPanX = 0;
-let dragStartPanY = 0;
-
 const hasUpgrade = (id: UpgradeId): boolean => purchasedUpgrades.includes(id);
+
+const loadFocusMode = (): void => {
+    focusModeEnabled = localStorage.getItem(FOCUS_MODE_STORAGE_KEY) === "true";
+};
+
+const updateFocusModeToggle = (): void => {
+    focusModeToggle.textContent = `Focus mode: ${focusModeEnabled ? "On" : "Off"}`;
+    focusModeToggle.setAttribute("aria-pressed", `${focusModeEnabled}`);
+};
+
+const toggleFocusMode = (): void => {
+    focusModeEnabled = !focusModeEnabled;
+    localStorage.setItem(FOCUS_MODE_STORAGE_KEY, `${focusModeEnabled}`);
+    updateFocusModeToggle();
+};
 
 const loadUpgradeState = (): void => {
     try {
@@ -210,75 +210,31 @@ const updateBankedPointsDisplay = (): void => {
     bankedPointsDisplay.textContent = `${bankedPoints}`;
 };
 
-const applyUpgradeView = (): void => {
-    upgradeTree.style.transform = `translate(${upgradePanX}px, ${upgradePanY}px) scale(${upgradeZoom})`;
-};
-
-const resetUpgradeView = (): void => {
-    upgradePanX = 0;
-    upgradePanY = 0;
-    upgradeZoom = DEFAULT_UPGRADE_ZOOM;
-    applyUpgradeView();
-};
-
-const clampUpgradeZoom = (zoom: number): number => Math.min(
-    MAX_UPGRADE_ZOOM,
-    Math.max(MIN_UPGRADE_ZOOM, zoom)
-);
-
-const isBlankUpgradeCanvasTarget = (target: EventTarget | null): boolean => {
-    if (target instanceof Element && target.closest(".upgrade-node")) {
-        return false;
-    }
-
-    return target === upgradeViewport || target === upgradeTree;
-};
-
-const stopUpgradeDragging = (pointerId?: number): void => {
-    if (pointerId !== undefined && dragPointerId !== pointerId) {
-        return;
-    }
-
-    const activePointerId = dragPointerId;
-    dragPointerId = undefined;
-    upgradeViewport.classList.remove("dragging");
-
-    if (activePointerId !== undefined && upgradeViewport.hasPointerCapture(activePointerId)) {
-        upgradeViewport.releasePointerCapture(activePointerId);
-    }
-};
-
-const zoomUpgradeTree = (event: WheelEvent): void => {
-    event.preventDefault();
-
-    const viewportRect = upgradeViewport.getBoundingClientRect();
-    const cursorX = event.clientX - viewportRect.left;
-    const cursorY = event.clientY - viewportRect.top;
-    const treeX = (cursorX - upgradePanX) / upgradeZoom;
-    const treeY = (cursorY - upgradePanY) / upgradeZoom;
-    const nextZoom = clampUpgradeZoom(upgradeZoom * Math.exp(-event.deltaY * 0.001));
-
-    upgradeZoom = nextZoom;
-    upgradePanX = cursorX - treeX * upgradeZoom;
-    upgradePanY = cursorY - treeY * upgradeZoom;
-    applyUpgradeView();
-};
-
 const isPurchased = (id: UpgradeId): boolean => purchasedUpgrades.includes(id);
 
 const renderUpgradeTree = (): void => {
     upgradeTree.replaceChildren();
 
-    const core = document.createElement("div");
-    core.className = "upgrade-core upgrade-node purchased";
-    core.textContent = "CORE";
-    upgradeTree.append(core);
-
     const groups: UpgradeGroup[] = ["top", "right", "bottom", "left", "length"];
+    const groupTitles: Record<UpgradeGroup, string> = {
+        top: "Combo",
+        right: "Time",
+        bottom: "Score",
+        left: "Utility",
+        length: "Sentence length"
+    };
 
     groups.forEach((group) => {
         const branch = document.createElement("div");
         branch.className = `upgrade-branch branch-${group}`;
+
+        const title = document.createElement("h2");
+        title.className = "upgrade-branch-title";
+        title.textContent = groupTitles[group];
+        branch.append(title);
+
+        const nodes = document.createElement("div");
+        nodes.className = "upgrade-branch-nodes";
 
         UPGRADE_NODES.filter((upgrade) => upgrade.group === group).forEach((upgrade) => {
             const node = document.createElement("button");
@@ -293,9 +249,10 @@ const renderUpgradeTree = (): void => {
             node.dataset.upgradeId = upgrade.id;
             node.innerHTML = `<strong>${upgrade.name}</strong><small>${upgrade.effect}</small><small>${purchased ? "Purchased" : `${upgrade.cost} points`}</small>`;
             node.addEventListener("click", () => purchaseUpgrade(upgrade.id));
-            branch.append(node);
+            nodes.append(node);
         });
 
+        branch.append(nodes);
         upgradeTree.append(branch);
     });
 
@@ -330,7 +287,6 @@ const showUpgradeTree = (): void => {
     gameOverOverlay.hidden = true;
     upgradeOverlay.hidden = false;
     renderUpgradeTree();
-    applyUpgradeView();
     upgradeTree.querySelector<HTMLButtonElement>(".available")?.focus();
 };
 
@@ -358,6 +314,8 @@ const resetProgress = (): void => {
 };
 
 loadUpgradeState();
+loadFocusMode();
+updateFocusModeToggle();
 
 const updateScoreDisplay = (): void => {
     scoreDisplay.textContent = `Score: ${score}`;
@@ -404,6 +362,12 @@ const endGame = (): void => {
     finalWordsDisplay.textContent = `${wordsCompletedThisRun}`;
     finalAccuracyDisplay.textContent = `${accuracy}%`;
     finalComboDisplay.textContent = `${highestCombo}`;
+
+    if (focusModeEnabled) {
+        resetRun();
+        return;
+    }
+
     upgradesButton.disabled = false;
     gameOverOverlay.hidden = false;
     // restartButton.focus();
@@ -482,7 +446,6 @@ const resetRun = (): void => {
     highestCombo = 0;
     mistakeShieldUsed = false;
     secondWindUsed = false;
-    rerollUsed = false;
     input.value = "";
     gameOverOverlay.hidden = true;
     upgradeOverlay.hidden = true;
@@ -695,20 +658,6 @@ updateTimerDisplay();
 
 input.addEventListener("keydown", (event) => {
     if (
-        !gameOver &&
-        event.key.toLowerCase() === "x" &&
-        hasUpgrade("reroll-token") &&
-        !rerollUsed
-    ) {
-        event.preventDefault();
-        rerollUsed = true;
-        input.value = "";
-        renderSentence();
-        statusDisplay.textContent = "Reroll used";
-        return;
-    }
-
-    if (
         event.key === "Backspace" &&
         input.selectionStart !== null &&
         input.selectionStart <= committedLength
@@ -779,68 +728,18 @@ input.addEventListener("input", () => {
 });
 
 restartButton.addEventListener("click", resetRun);
+focusModeToggle.addEventListener("click", toggleFocusMode);
 upgradesButton.addEventListener("click", showUpgradeTree);
 backToTypingButton.addEventListener("click", hideUpgradeTree);
 resetProgressButton.addEventListener("click", resetProgress);
 mainUpgradesButton.addEventListener("click", showUpgradeTree);
-resetViewButton.addEventListener("click", resetUpgradeView);
-
-upgradeViewport.addEventListener("pointerdown", (event) => {
-    if (!isBlankUpgradeCanvasTarget(event.target)) {
-        return;
-    }
-
-    dragPointerId = event.pointerId;
-    dragStartX = event.clientX;
-    dragStartY = event.clientY;
-    dragStartPanX = upgradePanX;
-    dragStartPanY = upgradePanY;
-    upgradeViewport.setPointerCapture(event.pointerId);
-    upgradeViewport.classList.add("dragging");
-});
-
-upgradeViewport.addEventListener("pointermove", (event) => {
-    if (dragPointerId !== event.pointerId) {
-        return;
-    }
-
-    upgradePanX = dragStartPanX + event.clientX - dragStartX;
-    upgradePanY = dragStartPanY + event.clientY - dragStartY;
-    applyUpgradeView();
-});
-
-upgradeViewport.addEventListener("pointerup", (event) => stopUpgradeDragging(event.pointerId));
-upgradeViewport.addEventListener("pointercancel", (event) => stopUpgradeDragging(event.pointerId));
-upgradeViewport.addEventListener("lostpointercapture", () => stopUpgradeDragging());
-upgradeViewport.addEventListener("wheel", zoomUpgradeTree, { passive: false });
-applyUpgradeView();
-
-const focusUpgradeDirection = (direction: UpgradeGroup): void => {
-    upgradeTree
-        .querySelector<HTMLButtonElement>(`.branch-${direction} .upgrade-node:not(:disabled)`)
-        ?.focus();
-};
 
 document.addEventListener("keydown", (event) => {
     if (!upgradeOverlay.hidden) {
-        const directionKeys: Partial<Record<string, UpgradeGroup>> = {
-            ArrowUp: "top",
-            ArrowRight: "right",
-            ArrowDown: "bottom",
-            ArrowLeft: "left"
-        };
-
         if (event.key === "Escape") {
             event.preventDefault();
             hideUpgradeTree();
             return;
-        }
-
-        const direction = directionKeys[event.key];
-
-        if (direction) {
-            event.preventDefault();
-            focusUpgradeDirection(direction);
         }
 
         return;

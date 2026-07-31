@@ -22,6 +22,26 @@
     z-index: 2;
 }
 
+#focus-mode-toggle {
+    background: #2c2e31;
+    border: 1px solid #646669;
+    border-radius: 0;
+    color: #d1d0c5;
+    cursor: pointer;
+    font: inherit;
+    left: 1.5rem;
+    padding: 0.6rem 0.9rem;
+    position: fixed;
+    top: 1.5rem;
+    z-index: 2;
+}
+
+#focus-mode-toggle[aria-pressed="true"] {
+    background: #7bc043;
+    border-color: #7bc043;
+    color: #323437;
+}
+
 #timer-display,
 #score-display,
 #combo-display {
@@ -308,133 +328,62 @@ main {
 
 #upgrade-viewport {
     bottom: 4.5rem;
-    left: 50%;
-    overflow: hidden;
+    left: 0;
+    overflow-y: auto;
+    padding: 0.5rem;
     position: absolute;
     right: 0;
     top: 5rem;
-    touch-action: none;
-    transform: translateX(-50%);
-    width: 100%;
-}
-
-#upgrade-viewport {
-    cursor: grab;
-    user-select: none;
-}
-
-#upgrade-viewport.dragging {
-    cursor: grabbing;
 }
 
 #upgrade-tree {
-    height: 100%;
-    left: 0;
-    position: absolute;
-    top: 0;
-    transform-origin: 0 0;
-    width: 100%;
-}
-
-.upgrade-core,
-.upgrade-branch {
-    position: absolute;
-}
-
-.upgrade-core {
-    align-items: center;
-    display: flex;
-    height: 4.5rem;
-    justify-content: center;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    width: 8.5rem;
-    z-index: 1;
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin: 0 auto;
+    max-width: 70rem;
+    padding: 0.5rem;
 }
 
 .upgrade-branch {
-    display: flex;
-    gap: 0.75rem;
-    z-index: 1;
+    background: #2c2e31;
+    border: 1px solid #46484b;
+    padding: 0.85rem;
 }
 
-.upgrade-branch::before {
+.upgrade-branch-title {
+    color: #e2b714;
+    font-size: 1rem;
+    margin: 0 0 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.upgrade-branch-nodes {
+    display: flex;
+    gap: 0.6rem;
+}
+
+.upgrade-branch-nodes .upgrade-node {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+.upgrade-branch-nodes .upgrade-node + .upgrade-node {
+    position: relative;
+}
+
+.upgrade-branch-nodes .upgrade-node + .upgrade-node::before {
     background: #646669;
-    content: "";
+    content: ">";
+    color: #9fa0a2;
+    font-size: 1rem;
+    left: -0.7rem;
+    line-height: 1;
+    padding: 0 0.1rem;
     position: absolute;
-    z-index: -1;
-}
-
-.branch-top,
-.branch-bottom {
-    left: 50%;
-    transform: translateX(-50%);
-}
-
-.branch-top {
-    flex-direction: column-reverse;
-}
-
-.branch-bottom {
-    flex-direction: column;
-}
-
-.branch-top {
-    bottom: calc(50% + 3.5rem);
-    top: auto;
-}
-
-.branch-bottom {
-    bottom: auto;
-    top: calc(50% + 3.5rem);
-}
-
-.branch-top::before,
-.branch-bottom::before {
-    height: 100%;
-    left: 50%;
-    top: 0;
-    width: 2px;
-}
-
-.branch-left,
-.branch-right {
-    align-items: center;
-    flex-direction: row;
     top: 50%;
     transform: translateY(-50%);
-}
-
-.branch-left {
-    flex-direction: row-reverse;
-    left: 0;
-}
-
-.branch-right {
-    right: 0;
-}
-
-.branch-length {
-    flex-direction: column;
-    right: 0;
-    top: calc(50% + 4.5rem);
-}
-
-.branch-left::before,
-.branch-right::before,
-.branch-length::before {
-    height: 2px;
-    left: 0;
-    top: 50%;
-    width: 100%;
-}
-
-.branch-length::before {
-    height: 100%;
-    left: 50%;
-    top: 0;
-    width: 2px;
 }
 
 .upgrade-node {
@@ -449,7 +398,7 @@ main {
     padding: 0.6rem;
     position: relative;
     text-align: center;
-    width: 8.5rem;
+    width: 100%;
     z-index: 2;
 }
 
@@ -497,7 +446,6 @@ main {
 }
 
 #back-to-typing,
-#reset-view-button,
 #reset-progress-button {
     background: #e2b714;
     border: 0;
@@ -523,26 +471,37 @@ main {
         left: 1rem;
         right: 1rem;
         top: 5rem;
-        transform: none;
         width: auto;
     }
 
-    .upgrade-core {
-        top: 50%;
+    #upgrade-tree {
+        grid-template-columns: 1fr;
     }
 
-    .upgrade-branch {
+    .upgrade-branch-nodes {
         gap: 0.4rem;
     }
 
     .upgrade-node {
         min-height: 4.5rem;
         padding: 0.4rem;
-        width: 6.5rem;
     }
 
     #upgrade-actions {
         flex-wrap: wrap;
         justify-content: center;
+    }
+}
+
+@media (max-width: 35rem) {
+    .upgrade-branch-nodes {
+        flex-direction: column;
+    }
+
+    .upgrade-branch-nodes .upgrade-node + .upgrade-node::before {
+        content: "v";
+        left: 50%;
+        top: -0.55rem;
+        transform: translateX(-50%);
     }
 }
