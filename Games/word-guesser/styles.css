@@ -543,4 +543,71 @@ body {
     margin-top: clamp(8px, 2vh, 19px);
 }
 
-@media(max-width:500px){.shell{padding:12px 10px 10px}.topbar{margin-bottom:10px}.card{padding:12px 10px 10px}.board{gap:5px;width:min(100%,42vh)}.tile{border-radius:7px}.key-row{gap:3px}.key{min-width:calc((100% - 24px)/10);height:clamp(34px,6vh,43px);padding:0 2px;border-radius:7px;font-size:11px}.key.wide{min-width:48px;font-size:10px}.tip{font-size:10px}}
+@media(max-width:500px) {
+    .shell {
+        padding: 12px 10px 10px
+    }
+
+    .topbar {
+        margin-bottom: 10px
+    }
+
+    .card {
+        padding: 12px 10px 10px
+    }
+
+    .board {
+        gap: 5px;
+        width: min(100%, 42vh)
+    }
+
+    .tile {
+        border-radius: 7px
+    }
+
+    .key-row {
+        gap: 3px
+    }
+
+    .key {
+        min-width: calc((100% - 24px)/10);
+        height: clamp(34px, 6vh, 43px);
+        padding: 0 2px;
+        border-radius: 7px;
+        font-size: 11px
+    }
+
+    .key.wide {
+        min-width: 48px;
+        font-size: 10px
+    }
+
+    .tip {
+        font-size: 10px
+    }
+}
+
+@media (min-width: 501px) {
+    .card {
+        padding: 18px;
+    }
+
+    .board {
+        width: min(100%, 330px, 37vh);
+        height: min(430px, 48vh);
+        grid-template-rows: repeat(6, minmax(0, 1fr));
+        margin-bottom: 14px;
+    }
+
+    .tile {
+        aspect-ratio: auto;
+    }
+
+    .key {
+        height: clamp(34px, 5vh, 44px);
+    }
+
+    .tip {
+        margin-top: 8px;
+    }
+}
