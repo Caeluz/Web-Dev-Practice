@@ -1,0 +1,266 @@
+:root {
+  color-scheme: dark;
+  --ink: #f5f7ed;
+  --muted: #a9bbb3;
+  --panel: rgba(20, 45, 38, 0.82);
+  --panel-solid: #142d26;
+  --line: rgba(202, 233, 112, 0.16);
+  --accent: #d7f171;
+  --accent-strong: #bddb4e;
+  --danger: #ffb4a8;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(114, 177, 106, 0.18), transparent 32rem),
+    radial-gradient(circle at 88% 85%, rgba(215, 241, 113, 0.1), transparent 28rem),
+    #091713;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+button, a { font: inherit; }
+
+/*
+  Leaflet's JavaScript can load even when a browser extension or preview server
+  blocks its CDN stylesheet. Keep the structural rules local so map tiles and
+  controls are still positioned correctly in that case.
+*/
+.leaflet-container {
+  overflow: hidden;
+  background: #ddd;
+  outline-offset: 1px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.leaflet-pane,
+.leaflet-tile,
+.leaflet-marker-icon,
+.leaflet-marker-shadow,
+.leaflet-tile-container,
+.leaflet-pane > svg,
+.leaflet-pane > canvas,
+.leaflet-zoom-box {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.leaflet-map-pane canvas { z-index: 100; }
+.leaflet-map-pane svg { z-index: 200; }
+.leaflet-tile-pane { z-index: 200; }
+.leaflet-overlay-pane { z-index: 400; }
+.leaflet-shadow-pane { z-index: 500; }
+.leaflet-marker-pane { z-index: 600; }
+.leaflet-tooltip-pane { z-index: 650; }
+.leaflet-popup-pane { z-index: 700; }
+
+.leaflet-tile {
+  width: 256px;
+  height: 256px;
+  visibility: hidden;
+  user-select: none;
+}
+
+.leaflet-tile-loaded { visibility: inherit; }
+
+.leaflet-container img.leaflet-tile,
+.leaflet-container img.leaflet-marker-icon,
+.leaflet-container img.leaflet-marker-shadow {
+  max-width: none !important;
+  max-height: none !important;
+  padding: 0;
+}
+
+.leaflet-control-container { position: relative; z-index: 800; }
+.leaflet-top, .leaflet-bottom { position: absolute; z-index: 1000; pointer-events: none; }
+.leaflet-top { top: 0; }
+.leaflet-right { right: 0; }
+.leaflet-bottom { bottom: 0; }
+.leaflet-left { left: 0; }
+.leaflet-control { position: relative; z-index: 800; pointer-events: auto; }
+.leaflet-top .leaflet-control { margin-top: 12px; }
+.leaflet-right .leaflet-control { margin-right: 12px; }
+.leaflet-bottom .leaflet-control { margin-bottom: 10px; }
+.leaflet-left .leaflet-control { margin-left: 10px; }
+.leaflet-control-zoom { overflow: hidden; border-radius: 8px; box-shadow: 0 2px 12px rgba(0, 0, 0, .2); }
+.leaflet-control-zoom a {
+  display: block;
+  width: 32px;
+  height: 32px;
+  border-bottom: 1px solid #ccc;
+  background: #fff;
+  color: #1a2b25;
+  font: bold 20px/32px Arial, Helvetica, sans-serif;
+  text-align: center;
+  text-decoration: none;
+}
+.leaflet-control-zoom a:last-child { border-bottom: 0; }
+.leaflet-control-attribution { padding: 2px 6px; background: rgba(255, 255, 255, .8); color: #333; font-size: 11px; }
+.leaflet-control-attribution a { color: #0078a8; }
+
+.locator-shell {
+  width: min(1080px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 48px 0 28px;
+}
+
+.hero {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 32px;
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent);
+  font-size: .75rem;
+  font-weight: 800;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  line-height: .92;
+  letter-spacing: -.065em;
+}
+
+.intro {
+  max-width: 560px;
+  margin: 18px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 2vw, 1.15rem);
+  line-height: 1.6;
+}
+
+.locate-button {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 0 22px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #17220e;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+  transition: transform .2s ease, background .2s ease;
+}
+
+.locate-button:hover { background: var(--accent-strong); transform: translateY(-2px); }
+.locate-button:focus-visible { outline: 3px solid #fff; outline-offset: 4px; }
+.locate-button:disabled { cursor: wait; opacity: .7; transform: none; }
+.button-icon { font-size: 1.5rem; line-height: 1; }
+
+.map-card {
+  position: relative;
+  min-height: 520px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 28px;
+  background: var(--panel-solid);
+  box-shadow: 0 28px 80px rgba(0, 0, 0, .28);
+}
+
+#map { position: absolute; inset: 0; z-index: 1; }
+
+.map-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  text-align: center;
+  background:
+    linear-gradient(rgba(215, 241, 113, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(215, 241, 113, .035) 1px, transparent 1px),
+    var(--panel-solid);
+  background-size: 42px 42px;
+  transition: opacity .35s ease, visibility .35s ease;
+}
+
+.map-placeholder.is-hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.map-placeholder p { margin: 24px 0 4px; font-size: 1.05rem; font-weight: 750; }
+.map-placeholder small { color: var(--muted); }
+
+.pulse-pin {
+  position: relative;
+  display: grid;
+  width: 72px;
+  height: 72px;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(215, 241, 113, .09);
+}
+
+.pulse-pin::before, .pulse-pin::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(215, 241, 113, .45);
+  border-radius: inherit;
+  content: "";
+  animation: pulse 2s ease-out infinite;
+}
+.pulse-pin::after { animation-delay: 1s; }
+.pulse-pin span { width: 18px; height: 18px; border: 5px solid #17220e; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 3px var(--accent); }
+
+@keyframes pulse { to { opacity: 0; transform: scale(1.7); } }
+
+.map-error {
+  position: absolute;
+  z-index: 3;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  max-width: 520px;
+  padding: 16px 18px;
+  border: 1px solid rgba(255, 180, 168, .25);
+  border-radius: 16px;
+  background: rgba(58, 29, 27, .94);
+  color: var(--danger);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .25);
+}
+.map-error[hidden] { display: none; }
+.map-error > span { display: grid; flex: 0 0 24px; height: 24px; place-items: center; border: 1px solid currentColor; border-radius: 50%; font-weight: 900; }
+.map-error p { margin: 3px 0 0; color: #e9c6c0; font-size: .9rem; line-height: 1.45; }
+
+.details { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-top: 14px; }
+.detail-card { padding: 22px 24px; border: 1px solid var(--line); border-radius: 18px; background: var(--panel); backdrop-filter: blur(16px); }
+.detail-card p { margin: 0 0 8px; color: var(--muted); font-size: .75rem; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+.detail-card strong { font-size: clamp(1.05rem, 3vw, 1.5rem); font-variant-numeric: tabular-nums; }
+
+footer { margin-top: 22px; color: #789087; font-size: .8rem; text-align: center; }
+footer a { color: #a9bbb3; }
+
+.location-marker { display: grid; width: 34px; height: 34px; place-items: center; border: 4px solid #fff; border-radius: 50%; background: #20372f; box-shadow: 0 4px 16px rgba(0, 0, 0, .35); }
+.location-marker::after { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); content: ""; }
+.leaflet-control-zoom a { color: #1a2b25; }
+
+@media (max-width: 700px) {
+  .locator-shell { width: min(100% - 20px, 1080px); padding-top: 28px; }
+  .hero { align-items: stretch; flex-direction: column; gap: 20px; }
+  .locate-button { justify-content: center; width: 100%; }
+  .map-card { min-height: 430px; border-radius: 20px; }
+  .details { grid-template-columns: 1fr 1fr; }
+  .accuracy-card { grid-column: 1 / -1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
