@@ -11,6 +11,7 @@
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:volley-forge": "node --test Games/Volley-Forge/tests/*.test.mjs",
     "build": "tsc",
     "watch": "tsc --watch"
   },
