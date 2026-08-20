@@ -29,6 +29,7 @@ import {
 import {
   circleRectCollision,
   clampAimAngle,
+  getHorizontalLaserTargets,
   hasFlightEnded,
   reflectedVelocity,
   resolveImpact,
@@ -298,6 +299,7 @@ function fireSelectedBall() {
     hits: 0,
     penetrationsRemaining: definition.ability === "drill" ? 2 : 0,
     emberTriggered: false,
+    lineTriggered: false,
     bankedCharge: 0,
     isFinal,
     contactCooldowns: new Map(),
@@ -356,7 +358,7 @@ function nearestBlock(origin) {
   return nearest;
 }
 
-function damageBlock(block, amount, source = "impact", triggerShatter = true) {
+function damageBlock(block, amount, source = "impact", triggerShatter = true, triggerBlockEffects = true) {
   if (!run || !block.alive || amount <= 0) return 0;
   const rect = blockRect(block);
   const impactX = rect.x + rect.width / 2;
@@ -385,9 +387,11 @@ function damageBlock(block, amount, source = "impact", triggerShatter = true) {
     grantXp(run, blockXp(block));
     audio.play("break");
     spawnParticles(impactX, impactY, BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c", block.kind === "boss" ? 42 : 18, 2.8);
-    if (block.kind === "volatile") damageNeighbors(block, 1, "volatile");
+    if (triggerBlockEffects && block.kind === "volatile") damageNeighbors(block, 1, "volatile");
     const shatteringRank = run.passives.shattering ?? 0;
-    if (triggerShatter && shatteringRank > 0) damageNeighbors(block, shatteringRank, "shattering");
+    if (triggerBlockEffects && triggerShatter && shatteringRank > 0) {
+      damageNeighbors(block, shatteringRank, "shattering");
+    }
   }
 
   return dealt;
@@ -396,8 +400,18 @@ function damageBlock(block, amount, source = "impact", triggerShatter = true) {
 function handleBlockCollision(ball, block, collision) {
   const definition = BALL_DEFINITIONS[ball.typeId];
   const outcome = resolveImpact(ball, run.passives);
-  damageBlock(block, outcome.damage, "ball");
+  const dealt = damageBlock(block, outcome.damage, "ball");
   ball.contactCooldowns.set(block.id, ball.elapsed + 0.075);
+
+  if (outcome.lineBurst && dealt > 0) {
+    const rect = blockRect(block);
+    spawnHorizontalBeam(rect.y + rect.height / 2, definition.glow);
+    for (const target of getHorizontalLaserTargets(blocks, block)) {
+      damageBlock(target, 1, "linebreaker", false, false);
+    }
+  } else if (outcome.lineBurst) {
+    ball.lineTriggered = false;
+  }
 
   if (outcome.emberBurst) {
     damageNeighbors(block, 1, "ember");
@@ -823,6 +837,18 @@ function spawnArc(x1, y1, x2, y2) {
   particles.push({ kind: "arc", x1, y1, x2, y2, life: 0.18, maxLife: 0.18, color: "#b8afff" });
 }
 
+function spawnHorizontalBeam(y, color) {
+  particles.push({
+    kind: "beam",
+    x1: PLAY_LEFT,
+    x2: PLAY_RIGHT,
+    y,
+    life: 0.18,
+    maxLife: 0.18,
+    color,
+  });
+}
+
 function updateEffects(delta) {
   for (const block of blocks) {
     block.visualRow += (block.row - block.visualRow) * Math.min(1, delta * 9);
@@ -1062,6 +1088,15 @@ function drawParticles() {
     if (particle.kind === "spark") {
       ctx.shadowColor = particle.color; ctx.shadowBlur = 8;
       ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
+    } else if (particle.kind === "beam") {
+      ctx.shadowColor = particle.color; ctx.shadowBlur = 18;
+      ctx.lineCap = "round";
+      ctx.lineWidth = 8;
+      ctx.globalAlpha *= 0.35;
+      ctx.beginPath(); ctx.moveTo(particle.x1, particle.y); ctx.lineTo(particle.x2, particle.y); ctx.stroke();
+      ctx.globalAlpha *= 2.8;
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(particle.x1, particle.y); ctx.lineTo(particle.x2, particle.y); ctx.stroke();
     } else {
       ctx.lineWidth = 3;
       ctx.shadowColor = particle.color; ctx.shadowBlur = 12;

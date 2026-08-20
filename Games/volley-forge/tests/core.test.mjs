@@ -1,7 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { BALL_DEFINITIONS, ENCOUNTERS, PASSIVE_DEFINITIONS } from "../src/data.mjs";
+import {
+  BALL_DEFINITIONS,
+  CONTENT_UNLOCKS,
+  ENCOUNTERS,
+  PASSIVE_DEFINITIONS,
+  STARTER_UNLOCKS,
+} from "../src/data.mjs";
 import {
   allBallsSpent,
   applyDraftChoice,
@@ -22,6 +28,7 @@ import {
 import {
   circleRectCollision,
   clampAimAngle,
+  getHorizontalLaserTargets,
   hasFlightEnded,
   reflectedVelocity,
   resolveImpact,
@@ -131,7 +138,39 @@ test("aiming and collision helpers constrain and reflect shots", () => {
   assert.ok(reflected.vx < 0);
 });
 
-test("all five ball abilities and passive damage modifiers resolve correctly", () => {
+test("Linebreaker is a Forge unlock and not a starter ball", () => {
+  assert.deepEqual(
+    {
+      damage: BALL_DEFINITIONS.linebreaker.damage,
+      speed: BALL_DEFINITIONS.linebreaker.speed,
+      radius: BALL_DEFINITIONS.linebreaker.radius,
+      ability: BALL_DEFINITIONS.linebreaker.ability,
+    },
+    { damage: 1, speed: 600, radius: 10, ability: "horizontal_laser" },
+  );
+  assert.equal(STARTER_UNLOCKS.includes("ball.linebreaker"), false);
+  assert.deepEqual(CONTENT_UNLOCKS.find((unlock) => unlock.id === "ball.linebreaker"), {
+    id: "ball.linebreaker",
+    kind: "ball",
+    contentId: "linebreaker",
+    price: 36,
+  });
+});
+
+test("Linebreaker targets every living block crossing its impact row once", () => {
+  const origin = { id: "origin", alive: true, row: 2, heightCells: 1 };
+  const targets = getHorizontalLaserTargets([
+    origin,
+    { id: "same-row", alive: true, row: 2, heightCells: 1 },
+    { id: "gap-row", alive: true, row: 2, heightCells: 1, column: 6 },
+    { id: "dead-row", alive: false, row: 2, heightCells: 1 },
+    { id: "multi-row", alive: true, row: 1, heightCells: 3 },
+    { id: "other-row", alive: true, row: 4, heightCells: 1 },
+  ], origin);
+  assert.deepEqual(targets.map((block) => block.id), ["same-row", "gap-row", "multi-row"]);
+});
+
+test("all six ball abilities and passive damage modifiers resolve correctly", () => {
   const iron = {
     typeId: "iron", hits: 0, bankedCharge: 2, isFinal: true,
     emberTriggered: false, penetrationsRemaining: 0,
@@ -167,6 +206,13 @@ test("all five ball abilities and passive damage modifiers resolve correctly", (
   assert.equal(resolveImpact(storm).stormChain, false);
   assert.equal(resolveImpact(storm).stormChain, false);
   assert.equal(resolveImpact(storm).stormChain, true);
+
+  const linebreaker = {
+    typeId: "linebreaker", hits: 0, bankedCharge: 0, isFinal: false,
+    emberTriggered: false, lineTriggered: false, penetrationsRemaining: 0,
+  };
+  assert.equal(resolveImpact(linebreaker).lineBurst, true);
+  assert.equal(resolveImpact(linebreaker).lineBurst, false);
 });
 
 test("flight ends at the bottom or safety timeout", () => {
@@ -187,11 +233,15 @@ test("meta storage sanitizes corruption and persists unlock-only progress", () =
   meta.forgeShards = 50;
   assert.equal(purchaseUnlock(meta, "ball.drill").purchased, true);
   assert.equal(meta.forgeShards, 22);
+  meta.forgeShards = 36;
+  assert.equal(purchaseUnlock(meta, "ball.linebreaker").purchased, true);
+  assert.equal(meta.forgeShards, 0);
   assert.equal(saveMeta(meta, storage), true);
   assert.equal(values.has(SAVE_KEY), true);
   const loaded = loadMeta(storage);
   assert.ok(loaded.unlockedIds.includes("ball.drill"));
-  assert.equal(loaded.forgeShards, 22);
+  assert.ok(loaded.unlockedIds.includes("ball.linebreaker"));
+  assert.equal(loaded.forgeShards, 0);
 
   const freshRun = createRunState(9);
   assert.deepEqual(freshRun.arsenal.map((ball) => ball.typeId), ["iron"]);

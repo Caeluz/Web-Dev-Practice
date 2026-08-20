@@ -59,6 +59,18 @@ export const BALL_DEFINITIONS = Object.freeze({
     damage: 1,
     ability: "storm_chain",
   },
+  linebreaker: {
+    id: "linebreaker",
+    name: "Linebreaker",
+    shortName: "Linebreaker",
+    description: "Its first damaging hit each shot fires a horizontal beam through the impact row.",
+    color: "#7de7ff",
+    glow: "#25bfff",
+    speed: 600,
+    radius: 10,
+    damage: 1,
+    ability: "horizontal_laser",
+  },
 });
 
 export const PASSIVE_DEFINITIONS = Object.freeze({
@@ -104,6 +116,7 @@ export const CONTENT_UNLOCKS = Object.freeze([
   { id: "passive.overcharged", kind: "passive", contentId: "overcharged", price: 22 },
   { id: "passive.shattering", kind: "passive", contentId: "shattering", price: 32 },
   { id: "ball.storm", kind: "ball", contentId: "storm", price: 40 },
+  { id: "ball.linebreaker", kind: "ball", contentId: "linebreaker", price: 36 },
 ]);
 
 export const STARTER_UNLOCKS = Object.freeze([
