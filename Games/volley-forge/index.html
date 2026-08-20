@@ -26,6 +26,7 @@
           <button id="help-button" class="icon-button" type="button" aria-label="How to play">?</button>
           <button id="mute-button" class="icon-button" type="button" aria-label="Mute sound">♪</button>
           <button id="pause-button" class="icon-button" type="button" aria-label="Pause game" disabled>Ⅱ</button>
+          <button id="dev-lab-button" class="secondary-button dev-lab-button" type="button" aria-label="Open Dev Lab">Dev Lab</button>
         </div>
       </header>
 
@@ -122,6 +123,38 @@
         <div class="forge-balance">Available shards <strong><i>◆</i> <span id="forge-balance">0</span></strong></div>
         <div id="unlock-list" class="unlock-list"></div>
         <button id="close-forge" class="secondary-button" type="button">Return</button>
+      </section>
+
+      <section id="dev-modal" class="modal dev-modal" role="dialog" aria-modal="true" aria-labelledby="dev-title" hidden>
+        <p class="eyebrow">Developer tools</p>
+        <h2 id="dev-title">Dev Lab</h2>
+        <p>Configure a temporary test run. It never grants XP, rewards, or saved progress.</p>
+        <div class="dev-form-grid">
+          <label class="dev-field">
+            <span>Ball</span>
+            <select id="dev-ball-select"></select>
+          </label>
+          <label class="dev-field">
+            <span>Test board</span>
+            <select id="dev-preset-select"></select>
+          </label>
+        </div>
+        <div class="dev-passive-heading">
+          <div>
+            <h3>Passive ranks</h3>
+            <p>Choose individual ranks or use a shortcut.</p>
+          </div>
+          <div class="dev-shortcuts">
+            <button id="dev-max-passives" class="text-button" type="button">Max All</button>
+            <button id="dev-clear-passives" class="text-button" type="button">Clear All</button>
+          </div>
+        </div>
+        <div id="dev-passive-list" class="dev-passive-list"></div>
+        <div class="modal-actions dev-actions">
+          <button id="dev-start-test" class="primary-button" type="button">Start Test</button>
+          <button id="dev-reset-test" class="secondary-button" type="button">Reset Test</button>
+          <button id="dev-exit" class="text-button" type="button">Exit Dev Lab</button>
+        </div>
       </section>
 
       <section id="run-modal" class="modal run-modal" role="dialog" aria-modal="true" aria-labelledby="run-title" hidden>

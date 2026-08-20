@@ -13,10 +13,13 @@ import {
   applyDraftChoice,
   calculateForgeReward,
   createDraft,
+  createDevTestBlocks,
+  createDevTestRunState,
   createEncounterBlocks,
   createRunState,
   createSeededRandom,
   createSlagBlock,
+  DEV_TEST_PRESETS,
   descendBlocks,
   grantXp,
   hasCrossedDangerLine,
@@ -111,6 +114,48 @@ test("authored encounters include special blocks and the multi-cell boss", () =>
   assert.ok(volatileEncounter.some((block) => block.kind === "volatile"));
   const boss = createEncounterBlocks(6).find((block) => block.kind === "boss");
   assert.deepEqual({ width: boss.widthCells, height: boss.heightCells, hp: boss.hp }, { width: 4, height: 2, hp: 42 });
+});
+
+test("Dev Lab presets are deterministic and unknown presets fall back to a row", () => {
+  assert.deepEqual(Object.keys(DEV_TEST_PRESETS), ["single", "row", "shields", "volatile", "mixed", "boss"]);
+
+  const single = createDevTestBlocks("single");
+  assert.deepEqual({ count: single.length, hp: single[0].hp, kind: single[0].kind }, { count: 1, hp: 10, kind: "normal" });
+
+  const row = createDevTestBlocks("row");
+  assert.equal(row.length, 8);
+  assert.ok(row.every((block) => block.hp === 3 && block.kind === "normal"));
+
+  const shields = createDevTestBlocks("shields");
+  assert.equal(shields.length, 8);
+  assert.ok(shields.every((block) => block.shield === 1 && block.kind === "shielded"));
+
+  const volatile = createDevTestBlocks("volatile");
+  assert.equal(volatile.length, 4);
+  assert.ok(volatile.every((block) => block.kind === "volatile" && block.hp === 2));
+
+  const mixed = createDevTestBlocks("mixed");
+  assert.deepEqual(new Set(mixed.map((block) => block.kind)), new Set(["normal", "shielded", "volatile"]));
+
+  const boss = createDevTestBlocks("boss");
+  assert.deepEqual({ count: boss.length, width: boss[0].widthCells, height: boss[0].heightCells, hp: boss[0].hp }, {
+    count: 1,
+    width: 4,
+    height: 2,
+    hp: 42,
+  });
+
+  assert.deepEqual(createDevTestBlocks("unknown").map((block) => block.kind), row.map((block) => block.kind));
+});
+
+test("Dev test state accepts locked balls without changing normal run state", () => {
+  const normalRun = createRunState(20);
+  assert.equal("devTest" in normalRun, false);
+
+  const devRun = createDevTestRunState("linebreaker", { tempered: 9, surveyor: 2, unknown: 3 });
+  assert.equal(devRun.devTest, true);
+  assert.deepEqual(devRun.arsenal.map((ball) => ball.typeId), ["linebreaker"]);
+  assert.deepEqual(devRun.passives, { tempered: 3, surveyor: 2 });
 });
 
 test("descent triggers the danger line and boss slag uses an open column", () => {

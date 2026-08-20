@@ -46,6 +46,21 @@ export function createRunState(seed = Date.now()) {
   };
 }
 
+export function createDevTestRunState(ballId = "iron", passiveRanks = {}) {
+  const selectedBallId = BALL_DEFINITIONS[ballId] ? ballId : "iron";
+  const run = createRunState(1);
+  run.devTest = true;
+  run.arsenal = [{ instanceId: 1, typeId: selectedBallId, spent: false }];
+  run.nextBallInstanceId = 2;
+  run.passives = Object.fromEntries(
+    Object.entries(passiveRanks)
+      .filter(([id, rank]) => PASSIVE_DEFINITIONS[id] && Number(rank) > 0)
+      .map(([id, rank]) => [id, Math.min(PASSIVE_DEFINITIONS[id].maxRank, Math.trunc(Number(rank)))])
+      .filter(([, rank]) => rank > 0),
+  );
+  return run;
+}
+
 export function grantXp(run, amount) {
   run.xp += Math.max(0, amount);
   let levelsGained = 0;
@@ -184,14 +199,41 @@ function parseCell(cell, row, column, encounterId, nextId) {
   };
 }
 
-export function createEncounterBlocks(encounterIndex) {
-  const encounter = ENCOUNTERS[encounterIndex];
-  if (!encounter) return [];
+const row = (...cells) => cells;
+
+export const DEV_TEST_PRESETS = Object.freeze({
+  single: {
+    name: "Single Block",
+    grid: [row(".", ".", ".", "10", ".", ".", ".", ".")],
+  },
+  row: {
+    name: "Horizontal Row",
+    grid: [row("3", "3", "3", "3", "3", "3", "3", "3")],
+  },
+  shields: {
+    name: "Shield Line",
+    grid: [row("S", "S", "S", "S", "S", "S", "S", "S")],
+  },
+  volatile: {
+    name: "Volatile Row",
+    grid: [row(".", ".", "V", "V", "V", "V", ".", ".")],
+  },
+  mixed: {
+    name: "Mixed Formation",
+    grid: [row("1", "S", "V", "1", "S", "V", "1", "S")],
+  },
+  boss: {
+    name: "Boss",
+    grid: [row(".", ".", "W", ".", ".", ".", ".", ".")],
+  },
+});
+
+function createBlocksFromGrid(grid, encounterId) {
   const blocks = [];
   let nextId = 1;
-  encounter.grid.forEach((cells, rowIndex) => {
+  grid.forEach((cells, rowIndex) => {
     cells.forEach((cell, columnIndex) => {
-      const block = parseCell(cell, rowIndex, columnIndex, encounter.id, nextId);
+      const block = parseCell(cell, rowIndex, columnIndex, encounterId, nextId);
       if (block) {
         blocks.push(block);
         nextId += 1;
@@ -199,6 +241,17 @@ export function createEncounterBlocks(encounterIndex) {
     });
   });
   return blocks;
+}
+
+export function createEncounterBlocks(encounterIndex) {
+  const encounter = ENCOUNTERS[encounterIndex];
+  if (!encounter) return [];
+  return createBlocksFromGrid(encounter.grid, encounter.id);
+}
+
+export function createDevTestBlocks(presetId) {
+  const resolvedPresetId = DEV_TEST_PRESETS[presetId] ? presetId : "row";
+  return createBlocksFromGrid(DEV_TEST_PRESETS[resolvedPresetId].grid, `dev-${resolvedPresetId}`);
 }
 
 export function descendBlocks(blocks, rows = 1) {

@@ -112,6 +112,8 @@ button:not(:disabled) { cursor: pointer; }
 .primary-button:hover { filter: brightness(1.09); }
 .secondary-button { border: 1px solid #694534; color: #e7d4c7; background: #2b1d18; }
 .secondary-button:hover { border-color: #a76747; background: #38251d; }
+.dev-lab-button { min-height: 36px; padding: 0 11px; border-color: #39798d; color: #b8efff; background: #17313a; }
+.dev-lab-button:hover { border-color: #7de7ff; background: #204752; }
 .text-button { border: 0; color: #a8978e; background: transparent; }
 .paused-panel[hidden], .start-panel[hidden] { display: none; }
 .toast { position: absolute; left: 50%; bottom: 76px; z-index: 4; padding: 9px 14px; border: 1px solid #75442f; border-radius: 7px; color: #ffe8d6; background: rgba(36,20,15,.95); opacity: 0; transform: translate(-50%, 10px); transition: .2s; pointer-events: none; white-space: nowrap; }
@@ -174,6 +176,24 @@ button:not(:disabled) { cursor: pointer; }
 .help-modal li { margin: 8px 0; padding-left: 5px; }
 .help-modal b { color: #f1d4bd; }
 .keyboard-help { padding: 12px; border: 1px solid #48342c; border-radius: 8px; background: #17110f; font-size: 11px; }
+.dev-modal { width: min(100%, 680px); }
+.dev-modal > p:not(.eyebrow) { max-width: 560px; }
+.dev-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-top: 20px; }
+.dev-field { display: grid; gap: 7px; color: #bda99d; font-size: 10px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.dev-field select, .dev-passive-control select { min-height: 40px; padding: 0 10px; border: 1px solid #584036; border-radius: 7px; color: #f0dfd4; background: #17110f; font: inherit; letter-spacing: normal; text-transform: none; }
+.dev-field select:focus, .dev-passive-control select:focus { outline: 2px solid #54c6e5; outline-offset: 2px; }
+.dev-passive-heading { display: flex; justify-content: space-between; gap: 16px; align-items: end; margin-top: 24px; padding-top: 18px; border-top: 1px solid #382923; }
+.dev-passive-heading h3 { margin: 0; color: #f0ded2; font-size: 14px; }
+.dev-passive-heading p { margin: 4px 0 0; color: #8f7d72; font-size: 10px; }
+.dev-shortcuts { display: flex; gap: 5px; }
+.dev-shortcuts .text-button { min-height: 30px; padding: 0 8px; color: #7de7ff; font-size: 10px; }
+.dev-shortcuts .text-button:hover { color: #fff; }
+.dev-passive-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 12px; }
+.dev-passive-control { display: grid; grid-template-columns: 1fr 76px; gap: 9px; align-items: center; padding: 9px; border: 1px solid #382b26; border-radius: 8px; background: #171210; }
+.dev-passive-control b { display: block; color: #dfd0c6; font-size: 10px; }
+.dev-passive-control small { display: block; margin-top: 3px; color: #806e64; font-size: 9px; line-height: 1.35; }
+.dev-passive-control select { min-height: 34px; padding: 0 7px; font-size: 10px; }
+.dev-actions { margin-top: 24px; }
 
 @media (max-width: 1000px) {
   .game-layout { grid-template-columns: minmax(0, 720px) 220px; }
@@ -200,6 +220,8 @@ button:not(:disabled) { cursor: pointer; }
   .card-options { grid-template-columns: 1fr; }
   .upgrade-card { min-height: 0; }
   .card-icon { margin: 12px 0; }
+  .dev-form-grid, .dev-passive-list { grid-template-columns: 1fr; }
+  .dev-passive-heading { align-items: start; flex-direction: column; }
   .modal { padding: 22px 16px; }
 }
 
@@ -207,6 +229,7 @@ button:not(:disabled) { cursor: pointer; }
   .brand h1 { font-size: 18px; }
   .top-actions { gap: 5px; }
   .icon-button, .shard-readout { height: 36px; min-width: 36px; }
+  .dev-lab-button { min-height: 36px; padding: 0 8px; font-size: 10px; }
   .start-panel { padding: 22px; }
   .start-panel h2 { font-size: 25px; }
   .start-sigil { width: 58px; height: 58px; margin-bottom: 16px; }

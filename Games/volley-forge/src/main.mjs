@@ -13,6 +13,9 @@ import {
   blockXp,
   calculateForgeReward,
   createDraft,
+  createDevTestBlocks,
+  createDevTestRunState,
+  DEV_TEST_PRESETS,
   createEncounterBlocks,
   createRunState,
   createSeededRandom,
@@ -48,6 +51,16 @@ const elements = {
   clearedLabel: document.querySelector("#cleared-label"),
   closeForge: document.querySelector("#close-forge"),
   closeHelp: document.querySelector("#close-help"),
+  devBallSelect: document.querySelector("#dev-ball-select"),
+  devClearPassives: document.querySelector("#dev-clear-passives"),
+  devExit: document.querySelector("#dev-exit"),
+  devLabButton: document.querySelector("#dev-lab-button"),
+  devMaxPassives: document.querySelector("#dev-max-passives"),
+  devModal: document.querySelector("#dev-modal"),
+  devPassiveList: document.querySelector("#dev-passive-list"),
+  devPresetSelect: document.querySelector("#dev-preset-select"),
+  devResetTest: document.querySelector("#dev-reset-test"),
+  devStartTest: document.querySelector("#dev-start-test"),
   encounterLabel: document.querySelector("#encounter-label"),
   encounterName: document.querySelector("#encounter-name"),
   forgeBalance: document.querySelector("#forge-balance"),
@@ -104,7 +117,6 @@ const CANNON_Y = 880;
 const BALL_EXIT_Y = 950;
 const FIXED_STEP = 1 / 120;
 const MAX_FLIGHT_SECONDS = 12;
-
 let meta = loadMeta();
 let run = null;
 let blocks = [];
@@ -126,6 +138,7 @@ let currentDraft = [];
 let pendingBallChoice = null;
 let forgeReturn = "start";
 let sessionId = 0;
+let devTestConfig = null;
 
 class ForgeAudio {
   constructor() {
@@ -217,6 +230,7 @@ function hideAllModals() {
     elements.forgeModal,
     elements.runModal,
     elements.helpModal,
+    elements.devModal,
   ]) modal.hidden = true;
   elements.modalBackdrop.hidden = true;
 }
@@ -228,6 +242,7 @@ function showModal(modal) {
     elements.forgeModal,
     elements.runModal,
     elements.helpModal,
+    elements.devModal,
   ]) candidate.hidden = candidate !== modal;
   elements.modalBackdrop.hidden = false;
   modal.hidden = false;
@@ -237,6 +252,7 @@ function startRun() {
   sessionId += 1;
   const seed = Date.now();
   run = createRunState(seed);
+  devTestConfig = null;
   random = createSeededRandom(seed);
   blocks = createEncounterBlocks(0);
   selectedSlotIndex = 0;
@@ -384,7 +400,7 @@ function damageBlock(block, amount, source = "impact", triggerShatter = true, tr
     block.alive = false;
     run.blocksDestroyed += 1;
     run.score += block.kind === "boss" ? 2400 : 85;
-    grantXp(run, blockXp(block));
+    if (!run.devTest) grantXp(run, blockXp(block));
     audio.play("break");
     spawnParticles(impactX, impactY, BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c", block.kind === "boss" ? 42 : 18, 2.8);
     if (triggerBlockEffects && block.kind === "volatile") damageNeighbors(block, 1, "volatile");
@@ -489,6 +505,17 @@ function finishBall() {
   if (!run || !currentBall) return;
   markBallSpent(run, currentBall.slotInstanceId);
   currentBall = null;
+
+  if (run.devTest) {
+    const boardCleared = !blocks.some((block) => block.alive);
+    if (boardCleared) blocks = createDevTestBlocks(devTestConfig.presetId);
+    for (const ball of run.arsenal) ball.spent = false;
+    run.phase = PHASES.AIMING;
+    selectedSlotIndex = 0;
+    updateInterface();
+    if (boardCleared) showToast("Dev board reset");
+    return;
+  }
 
   if (!blocks.some((block) => block.alive)) {
     completeEncounter();
@@ -721,25 +748,165 @@ function renderPassives() {
   }
 }
 
+function renderDevLabControls() {
+  const selectedBallId = devTestConfig?.ballId ?? elements.devBallSelect.value ?? "iron";
+  const selectedPresetId = devTestConfig?.presetId ?? elements.devPresetSelect.value ?? "row";
+
+  elements.devBallSelect.replaceChildren();
+  for (const definition of Object.values(BALL_DEFINITIONS)) {
+    const option = document.createElement("option");
+    option.value = definition.id;
+    option.textContent = definition.name;
+    elements.devBallSelect.append(option);
+  }
+  elements.devBallSelect.value = BALL_DEFINITIONS[selectedBallId] ? selectedBallId : "iron";
+
+  elements.devPresetSelect.replaceChildren();
+  for (const [id, preset] of Object.entries(DEV_TEST_PRESETS)) {
+    const option = document.createElement("option");
+    option.value = id;
+    option.textContent = preset.name;
+    elements.devPresetSelect.append(option);
+  }
+  elements.devPresetSelect.value = DEV_TEST_PRESETS[selectedPresetId] ? selectedPresetId : "row";
+
+  elements.devPassiveList.replaceChildren();
+  for (const definition of Object.values(PASSIVE_DEFINITIONS)) {
+    const item = document.createElement("label");
+    item.className = "dev-passive-control";
+    const copy = document.createElement("span");
+    copy.innerHTML = `<b>${definition.name}</b><small>${definition.description}</small>`;
+    const select = document.createElement("select");
+    select.dataset.passiveId = definition.id;
+    select.setAttribute("aria-label", `${definition.name} rank`);
+    for (let rank = 0; rank <= definition.maxRank; rank += 1) {
+      const option = document.createElement("option");
+      option.value = rank;
+      option.textContent = rank === 0 ? "Off" : `Rank ${rank}`;
+      select.append(option);
+    }
+    const selectedRank = devTestConfig?.passiveRanks?.[definition.id] ?? 0;
+    select.value = String(Math.min(definition.maxRank, Math.max(0, selectedRank)));
+    item.append(copy, select);
+    elements.devPassiveList.append(item);
+  }
+}
+
+function setDevPassiveRanks(mode) {
+  for (const select of elements.devPassiveList.querySelectorAll("select")) {
+    select.value = mode === "max" ? String(select.options.length - 1) : "0";
+  }
+}
+
+function readDevPassiveRanks() {
+  const ranks = {};
+  for (const select of elements.devPassiveList.querySelectorAll("select")) {
+    const rank = Number(select.value);
+    if (rank > 0) ranks[select.dataset.passiveId] = rank;
+  }
+  return ranks;
+}
+
+function startDevTest() {
+  const ballId = BALL_DEFINITIONS[elements.devBallSelect.value] ? elements.devBallSelect.value : "iron";
+  const presetId = DEV_TEST_PRESETS[elements.devPresetSelect.value] ? elements.devPresetSelect.value : "row";
+  devTestConfig = {
+    ballId,
+    passiveRanks: readDevPassiveRanks(),
+    presetId,
+  };
+
+  sessionId += 1;
+  run = createDevTestRunState(ballId, devTestConfig.passiveRanks);
+  random = createSeededRandom(1);
+  blocks = createDevTestBlocks(presetId);
+  selectedSlotIndex = 0;
+  currentBall = null;
+  pendingContinuation = null;
+  currentDraft = [];
+  pendingBallChoice = null;
+  particles = [];
+  paused = false;
+  aimAngle = -Math.PI / 2;
+  elements.startPanel.hidden = true;
+  elements.pausedPanel.hidden = true;
+  elements.pauseButton.disabled = false;
+  elements.pauseButton.textContent = "Ⅱ";
+  hideAllModals();
+  audio.ensure();
+  updateInterface();
+  showToast(`${BALL_DEFINITIONS[ballId].name} test ready`);
+}
+
+function resetDevTest() {
+  if (!run?.devTest || !devTestConfig) return;
+  currentBall = null;
+  blocks = createDevTestBlocks(devTestConfig.presetId);
+  for (const ball of run.arsenal) ball.spent = false;
+  run.phase = PHASES.AIMING;
+  run.xp = 0;
+  run.pendingDrafts = 0;
+  paused = false;
+  particles = [];
+  hideAllModals();
+  updateInterface();
+  showToast("Dev board reset");
+}
+
+function exitDevLab() {
+  if (run?.devTest) {
+    sessionId += 1;
+    run = null;
+    blocks = [];
+    currentBall = null;
+    particles = [];
+    elements.startPanel.hidden = false;
+    elements.pausedPanel.hidden = true;
+    elements.pauseButton.disabled = true;
+  }
+  devTestConfig = null;
+  paused = false;
+  hideAllModals();
+  updateInterface();
+}
+
+function openDevLab() {
+  if (run && !run.devTest) {
+    showToast("Finish the current run before opening Dev Lab");
+    return;
+  }
+  if (run?.phase === PHASES.BALL_IN_FLIGHT) return;
+  renderDevLabControls();
+  if (run?.devTest) paused = true;
+  showModal(elements.devModal);
+  updateInterface();
+}
+
 function updateInterface() {
   elements.shardCount.textContent = meta.forgeShards.toLocaleString();
   elements.muteButton.textContent = meta.settings.muted ? "×" : "♪";
   elements.muteButton.setAttribute("aria-label", meta.settings.muted ? "Enable sound" : "Mute sound");
   if (!run) {
     renderArsenal();
+    elements.devLabButton.disabled = false;
     return;
   }
 
   const encounter = ENCOUNTERS[run.encounterIndex];
   const readyCount = unspentBallCount(run);
+  elements.devLabButton.disabled = !run.devTest || Boolean(currentBall) || run.phase !== PHASES.AIMING;
   elements.encounterLabel.textContent = encounter.boss ? "BOSS — EMBER FOUNDRY" : `EMBER FOUNDRY · ${run.encounterIndex + 1} / ${ENCOUNTERS.length}`;
   elements.encounterName.textContent = encounter.name;
+  if (run.devTest) {
+    elements.encounterLabel.textContent = "DEV LAB";
+    elements.encounterName.textContent = DEV_TEST_PRESETS[devTestConfig.presetId].name;
+  }
   elements.phaseLabel.textContent = run.phase.replaceAll("_", " ");
   elements.turnLabel.textContent = `TURN ${run.turn}`;
   elements.levelLabel.textContent = run.level;
   elements.scoreLabel.textContent = run.score.toLocaleString();
   elements.blockLabel.textContent = blocks.filter((block) => block.alive).length;
-  elements.clearedLabel.textContent = `${run.encountersCleared} / ${ENCOUNTERS.length}`;
+  elements.clearedLabel.textContent = run.devTest ? "SANDBOX" : `${run.encountersCleared} / ${ENCOUNTERS.length}`;
   elements.shotCount.textContent = `${readyCount} / ${run.arsenal.length}`;
   const threshold = xpToNext(run.level);
   elements.xpLabel.textContent = `${run.xp} / ${threshold}`;
@@ -1189,16 +1356,23 @@ elements.closeHelp.addEventListener("click", closeHelp);
 elements.pauseButton.addEventListener("click", () => togglePause());
 elements.resumeButton.addEventListener("click", () => togglePause(false));
 elements.restartButton.addEventListener("click", startRun);
+elements.devLabButton.addEventListener("click", openDevLab);
+elements.devMaxPassives.addEventListener("click", () => setDevPassiveRanks("max"));
+elements.devClearPassives.addEventListener("click", () => setDevPassiveRanks("clear"));
+elements.devStartTest.addEventListener("click", startDevTest);
+elements.devResetTest.addEventListener("click", resetDevTest);
+elements.devExit.addEventListener("click", exitDevLab);
 elements.replaceBack.addEventListener("click", () => {
   pendingBallChoice = null;
   showModal(elements.cardModal);
 });
 elements.muteButton.addEventListener("click", () => {
   meta.settings.muted = !meta.settings.muted;
-  saveMeta(meta);
+  if (!run?.devTest) saveMeta(meta);
   updateInterface();
   if (!meta.settings.muted) audio.play("wall");
 });
 
+renderDevLabControls();
 updateInterface();
 requestAnimationFrame(frame);
