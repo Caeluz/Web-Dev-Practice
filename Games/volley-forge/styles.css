@@ -195,6 +195,18 @@ button:not(:disabled) { cursor: pointer; }
 .dev-passive-control select { min-height: 34px; padding: 0 7px; font-size: 10px; }
 .dev-actions { margin-top: 24px; }
 
+@media (min-width: 1001px) {
+  html, body { height: 100%; overflow: hidden; overscroll-behavior: none; }
+  body { min-height: 0; }
+  .game-shell { height: 100dvh; padding-bottom: 22px; }
+  .game-layout {
+    grid-template-columns: 230px minmax(360px, min(720px, max(360px, calc((100dvh - 190px) * .75)))) 230px;
+    min-height: 0;
+  }
+  .forge-frame { min-height: 0; }
+  .canvas-wrap { width: 100%; }
+}
+
 @media (max-width: 1000px) {
   .game-layout { grid-template-columns: minmax(0, 720px) 220px; }
   .arsenal-panel { grid-column: 1 / -1; grid-row: 2; }

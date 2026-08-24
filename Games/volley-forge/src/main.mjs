@@ -1064,6 +1064,21 @@ function drawBackground() {
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
   ctx.save();
+  ctx.shadowColor = "rgba(255, 132, 76, .7)";
+  ctx.shadowBlur = 10;
+  ctx.strokeStyle = "rgba(255, 157, 99, .42)";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(PLAY_LEFT, PLAY_TOP);
+  ctx.lineTo(PLAY_LEFT, DANGER_Y);
+  ctx.moveTo(PLAY_RIGHT, PLAY_TOP);
+  ctx.lineTo(PLAY_RIGHT, DANGER_Y);
+  ctx.moveTo(PLAY_LEFT, PLAY_TOP);
+  ctx.lineTo(PLAY_RIGHT, PLAY_TOP);
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
   ctx.shadowColor = "#ff3f21";
   ctx.shadowBlur = 18;
   ctx.strokeStyle = "rgba(255,71,42,.9)";
