@@ -55,7 +55,10 @@ export function createDevTestRunState(ballId = "iron", passiveRanks = {}) {
   run.passives = Object.fromEntries(
     Object.entries(passiveRanks)
       .filter(([id, rank]) => PASSIVE_DEFINITIONS[id] && Number(rank) > 0)
-      .map(([id, rank]) => [id, Math.min(PASSIVE_DEFINITIONS[id].maxRank, Math.trunc(Number(rank)))])
+      .map(([id, rank]) => [
+        id,
+        Math.min(PASSIVE_DEFINITIONS[id].maxRank, Math.trunc(Number(rank))),
+      ])
       .filter(([, rank]) => rank > 0),
   );
   return run;
@@ -128,7 +131,8 @@ export function applyDraftChoice(run, choice) {
     const definition = PASSIVE_DEFINITIONS[choice.id];
     if (!definition) return { applied: false, reason: "unknown" };
     const currentRank = run.passives[choice.id] ?? 0;
-    if (currentRank >= definition.maxRank) return { applied: false, reason: "max_rank" };
+    if (currentRank >= definition.maxRank)
+      return { applied: false, reason: "max_rank" };
     run.passives[choice.id] = currentRank + 1;
     return { applied: true, requiresReplacement: false };
   }
@@ -153,8 +157,18 @@ export function applyDraftChoice(run, choice) {
 }
 
 export function replaceBall(run, slotIndex, typeId) {
-  if (!BALL_DEFINITIONS[typeId] || slotIndex < 0 || slotIndex >= run.arsenal.length) return false;
-  if (run.arsenal.some((ball, index) => index !== slotIndex && ball.typeId === typeId)) return false;
+  if (
+    !BALL_DEFINITIONS[typeId] ||
+    slotIndex < 0 ||
+    slotIndex >= run.arsenal.length
+  )
+    return false;
+  if (
+    run.arsenal.some(
+      (ball, index) => index !== slotIndex && ball.typeId === typeId,
+    )
+  )
+    return false;
   run.arsenal[slotIndex] = {
     instanceId: run.nextBallInstanceId,
     typeId,
@@ -210,6 +224,17 @@ export const DEV_TEST_PRESETS = Object.freeze({
     name: "Horizontal Row",
     grid: [row("3", "3", "3", "3", "3", "3", "3", "3")],
   },
+  maze: {
+    name: "Serpentine Maze",
+    grid: [
+      row("10", "10", "10", "10", "10", "10", "10", "10"),
+      row(".", ".", ".", ".", ".", ".", ".", "10"),
+      row(".", "10", "10", "10", "10", "10", "10", "10"),
+      row(".", ".", ".", ".", ".", ".", ".", "."),
+      row("10", "10", "10", "10", "10", "10", "10", "."),
+      row(".", ".", ".", ".", ".", ".", ".", "."),
+    ],
+  },
   shields: {
     name: "Shield Line",
     grid: [row("S", "S", "S", "S", "S", "S", "S", "S")],
@@ -251,7 +276,10 @@ export function createEncounterBlocks(encounterIndex) {
 
 export function createDevTestBlocks(presetId) {
   const resolvedPresetId = DEV_TEST_PRESETS[presetId] ? presetId : "row";
-  return createBlocksFromGrid(DEV_TEST_PRESETS[resolvedPresetId].grid, `dev-${resolvedPresetId}`);
+  return createBlocksFromGrid(
+    DEV_TEST_PRESETS[resolvedPresetId].grid,
+    `dev-${resolvedPresetId}`,
+  );
 }
 
 export function descendBlocks(blocks, rows = 1) {
@@ -261,17 +289,25 @@ export function descendBlocks(blocks, rows = 1) {
 }
 
 export function hasCrossedDangerLine(blocks, dangerRow = 9) {
-  return blocks.some((block) => block.alive && block.row + block.heightCells > dangerRow);
+  return blocks.some(
+    (block) => block.alive && block.row + block.heightCells > dangerRow,
+  );
 }
 
 export function createSlagBlock(blocks, turn, random = Math.random) {
   const occupiedColumns = new Set(
     blocks
       .filter((block) => block.alive && block.row < 1)
-      .flatMap((block) => Array.from({ length: block.widthCells }, (_, index) => block.column + index)),
+      .flatMap((block) =>
+        Array.from(
+          { length: block.widthCells },
+          (_, index) => block.column + index,
+        ),
+      ),
   );
-  const openColumns = Array.from({ length: 8 }, (_, index) => index)
-    .filter((column) => !occupiedColumns.has(column));
+  const openColumns = Array.from({ length: 8 }, (_, index) => index).filter(
+    (column) => !occupiedColumns.has(column),
+  );
   if (openColumns.length === 0) return null;
   const column = openColumns[Math.floor(random() * openColumns.length)];
   const hp = 1 + Math.floor(turn / 3);
@@ -297,7 +333,9 @@ export function blockXp(block) {
 export function calculateForgeReward(run, victory) {
   return Math.max(
     1,
-    run.encountersCleared * 2 + Math.floor(run.score / 1200) + (victory ? 15 : 0),
+    run.encountersCleared * 2 +
+      Math.floor(run.score / 1200) +
+      (victory ? 15 : 0),
   );
 }
 

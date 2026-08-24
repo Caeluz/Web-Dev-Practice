@@ -117,7 +117,7 @@ test("authored encounters include special blocks and the multi-cell boss", () =>
 });
 
 test("Dev Lab presets are deterministic and unknown presets fall back to a row", () => {
-  assert.deepEqual(Object.keys(DEV_TEST_PRESETS), ["single", "row", "shields", "volatile", "mixed", "boss"]);
+  assert.deepEqual(Object.keys(DEV_TEST_PRESETS), ["single", "row", "maze", "shields", "volatile", "mixed", "boss"]);
 
   const single = createDevTestBlocks("single");
   assert.deepEqual({ count: single.length, hp: single[0].hp, kind: single[0].kind }, { count: 1, hp: 10, kind: "normal" });
@@ -125,6 +125,10 @@ test("Dev Lab presets are deterministic and unknown presets fall back to a row",
   const row = createDevTestBlocks("row");
   assert.equal(row.length, 8);
   assert.ok(row.every((block) => block.hp === 3 && block.kind === "normal"));
+
+  const maze = createDevTestBlocks("maze");
+  assert.equal(maze.length, 27);
+  assert.ok(maze.every((block) => block.hp === 10 && block.kind === "normal"));
 
   const shields = createDevTestBlocks("shields");
   assert.equal(shields.length, 8);
