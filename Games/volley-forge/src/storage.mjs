@@ -16,7 +16,8 @@ export function createDefaultMeta() {
 
 export function sanitizeMeta(value) {
   const fallback = createDefaultMeta();
-  if (!value || typeof value !== "object" || value.version !== SAVE_VERSION) return fallback;
+  if (!value || typeof value !== "object" || value.version !== SAVE_VERSION)
+    return fallback;
 
   const knownIds = new Set([
     ...STARTER_UNLOCKS,
@@ -39,7 +40,9 @@ export function sanitizeMeta(value) {
 export function loadMeta(storage = globalThis.localStorage) {
   try {
     const serialized = storage?.getItem(SAVE_KEY);
-    return serialized ? sanitizeMeta(JSON.parse(serialized)) : createDefaultMeta();
+    return serialized
+      ? sanitizeMeta(JSON.parse(serialized))
+      : createDefaultMeta();
   } catch {
     return createDefaultMeta();
   }
@@ -58,8 +61,10 @@ export function saveMeta(meta, storage = globalThis.localStorage) {
 export function purchaseUnlock(meta, unlockId) {
   const unlock = CONTENT_UNLOCKS.find((entry) => entry.id === unlockId);
   if (!unlock) return { purchased: false, reason: "unknown" };
-  if (meta.unlockedIds.includes(unlockId)) return { purchased: false, reason: "owned" };
-  if (meta.forgeShards < unlock.price) return { purchased: false, reason: "insufficient" };
+  if (meta.unlockedIds.includes(unlockId))
+    return { purchased: false, reason: "owned" };
+  if (meta.forgeShards < unlock.price)
+    return { purchased: false, reason: "insufficient" };
   meta.forgeShards -= unlock.price;
   meta.unlockedIds.push(unlockId);
   return { purchased: true };

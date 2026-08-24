@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <meta name="theme-color" content="#100d0c" />
     <meta
       name="description"
@@ -19,14 +22,45 @@
           <div>
             <p class="eyebrow">Arcane ricochet roguelite</p>
             <h1>Volley-Forge</h1>
-          </div>  
+          </div>
         </div>
         <div class="top-actions">
-          <span class="shard-readout" title="Forge shards"><i aria-hidden="true">◆</i> <b id="shard-count">0</b></span>
-          <button id="help-button" class="icon-button" type="button" aria-label="How to play">?</button>
-          <button id="mute-button" class="icon-button" type="button" aria-label="Mute sound">♪</button>
-          <button id="pause-button" class="icon-button" type="button" aria-label="Pause game" disabled>Ⅱ</button>
-          <button id="dev-lab-button" class="secondary-button dev-lab-button" type="button" aria-label="Open Dev Lab">Dev Lab</button>
+          <span class="shard-readout" title="Forge shards"
+            ><i aria-hidden="true">◆</i> <b id="shard-count">0</b></span
+          >
+          <button
+            id="help-button"
+            class="icon-button"
+            type="button"
+            aria-label="How to play"
+          >
+            ?
+          </button>
+          <button
+            id="mute-button"
+            class="icon-button"
+            type="button"
+            aria-label="Mute sound"
+          >
+            ♪
+          </button>
+          <button
+            id="pause-button"
+            class="icon-button"
+            type="button"
+            aria-label="Pause game"
+            disabled
+          >
+            Ⅱ
+          </button>
+          <button
+            id="dev-lab-button"
+            class="secondary-button dev-lab-button"
+            type="button"
+            aria-label="Open Dev Lab"
+          >
+            Dev Lab
+          </button>
         </div>
       </header>
 
@@ -40,7 +74,9 @@
             <span id="shot-count" class="chip">0 / 0</span>
           </div>
           <div id="arsenal" class="arsenal" aria-label="Equipped balls"></div>
-          <p class="panel-tip">Select a ready ball, then drag across the forge to aim.</p>
+          <p class="panel-tip">
+            Select a ready ball, then drag across the forge to aim.
+          </p>
         </aside>
 
         <section class="forge-frame">
@@ -52,15 +88,30 @@
             <span id="phase-label" class="phase-label">READY</span>
           </div>
           <div class="canvas-wrap" id="canvas-wrap">
-            <canvas id="game-canvas" width="720" height="960" aria-label="Volley-Forge play field"></canvas>
+            <canvas
+              id="game-canvas"
+              width="720"
+              height="960"
+              aria-label="Volley-Forge play field"
+            ></canvas>
             <section id="start-panel" class="start-panel">
               <div class="start-sigil" aria-hidden="true"><span></span></div>
               <p class="eyebrow">The furnace calls</p>
               <h2>Break the descending forge.</h2>
-              <p>Aim each ball. Spend the entire arsenal. Survive the descent.</p>
+              <p>
+                Aim each ball. Spend the entire arsenal. Survive the descent.
+              </p>
               <div class="start-actions">
-                <button id="start-button" class="primary-button" type="button">Begin Run</button>
-                <button id="forge-button" class="secondary-button" type="button">Open Forge</button>
+                <button id="start-button" class="primary-button" type="button">
+                  Begin Run
+                </button>
+                <button
+                  id="forge-button"
+                  class="secondary-button"
+                  type="button"
+                >
+                  Open Forge
+                </button>
               </div>
               <small>Mouse, touch, or keyboard supported</small>
             </section>
@@ -68,11 +119,24 @@
               <p class="eyebrow">Furnace banked</p>
               <h2>Paused</h2>
               <div class="start-actions">
-                <button id="resume-button" class="primary-button" type="button">Resume</button>
-                <button id="restart-button" class="secondary-button" type="button">Restart Run</button>
+                <button id="resume-button" class="primary-button" type="button">
+                  Resume
+                </button>
+                <button
+                  id="restart-button"
+                  class="secondary-button"
+                  type="button"
+                >
+                  Restart Run
+                </button>
               </div>
             </div>
-            <div id="toast" class="toast" role="status" aria-live="polite"></div>
+            <div
+              id="toast"
+              class="toast"
+              role="status"
+              aria-live="polite"
+            ></div>
           </div>
         </section>
 
@@ -94,41 +158,85 @@
             <div><span>Forge XP</span><b id="xp-label">0 / 6</b></div>
             <div class="xp-track"><i id="xp-fill"></i></div>
           </div>
-          <div class="passive-heading"><span>Tempering</span><small>PASSIVES</small></div>
-          <div id="passive-list" class="passive-list"><p>No passive upgrades yet.</p></div>
+          <div class="passive-heading">
+            <span>Tempering</span><small>PASSIVES</small>
+          </div>
+          <div id="passive-list" class="passive-list">
+            <p>No passive upgrades yet.</p>
+          </div>
         </aside>
       </section>
     </main>
 
     <div id="modal-backdrop" class="modal-backdrop" hidden>
-      <section id="card-modal" class="modal card-modal" role="dialog" aria-modal="true" aria-labelledby="card-title" hidden>
+      <section
+        id="card-modal"
+        class="modal card-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="card-title"
+        hidden
+      >
         <p class="eyebrow">Level forged</p>
         <h2 id="card-title">Choose one upgrade</h2>
         <p id="card-subtitle">Shape this run with one of three cards.</p>
         <div id="card-options" class="card-options"></div>
       </section>
 
-      <section id="replace-modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="replace-title" hidden>
+      <section
+        id="replace-modal"
+        class="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="replace-title"
+        hidden
+      >
         <p class="eyebrow">Arsenal full</p>
         <h2 id="replace-title">Replace one ball</h2>
         <p id="replace-copy"></p>
         <div id="replace-options" class="replace-options"></div>
-        <button id="replace-back" class="text-button" type="button">Back to cards</button>
+        <button id="replace-back" class="text-button" type="button">
+          Back to cards
+        </button>
       </section>
 
-      <section id="forge-modal" class="modal forge-modal" role="dialog" aria-modal="true" aria-labelledby="forge-title" hidden>
+      <section
+        id="forge-modal"
+        class="modal forge-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forge-title"
+        hidden
+      >
         <p class="eyebrow">Permanent discoveries, never permanent power</p>
         <h2 id="forge-title">The Unlock Forge</h2>
-        <p>Spend shards to add new balls and passives to future level-up pools.</p>
-        <div class="forge-balance">Available shards <strong><i>◆</i> <span id="forge-balance">0</span></strong></div>
+        <p>
+          Spend shards to add new balls and passives to future level-up pools.
+        </p>
+        <div class="forge-balance">
+          Available shards
+          <strong><i>◆</i> <span id="forge-balance">0</span></strong>
+        </div>
         <div id="unlock-list" class="unlock-list"></div>
-        <button id="close-forge" class="secondary-button" type="button">Return</button>
+        <button id="close-forge" class="secondary-button" type="button">
+          Return
+        </button>
       </section>
 
-      <section id="dev-modal" class="modal dev-modal" role="dialog" aria-modal="true" aria-labelledby="dev-title" hidden>
+      <section
+        id="dev-modal"
+        class="modal dev-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="dev-title"
+        hidden
+      >
         <p class="eyebrow">Developer tools</p>
         <h2 id="dev-title">Dev Lab</h2>
-        <p>Configure a temporary test run. It never grants XP, rewards, or saved progress.</p>
+        <p>
+          Configure a temporary test run. It never grants XP, rewards, or saved
+          progress.
+        </p>
         <div class="dev-form-grid">
           <label class="dev-field">
             <span>Ball</span>
@@ -145,19 +253,36 @@
             <p>Choose individual ranks or use a shortcut.</p>
           </div>
           <div class="dev-shortcuts">
-            <button id="dev-max-passives" class="text-button" type="button">Max All</button>
-            <button id="dev-clear-passives" class="text-button" type="button">Clear All</button>
+            <button id="dev-max-passives" class="text-button" type="button">
+              Max All
+            </button>
+            <button id="dev-clear-passives" class="text-button" type="button">
+              Clear All
+            </button>
           </div>
         </div>
         <div id="dev-passive-list" class="dev-passive-list"></div>
         <div class="modal-actions dev-actions">
-          <button id="dev-start-test" class="primary-button" type="button">Start Test</button>
-          <button id="dev-reset-test" class="secondary-button" type="button">Reset Test</button>
-          <button id="dev-exit" class="text-button" type="button">Exit Dev Lab</button>
+          <button id="dev-start-test" class="primary-button" type="button">
+            Start Test
+          </button>
+          <button id="dev-reset-test" class="secondary-button" type="button">
+            Reset Test
+          </button>
+          <button id="dev-exit" class="text-button" type="button">
+            Exit Dev Lab
+          </button>
         </div>
       </section>
 
-      <section id="run-modal" class="modal run-modal" role="dialog" aria-modal="true" aria-labelledby="run-title" hidden>
+      <section
+        id="run-modal"
+        class="modal run-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="run-title"
+        hidden
+      >
         <p id="run-eyebrow" class="eyebrow">Run complete</p>
         <h2 id="run-title">The forge remembers.</h2>
         <p id="run-message"></p>
@@ -167,23 +292,46 @@
           <div><span>Shards earned</span><b id="result-shards">◆ 0</b></div>
         </div>
         <div class="modal-actions">
-          <button id="new-run-button" class="primary-button" type="button">Forge Again</button>
-          <button id="run-forge-button" class="secondary-button" type="button">Open Forge</button>
+          <button id="new-run-button" class="primary-button" type="button">
+            Forge Again
+          </button>
+          <button id="run-forge-button" class="secondary-button" type="button">
+            Open Forge
+          </button>
         </div>
       </section>
 
-      <section id="help-modal" class="modal help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title" hidden>
+      <section
+        id="help-modal"
+        class="modal help-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="help-title"
+        hidden
+      >
         <p class="eyebrow">Field manual</p>
         <h2 id="help-title">How to play</h2>
         <ol>
           <li><b>Select</b> any glowing ball in your arsenal.</li>
           <li><b>Drag and release</b> above the cannon to aim and fire.</li>
-          <li><b>Exhaust every ball.</b> Surviving blocks then descend one row.</li>
-          <li><b>Break every block</b> before any of them crosses the molten danger line.</li>
-          <li><b>Level up</b> from destroyed blocks and choose one of three upgrades.</li>
+          <li>
+            <b>Exhaust every ball.</b> Surviving blocks then descend one row.
+          </li>
+          <li>
+            <b>Break every block</b> before any of them crosses the molten
+            danger line.
+          </li>
+          <li>
+            <b>Level up</b> from destroyed blocks and choose one of three
+            upgrades.
+          </li>
         </ol>
-        <p class="keyboard-help"><b>Keyboard:</b> 1–4 select · arrows aim · Space fires · P pauses</p>
-        <button id="close-help" class="primary-button" type="button">Back to the Forge</button>
+        <p class="keyboard-help">
+          <b>Keyboard:</b> 1–4 select · arrows aim · Space fires · P pauses
+        </p>
+        <button id="close-help" class="primary-button" type="button">
+          Back to the Forge
+        </button>
       </section>
     </div>
 

@@ -3,6 +3,7 @@ import {
   BLOCK_TYPES,
   ENCOUNTERS,
   PASSIVE_DEFINITIONS,
+  DEV_TEST_PRESETS,
   STARTER_UNLOCKS,
 } from "./data.mjs";
 
@@ -212,46 +213,6 @@ function parseCell(cell, row, column, encounterId, nextId) {
     alive: true,
   };
 }
-
-const row = (...cells) => cells;
-
-export const DEV_TEST_PRESETS = Object.freeze({
-  single: {
-    name: "Single Block",
-    grid: [row(".", ".", ".", "10", ".", ".", ".", ".")],
-  },
-  row: {
-    name: "Horizontal Row",
-    grid: [row("3", "3", "3", "3", "3", "3", "3", "3")],
-  },
-  maze: {
-    name: "Serpentine Maze",
-    grid: [
-      row("10", "10", "10", "10", "10", "10", "10", "10"),
-      row(".", ".", ".", ".", ".", ".", ".", "10"),
-      row(".", "10", "10", "10", "10", "10", "10", "10"),
-      row(".", ".", ".", ".", ".", ".", ".", "."),
-      row("10", "10", "10", "10", "10", "10", "10", "."),
-      row(".", ".", ".", ".", ".", ".", ".", "."),
-    ],
-  },
-  shields: {
-    name: "Shield Line",
-    grid: [row("S", "S", "S", "S", "S", "S", "S", "S")],
-  },
-  volatile: {
-    name: "Volatile Row",
-    grid: [row(".", ".", "V", "V", "V", "V", ".", ".")],
-  },
-  mixed: {
-    name: "Mixed Formation",
-    grid: [row("1", "S", "V", "1", "S", "V", "1", "S")],
-  },
-  boss: {
-    name: "Boss",
-    grid: [row(".", ".", "W", ".", ".", ".", ".", ".")],
-  },
-});
 
 function createBlocksFromGrid(grid, encounterId) {
   const blocks = [];

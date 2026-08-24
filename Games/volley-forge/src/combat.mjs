@@ -22,10 +22,19 @@ export function circleRectCollision(ball, rect) {
     const top = Math.abs(ball.y - rect.y);
     const bottom = Math.abs(rect.y + rect.height - ball.y);
     const minimum = Math.min(left, right, top, bottom);
-    if (minimum === left) { dx = -1; dy = 0; }
-    else if (minimum === right) { dx = 1; dy = 0; }
-    else if (minimum === top) { dx = 0; dy = -1; }
-    else { dx = 0; dy = 1; }
+    if (minimum === left) {
+      dx = -1;
+      dy = 0;
+    } else if (minimum === right) {
+      dx = 1;
+      dy = 0;
+    } else if (minimum === top) {
+      dx = 0;
+      dy = -1;
+    } else {
+      dx = 0;
+      dy = 1;
+    }
     distance = 0;
   } else {
     dx /= distance;
@@ -44,7 +53,8 @@ export function reflectedVelocity(vx, vy, normal) {
 }
 
 export function getHorizontalLaserTargets(blocks, origin) {
-  const originCenterRow = origin.row + Math.floor((origin.heightCells ?? 1) / 2);
+  const originCenterRow =
+    origin.row + Math.floor((origin.heightCells ?? 1) / 2);
   return blocks.filter((block) => {
     if (!block.alive || block === origin) return false;
     const blockBottom = block.row + (block.heightCells ?? 1);
@@ -65,14 +75,18 @@ export function resolveImpact(ball, passiveRanks = {}) {
   if (ball.isFinal) damage += passiveRanks.overcharged ?? 0;
 
   ball.hits += 1;
-  const emberBurst = definition.ability === "ember_burst" && !ball.emberTriggered;
+  const emberBurst =
+    definition.ability === "ember_burst" && !ball.emberTriggered;
   if (emberBurst) ball.emberTriggered = true;
 
-  const stormChain = definition.ability === "storm_chain" && ball.hits % 3 === 0;
-  const penetrates = definition.ability === "drill" && ball.penetrationsRemaining > 0;
+  const stormChain =
+    definition.ability === "storm_chain" && ball.hits % 3 === 0;
+  const penetrates =
+    definition.ability === "drill" && ball.penetrationsRemaining > 0;
   if (penetrates) ball.penetrationsRemaining -= 1;
 
-  const lineBurst = definition.ability === "horizontal_laser" && !ball.lineTriggered;
+  const lineBurst =
+    definition.ability === "horizontal_laser" && !ball.lineTriggered;
   if (lineBurst) ball.lineTriggered = true;
 
   return { damage, emberBurst, stormChain, lineBurst, penetrates };

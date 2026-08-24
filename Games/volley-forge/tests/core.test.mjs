@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import {
   BALL_DEFINITIONS,
   CONTENT_UNLOCKS,
+  DEV_TEST_PRESETS,
   ENCOUNTERS,
   PASSIVE_DEFINITIONS,
   STARTER_UNLOCKS,
@@ -19,7 +20,6 @@ import {
   createRunState,
   createSeededRandom,
   createSlagBlock,
-  DEV_TEST_PRESETS,
   descendBlocks,
   grantXp,
   hasCrossedDangerLine,

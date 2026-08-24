@@ -2,6 +2,7 @@ import {
   BALL_DEFINITIONS,
   BLOCK_TYPES,
   CONTENT_UNLOCKS,
+  DEV_TEST_PRESETS,
   ENCOUNTERS,
   PASSIVE_DEFINITIONS,
   getContentName,
@@ -15,7 +16,6 @@ import {
   createDraft,
   createDevTestBlocks,
   createDevTestRunState,
-  DEV_TEST_PRESETS,
   createEncounterBlocks,
   createRunState,
   createSeededRandom,
@@ -185,7 +185,10 @@ class ForgeAudio {
     if (name === "danger") this.tone(75, 0.4, "sawtooth", 0.06, -20);
     if (name === "victory") {
       [262, 330, 392, 523].forEach((note, index) => {
-        window.setTimeout(() => this.tone(note, 0.22, "triangle", 0.04, 80), index * 110);
+        window.setTimeout(
+          () => this.tone(note, 0.22, "triangle", 0.04, 80),
+          index * 110,
+        );
       });
     }
   }
@@ -220,7 +223,10 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.add("show");
   window.clearTimeout(toastTimer);
-  toastTimer = window.setTimeout(() => elements.toast.classList.remove("show"), 1600);
+  toastTimer = window.setTimeout(
+    () => elements.toast.classList.remove("show"),
+    1600,
+  );
 }
 
 function hideAllModals() {
@@ -231,7 +237,8 @@ function hideAllModals() {
     elements.runModal,
     elements.helpModal,
     elements.devModal,
-  ]) modal.hidden = true;
+  ])
+    modal.hidden = true;
   elements.modalBackdrop.hidden = true;
 }
 
@@ -243,7 +250,8 @@ function showModal(modal) {
     elements.runModal,
     elements.helpModal,
     elements.devModal,
-  ]) candidate.hidden = candidate !== modal;
+  ])
+    candidate.hidden = candidate !== modal;
   elements.modalBackdrop.hidden = false;
   modal.hidden = false;
 }
@@ -280,7 +288,10 @@ function loadEncounter(index) {
   blocks = createEncounterBlocks(index);
   currentBall = null;
   for (const ball of run.arsenal) ball.spent = false;
-  selectedSlotIndex = Math.max(0, run.arsenal.findIndex((ball) => !ball.spent));
+  selectedSlotIndex = Math.max(
+    0,
+    run.arsenal.findIndex((ball) => !ball.spent),
+  );
   updateInterface();
   showToast(`${ENCOUNTERS[index].name} — ${ENCOUNTERS[index].subtitle}`);
 }
@@ -344,16 +355,22 @@ function areOrthogonalNeighbors(first, second) {
   const secondRight = second.column + second.widthCells;
   const secondTop = second.row;
   const secondBottom = second.row + second.heightCells;
-  const horizontalTouch = (firstRight === secondLeft || secondRight === firstLeft)
-    && Math.max(firstTop, secondTop) < Math.min(firstBottom, secondBottom);
-  const verticalTouch = (firstBottom === secondTop || secondBottom === firstTop)
-    && Math.max(firstLeft, secondLeft) < Math.min(firstRight, secondRight);
+  const horizontalTouch =
+    (firstRight === secondLeft || secondRight === firstLeft) &&
+    Math.max(firstTop, secondTop) < Math.min(firstBottom, secondBottom);
+  const verticalTouch =
+    (firstBottom === secondTop || secondBottom === firstTop) &&
+    Math.max(firstLeft, secondLeft) < Math.min(firstRight, secondRight);
   return horizontalTouch || verticalTouch;
 }
 
 function damageNeighbors(origin, amount, source) {
-  const neighbors = blocks.filter((block) => block.alive && block !== origin && areOrthogonalNeighbors(origin, block));
-  for (const neighbor of neighbors) damageBlock(neighbor, amount, source, false);
+  const neighbors = blocks.filter(
+    (block) =>
+      block.alive && block !== origin && areOrthogonalNeighbors(origin, block),
+  );
+  for (const neighbor of neighbors)
+    damageBlock(neighbor, amount, source, false);
 }
 
 function nearestBlock(origin) {
@@ -365,7 +382,10 @@ function nearestBlock(origin) {
   for (const block of blocks) {
     if (!block.alive || block === origin) continue;
     const rect = blockRect(block, false);
-    const distance = Math.hypot(rect.x + rect.width / 2 - originX, rect.y + rect.height / 2 - originY);
+    const distance = Math.hypot(
+      rect.x + rect.width / 2 - originX,
+      rect.y + rect.height / 2 - originY,
+    );
     if (distance < nearestDistance) {
       nearest = block;
       nearestDistance = distance;
@@ -374,7 +394,13 @@ function nearestBlock(origin) {
   return nearest;
 }
 
-function damageBlock(block, amount, source = "impact", triggerShatter = true, triggerBlockEffects = true) {
+function damageBlock(
+  block,
+  amount,
+  source = "impact",
+  triggerShatter = true,
+  triggerBlockEffects = true,
+) {
   if (!run || !block.alive || amount <= 0) return 0;
   const rect = blockRect(block);
   const impactX = rect.x + rect.width / 2;
@@ -392,7 +418,13 @@ function damageBlock(block, amount, source = "impact", triggerShatter = true, tr
   block.hp -= amount;
   run.damageDealt += dealt;
   run.score += dealt * 22;
-  spawnParticles(impactX, impactY, BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c", 5 + dealt * 2, 1.1);
+  spawnParticles(
+    impactX,
+    impactY,
+    BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c",
+    5 + dealt * 2,
+    1.1,
+  );
   audio.play("hit");
   shake = Math.min(12, shake + 1.2 + dealt * 0.5);
 
@@ -402,8 +434,15 @@ function damageBlock(block, amount, source = "impact", triggerShatter = true, tr
     run.score += block.kind === "boss" ? 2400 : 85;
     if (!run.devTest) grantXp(run, blockXp(block));
     audio.play("break");
-    spawnParticles(impactX, impactY, BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c", block.kind === "boss" ? 42 : 18, 2.8);
-    if (triggerBlockEffects && block.kind === "volatile") damageNeighbors(block, 1, "volatile");
+    spawnParticles(
+      impactX,
+      impactY,
+      BLOCK_TYPES[block.kind]?.edge ?? "#ff8a4c",
+      block.kind === "boss" ? 42 : 18,
+      2.8,
+    );
+    if (triggerBlockEffects && block.kind === "volatile")
+      damageNeighbors(block, 1, "volatile");
     const shatteringRank = run.passives.shattering ?? 0;
     if (triggerBlockEffects && triggerShatter && shatteringRank > 0) {
       damageNeighbors(block, shatteringRank, "shattering");
@@ -480,15 +519,26 @@ function updateBall(step) {
   }
 
   for (const block of blocks) {
-    if (!block.alive || (ball.contactCooldowns.get(block.id) ?? 0) > ball.elapsed) continue;
+    if (
+      !block.alive ||
+      (ball.contactCooldowns.get(block.id) ?? 0) > ball.elapsed
+    )
+      continue;
     const collision = circleRectCollision(ball, blockRect(block));
     if (collision) {
       handleBlockCollision(ball, block, collision);
-      if (BALL_DEFINITIONS[ball.typeId].ability !== "drill" || ball.penetrationsRemaining <= 0) break;
+      if (
+        BALL_DEFINITIONS[ball.typeId].ability !== "drill" ||
+        ball.penetrationsRemaining <= 0
+      )
+        break;
     }
   }
 
-  if (ball.trail.length === 0 || Math.hypot(ball.x - ball.trail[0].x, ball.y - ball.trail[0].y) > 8) {
+  if (
+    ball.trail.length === 0 ||
+    Math.hypot(ball.x - ball.trail[0].x, ball.y - ball.trail[0].y) > 8
+  ) {
     ball.trail.unshift({ x: ball.x, y: ball.y, life: 1 });
     if (ball.trail.length > 18) ball.trail.pop();
   }
@@ -496,7 +546,8 @@ function updateBall(step) {
   if (!blocks.some((block) => block.alive)) {
     finishBall();
   } else if (hasFlightEnded(ball, BALL_EXIT_Y, MAX_FLIGHT_SECONDS)) {
-    if (ball.elapsed >= MAX_FLIGHT_SECONDS) showToast("Shot recalled by the forge");
+    if (ball.elapsed >= MAX_FLIGHT_SECONDS)
+      showToast("Shot recalled by the forge");
     finishBall();
   }
 }
@@ -542,7 +593,12 @@ function beginTurnResolution() {
   updateInterface();
 
   window.setTimeout(() => {
-    if (!run || activeSession !== sessionId || run.phase !== PHASES.TURN_RESOLUTION) return;
+    if (
+      !run ||
+      activeSession !== sessionId ||
+      run.phase !== PHASES.TURN_RESOLUTION
+    )
+      return;
     for (const block of blocks) block.visualRow = block.row;
     if (hasCrossedDangerLine(blocks, DANGER_ROW)) {
       endRun(false);
@@ -600,16 +656,19 @@ function showCardDraft() {
   }
 
   run.phase = PHASES.CARD_DRAFT;
-  elements.cardSubtitle.textContent = run.pendingDrafts > 1
-    ? `${run.pendingDrafts} upgrade choices are waiting.`
-    : "Shape this run with one of three cards.";
+  elements.cardSubtitle.textContent =
+    run.pendingDrafts > 1
+      ? `${run.pendingDrafts} upgrade choices are waiting.`
+      : "Shape this run with one of three cards.";
   elements.cardOptions.replaceChildren();
   currentDraft.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "upgrade-card";
     const isBall = choice.kind === "ball";
-    const rank = isBall ? "NEW ARSENAL BALL" : `RANK ${(run.passives[choice.id] ?? 0) + 1} / ${choice.definition.maxRank}`;
+    const rank = isBall
+      ? "NEW ARSENAL BALL"
+      : `RANK ${(run.passives[choice.id] ?? 0) + 1} / ${choice.definition.maxRank}`;
     button.innerHTML = `
       <span class="card-kind">${isBall ? "Forged ball" : "Passive tempering"}</span>
       <i class="card-icon" aria-hidden="true">${isBall ? "●" : choice.definition.icon}</i>
@@ -682,8 +741,12 @@ function endRun(victory) {
   if (victory) audio.play("victory");
   else audio.play("danger");
 
-  elements.runEyebrow.textContent = victory ? "Foundry conquered" : "The line was breached";
-  elements.runTitle.textContent = victory ? "The Forge Warden is broken." : "The forge claims this volley.";
+  elements.runEyebrow.textContent = victory
+    ? "Foundry conquered"
+    : "The line was breached";
+  elements.runTitle.textContent = victory
+    ? "The Forge Warden is broken."
+    : "The forge claims this volley.";
   elements.runMessage.textContent = victory
     ? "Your discoveries return to the forge. Future runs still begin with one Iron Ball."
     : "Spend the shards you recovered, reshape the card pool, and try a sharper build.";
@@ -749,8 +812,10 @@ function renderPassives() {
 }
 
 function renderDevLabControls() {
-  const selectedBallId = devTestConfig?.ballId ?? elements.devBallSelect.value ?? "iron";
-  const selectedPresetId = devTestConfig?.presetId ?? elements.devPresetSelect.value ?? "row";
+  const selectedBallId =
+    devTestConfig?.ballId ?? elements.devBallSelect.value ?? "iron";
+  const selectedPresetId =
+    devTestConfig?.presetId ?? elements.devPresetSelect.value ?? "row";
 
   elements.devBallSelect.replaceChildren();
   for (const definition of Object.values(BALL_DEFINITIONS)) {
@@ -759,7 +824,9 @@ function renderDevLabControls() {
     option.textContent = definition.name;
     elements.devBallSelect.append(option);
   }
-  elements.devBallSelect.value = BALL_DEFINITIONS[selectedBallId] ? selectedBallId : "iron";
+  elements.devBallSelect.value = BALL_DEFINITIONS[selectedBallId]
+    ? selectedBallId
+    : "iron";
 
   elements.devPresetSelect.replaceChildren();
   for (const [id, preset] of Object.entries(DEV_TEST_PRESETS)) {
@@ -768,7 +835,9 @@ function renderDevLabControls() {
     option.textContent = preset.name;
     elements.devPresetSelect.append(option);
   }
-  elements.devPresetSelect.value = DEV_TEST_PRESETS[selectedPresetId] ? selectedPresetId : "row";
+  elements.devPresetSelect.value = DEV_TEST_PRESETS[selectedPresetId]
+    ? selectedPresetId
+    : "row";
 
   elements.devPassiveList.replaceChildren();
   for (const definition of Object.values(PASSIVE_DEFINITIONS)) {
@@ -786,7 +855,9 @@ function renderDevLabControls() {
       select.append(option);
     }
     const selectedRank = devTestConfig?.passiveRanks?.[definition.id] ?? 0;
-    select.value = String(Math.min(definition.maxRank, Math.max(0, selectedRank)));
+    select.value = String(
+      Math.min(definition.maxRank, Math.max(0, selectedRank)),
+    );
     item.append(copy, select);
     elements.devPassiveList.append(item);
   }
@@ -808,8 +879,12 @@ function readDevPassiveRanks() {
 }
 
 function startDevTest() {
-  const ballId = BALL_DEFINITIONS[elements.devBallSelect.value] ? elements.devBallSelect.value : "iron";
-  const presetId = DEV_TEST_PRESETS[elements.devPresetSelect.value] ? elements.devPresetSelect.value : "row";
+  const ballId = BALL_DEFINITIONS[elements.devBallSelect.value]
+    ? elements.devBallSelect.value
+    : "iron";
+  const presetId = DEV_TEST_PRESETS[elements.devPresetSelect.value]
+    ? elements.devPresetSelect.value
+    : "row";
   devTestConfig = {
     ballId,
     passiveRanks: readDevPassiveRanks(),
@@ -885,7 +960,10 @@ function openDevLab() {
 function updateInterface() {
   elements.shardCount.textContent = meta.forgeShards.toLocaleString();
   elements.muteButton.textContent = meta.settings.muted ? "×" : "♪";
-  elements.muteButton.setAttribute("aria-label", meta.settings.muted ? "Enable sound" : "Mute sound");
+  elements.muteButton.setAttribute(
+    "aria-label",
+    meta.settings.muted ? "Enable sound" : "Mute sound",
+  );
   if (!run) {
     renderArsenal();
     elements.devLabButton.disabled = false;
@@ -894,19 +972,27 @@ function updateInterface() {
 
   const encounter = ENCOUNTERS[run.encounterIndex];
   const readyCount = unspentBallCount(run);
-  elements.devLabButton.disabled = !run.devTest || Boolean(currentBall) || run.phase !== PHASES.AIMING;
-  elements.encounterLabel.textContent = encounter.boss ? "BOSS — EMBER FOUNDRY" : `EMBER FOUNDRY · ${run.encounterIndex + 1} / ${ENCOUNTERS.length}`;
+  elements.devLabButton.disabled =
+    !run.devTest || Boolean(currentBall) || run.phase !== PHASES.AIMING;
+  elements.encounterLabel.textContent = encounter.boss
+    ? "BOSS — EMBER FOUNDRY"
+    : `EMBER FOUNDRY · ${run.encounterIndex + 1} / ${ENCOUNTERS.length}`;
   elements.encounterName.textContent = encounter.name;
   if (run.devTest) {
     elements.encounterLabel.textContent = "DEV LAB";
-    elements.encounterName.textContent = DEV_TEST_PRESETS[devTestConfig.presetId].name;
+    elements.encounterName.textContent =
+      DEV_TEST_PRESETS[devTestConfig.presetId].name;
   }
   elements.phaseLabel.textContent = run.phase.replaceAll("_", " ");
   elements.turnLabel.textContent = `TURN ${run.turn}`;
   elements.levelLabel.textContent = run.level;
   elements.scoreLabel.textContent = run.score.toLocaleString();
-  elements.blockLabel.textContent = blocks.filter((block) => block.alive).length;
-  elements.clearedLabel.textContent = run.devTest ? "SANDBOX" : `${run.encountersCleared} / ${ENCOUNTERS.length}`;
+  elements.blockLabel.textContent = blocks.filter(
+    (block) => block.alive,
+  ).length;
+  elements.clearedLabel.textContent = run.devTest
+    ? "SANDBOX"
+    : `${run.encountersCleared} / ${ENCOUNTERS.length}`;
   elements.shotCount.textContent = `${readyCount} / ${run.arsenal.length}`;
   const threshold = xpToNext(run.level);
   elements.xpLabel.textContent = `${run.xp} / ${threshold}`;
@@ -921,9 +1007,10 @@ function renderUnlockForge() {
   for (const unlock of CONTENT_UNLOCKS) {
     const owned = meta.unlockedIds.includes(unlock.id);
     const canAfford = meta.forgeShards >= unlock.price;
-    const definition = unlock.kind === "ball"
-      ? BALL_DEFINITIONS[unlock.contentId]
-      : PASSIVE_DEFINITIONS[unlock.contentId];
+    const definition =
+      unlock.kind === "ball"
+        ? BALL_DEFINITIONS[unlock.contentId]
+        : PASSIVE_DEFINITIONS[unlock.contentId];
     const row = document.createElement("article");
     row.className = "unlock-item";
     row.innerHTML = `<div><h3>${getContentName(unlock)}</h3><p>${definition.description}</p></div>`;
@@ -952,16 +1039,21 @@ function openForge(returnTarget) {
 }
 
 function closeForge() {
-  if (forgeReturn === "run" && run?.phase === PHASES.RUN_OVER) showModal(elements.runModal);
+  if (forgeReturn === "run" && run?.phase === PHASES.RUN_OVER)
+    showModal(elements.runModal);
   else hideAllModals();
 }
 
 function togglePause(force) {
-  if (!run || run.phase === PHASES.RUN_OVER || run.phase === PHASES.CARD_DRAFT) return;
+  if (!run || run.phase === PHASES.RUN_OVER || run.phase === PHASES.CARD_DRAFT)
+    return;
   paused = typeof force === "boolean" ? force : !paused;
   elements.pausedPanel.hidden = !paused;
   elements.pauseButton.textContent = paused ? "▶" : "Ⅱ";
-  elements.pauseButton.setAttribute("aria-label", paused ? "Resume game" : "Pause game");
+  elements.pauseButton.setAttribute(
+    "aria-label",
+    paused ? "Resume game" : "Pause game",
+  );
   if (!paused) lastFrameTime = performance.now();
   updateInterface();
 }
@@ -1001,7 +1093,16 @@ function spawnParticles(x, y, color, count, force = 1) {
 }
 
 function spawnArc(x1, y1, x2, y2) {
-  particles.push({ kind: "arc", x1, y1, x2, y2, life: 0.18, maxLife: 0.18, color: "#b8afff" });
+  particles.push({
+    kind: "arc",
+    x1,
+    y1,
+    x2,
+    y2,
+    life: 0.18,
+    maxLife: 0.18,
+    color: "#b8afff",
+  });
 }
 
 function spawnHorizontalBeam(y, color) {
@@ -1048,17 +1149,23 @@ function drawBackground() {
   ctx.lineWidth = 1;
   for (let column = 0; column <= 8; column += 1) {
     const x = PLAY_LEFT + column * CELL_WIDTH;
-    ctx.beginPath(); ctx.moveTo(x, PLAY_TOP); ctx.lineTo(x, DANGER_Y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x, PLAY_TOP);
+    ctx.lineTo(x, DANGER_Y);
+    ctx.stroke();
   }
   for (let rowIndex = 0; rowIndex <= DANGER_ROW; rowIndex += 1) {
     const y = GRID_TOP + rowIndex * CELL_HEIGHT;
-    ctx.beginPath(); ctx.moveTo(PLAY_LEFT, y); ctx.lineTo(PLAY_RIGHT, y); ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(PLAY_LEFT, y);
+    ctx.lineTo(PLAY_RIGHT, y);
+    ctx.stroke();
   }
 
   const sideGlow = ctx.createLinearGradient(0, 0, WIDTH, 0);
   sideGlow.addColorStop(0, "rgba(255,82,30,.17)");
-  sideGlow.addColorStop(.12, "transparent");
-  sideGlow.addColorStop(.88, "transparent");
+  sideGlow.addColorStop(0.12, "transparent");
+  sideGlow.addColorStop(0.88, "transparent");
   sideGlow.addColorStop(1, "rgba(255,82,30,.17)");
   ctx.fillStyle = sideGlow;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
@@ -1084,7 +1191,10 @@ function drawBackground() {
   ctx.strokeStyle = "rgba(255,71,42,.9)";
   ctx.lineWidth = 2;
   ctx.setLineDash([12, 9]);
-  ctx.beginPath(); ctx.moveTo(PLAY_LEFT, DANGER_Y); ctx.lineTo(PLAY_RIGHT, DANGER_Y); ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(PLAY_LEFT, DANGER_Y);
+  ctx.lineTo(PLAY_RIGHT, DANGER_Y);
+  ctx.stroke();
   ctx.setLineDash([]);
   ctx.restore();
   ctx.fillStyle = "rgba(255,109,62,.76)";
@@ -1102,25 +1212,38 @@ function drawBlock(block) {
   ctx.save();
   ctx.shadowColor = style.edge;
   ctx.shadowBlur = block.kind === "boss" ? 18 : 7;
-  const gradient = ctx.createLinearGradient(rect.x, rect.y, rect.x, rect.y + rect.height);
+  const gradient = ctx.createLinearGradient(
+    rect.x,
+    rect.y,
+    rect.x,
+    rect.y + rect.height,
+  );
   gradient.addColorStop(0, style.edge);
-  gradient.addColorStop(.08, style.color);
+  gradient.addColorStop(0.08, style.color);
   gradient.addColorStop(1, "#221816");
   ctx.fillStyle = gradient;
-  roundedRect(rect.x, rect.y, rect.width, rect.height, block.kind === "boss" ? 12 : 7);
+  roundedRect(
+    rect.x,
+    rect.y,
+    rect.width,
+    rect.height,
+    block.kind === "boss" ? 12 : 7,
+  );
   ctx.fill();
   ctx.shadowBlur = 0;
-  ctx.strokeStyle = healthRatio < .45 ? "#ff6840" : style.edge;
+  ctx.strokeStyle = healthRatio < 0.45 ? "#ff6840" : style.edge;
   ctx.lineWidth = block.kind === "boss" ? 3 : 1.5;
   ctx.stroke();
 
-  ctx.globalAlpha = .18;
+  ctx.globalAlpha = 0.18;
   ctx.strokeStyle = "#fff";
   ctx.beginPath();
-  ctx.moveTo(rect.x + 8, rect.y + rect.height * .72);
-  ctx.lineTo(rect.x + rect.width * .35, rect.y + rect.height * .25);
-  if (healthRatio < .72) ctx.lineTo(rect.x + rect.width * .62, rect.y + rect.height * .7);
-  if (healthRatio < .4) ctx.lineTo(rect.x + rect.width - 8, rect.y + rect.height * .3);
+  ctx.moveTo(rect.x + 8, rect.y + rect.height * 0.72);
+  ctx.lineTo(rect.x + rect.width * 0.35, rect.y + rect.height * 0.25);
+  if (healthRatio < 0.72)
+    ctx.lineTo(rect.x + rect.width * 0.62, rect.y + rect.height * 0.7);
+  if (healthRatio < 0.4)
+    ctx.lineTo(rect.x + rect.width - 8, rect.y + rect.height * 0.3);
   ctx.stroke();
   ctx.globalAlpha = 1;
 
@@ -1128,14 +1251,25 @@ function drawBlock(block) {
     ctx.strokeStyle = "#ffb052";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.arc(rect.x + rect.width / 2, rect.y + rect.height / 2, 12, 0, Math.PI * 2);
+    ctx.arc(
+      rect.x + rect.width / 2,
+      rect.y + rect.height / 2,
+      12,
+      0,
+      Math.PI * 2,
+    );
     ctx.moveTo(rect.x + rect.width / 2 - 12, rect.y + rect.height / 2);
     ctx.lineTo(rect.x + rect.width / 2 + 12, rect.y + rect.height / 2);
     ctx.stroke();
   }
   if (block.kind === "boss") {
     ctx.fillStyle = "rgba(255, 89, 42, .14)";
-    ctx.fillRect(rect.x + 12, rect.y + rect.height - 20, (rect.width - 24) * healthRatio, 7);
+    ctx.fillRect(
+      rect.x + 12,
+      rect.y + rect.height - 20,
+      (rect.width - 24) * healthRatio,
+      7,
+    );
     ctx.strokeStyle = "#ff8c52";
     ctx.strokeRect(rect.x + 12, rect.y + rect.height - 20, rect.width - 24, 7);
   }
@@ -1177,24 +1311,41 @@ function traceAimPath() {
   for (let step = 0; step < 420 && collisions < collisionLimit; step += 1) {
     x += vx * 5;
     y += vy * 5;
-    if (x - definition.radius <= PLAY_LEFT || x + definition.radius >= PLAY_RIGHT) {
-      vx *= -1; x = Math.max(PLAY_LEFT + definition.radius, Math.min(PLAY_RIGHT - definition.radius, x));
-      points.push({ x, y }); collisions += 1; lastBlock = null;
+    if (
+      x - definition.radius <= PLAY_LEFT ||
+      x + definition.radius >= PLAY_RIGHT
+    ) {
+      vx *= -1;
+      x = Math.max(
+        PLAY_LEFT + definition.radius,
+        Math.min(PLAY_RIGHT - definition.radius, x),
+      );
+      points.push({ x, y });
+      collisions += 1;
+      lastBlock = null;
     }
     if (y - definition.radius <= PLAY_TOP) {
-      vy = Math.abs(vy); y = PLAY_TOP + definition.radius;
-      points.push({ x, y }); collisions += 1; lastBlock = null;
+      vy = Math.abs(vy);
+      y = PLAY_TOP + definition.radius;
+      points.push({ x, y });
+      collisions += 1;
+      lastBlock = null;
     }
     for (const block of blocks) {
       if (!block.alive || block.id === lastBlock) continue;
-      const collision = circleRectCollision({ x, y, radius: definition.radius }, blockRect(block));
+      const collision = circleRectCollision(
+        { x, y, radius: definition.radius },
+        blockRect(block),
+      );
       if (!collision) continue;
       const dot = vx * collision.nx + vy * collision.ny;
       vx -= 2 * dot * collision.nx;
       vy -= 2 * dot * collision.ny;
       x += collision.nx * (collision.overlap + 3);
       y += collision.ny * (collision.overlap + 3);
-      points.push({ x, y }); collisions += 1; lastBlock = block.id;
+      points.push({ x, y });
+      collisions += 1;
+      lastBlock = block.id;
       break;
     }
     if (y > DANGER_Y + 80) break;
@@ -1204,11 +1355,13 @@ function traceAimPath() {
   ctx.save();
   ctx.strokeStyle = definition.color;
   ctx.fillStyle = definition.color;
-  ctx.globalAlpha = .54;
+  ctx.globalAlpha = 0.54;
   ctx.lineWidth = 2;
   ctx.setLineDash([7, 10]);
   ctx.beginPath();
-  points.forEach((point, index) => index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y));
+  points.forEach((point, index) =>
+    index === 0 ? ctx.moveTo(point.x, point.y) : ctx.lineTo(point.x, point.y),
+  );
   ctx.stroke();
   ctx.setLineDash([]);
   ctx.restore();
@@ -1223,7 +1376,8 @@ function drawCannon() {
   ctx.strokeStyle = "#b16945";
   ctx.lineWidth = 3;
   roundedRect(-18, -58, 36, 62, 8);
-  ctx.fill(); ctx.stroke();
+  ctx.fill();
+  ctx.stroke();
   ctx.fillStyle = "#1a1210";
   ctx.fillRect(-11, -55, 22, 42);
   ctx.restore();
@@ -1233,11 +1387,16 @@ function drawCannon() {
   ctx.fillStyle = "#2d211c";
   ctx.strokeStyle = "#875039";
   ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.arc(0, 0, 38, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, 38, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
   ctx.fillStyle = definition.color;
   ctx.shadowColor = definition.glow;
   ctx.shadowBlur = 15;
-  ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 0, 14, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -1245,19 +1404,30 @@ function drawBall(ball) {
   const definition = BALL_DEFINITIONS[ball.typeId];
   ctx.save();
   ball.trail.forEach((point) => {
-    ctx.globalAlpha = Math.max(0, point.life) * .25;
+    ctx.globalAlpha = Math.max(0, point.life) * 0.25;
     ctx.fillStyle = definition.color;
-    ctx.beginPath(); ctx.arc(point.x, point.y, ball.radius * point.life, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath();
+    ctx.arc(point.x, point.y, ball.radius * point.life, 0, Math.PI * 2);
+    ctx.fill();
   });
   ctx.globalAlpha = 1;
   ctx.shadowColor = definition.glow;
   ctx.shadowBlur = 20;
-  const gradient = ctx.createRadialGradient(ball.x - 3, ball.y - 4, 1, ball.x, ball.y, ball.radius);
+  const gradient = ctx.createRadialGradient(
+    ball.x - 3,
+    ball.y - 4,
+    1,
+    ball.x,
+    ball.y,
+    ball.radius,
+  );
   gradient.addColorStop(0, "#fff");
-  gradient.addColorStop(.26, definition.color);
+  gradient.addColorStop(0.26, definition.color);
   gradient.addColorStop(1, "#24120e");
   ctx.fillStyle = gradient;
-  ctx.beginPath(); ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath();
+  ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
 }
 
@@ -1268,28 +1438,41 @@ function drawParticles() {
     ctx.strokeStyle = particle.color;
     ctx.fillStyle = particle.color;
     if (particle.kind === "spark") {
-      ctx.shadowColor = particle.color; ctx.shadowBlur = 8;
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 8;
       ctx.fillRect(particle.x, particle.y, particle.size, particle.size);
     } else if (particle.kind === "beam") {
-      ctx.shadowColor = particle.color; ctx.shadowBlur = 18;
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 18;
       ctx.lineCap = "round";
       ctx.lineWidth = 8;
       ctx.globalAlpha *= 0.35;
-      ctx.beginPath(); ctx.moveTo(particle.x1, particle.y); ctx.lineTo(particle.x2, particle.y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(particle.x1, particle.y);
+      ctx.lineTo(particle.x2, particle.y);
+      ctx.stroke();
       ctx.globalAlpha *= 2.8;
       ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(particle.x1, particle.y); ctx.lineTo(particle.x2, particle.y); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(particle.x1, particle.y);
+      ctx.lineTo(particle.x2, particle.y);
+      ctx.stroke();
     } else {
       ctx.lineWidth = 3;
-      ctx.shadowColor = particle.color; ctx.shadowBlur = 12;
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 12;
       ctx.beginPath();
       ctx.moveTo(particle.x1, particle.y1);
       const segments = 5;
       for (let index = 1; index < segments; index += 1) {
         const t = index / segments;
         ctx.lineTo(
-          particle.x1 + (particle.x2 - particle.x1) * t + (visualRandom() - .5) * 14,
-          particle.y1 + (particle.y2 - particle.y1) * t + (visualRandom() - .5) * 14,
+          particle.x1 +
+            (particle.x2 - particle.x1) * t +
+            (visualRandom() - 0.5) * 14,
+          particle.y1 +
+            (particle.y2 - particle.y1) * t +
+            (visualRandom() - 0.5) * 14,
         );
       }
       ctx.lineTo(particle.x2, particle.y2);
@@ -1301,7 +1484,11 @@ function drawParticles() {
 
 function render() {
   ctx.save();
-  if (shake > 0) ctx.translate((visualRandom() - .5) * shake, (visualRandom() - .5) * shake);
+  if (shake > 0)
+    ctx.translate(
+      (visualRandom() - 0.5) * shake,
+      (visualRandom() - 0.5) * shake,
+    );
   drawBackground();
   if (run) {
     traceAimPath();
@@ -1338,7 +1525,8 @@ canvas.addEventListener("pointerdown", (event) => {
 });
 
 canvas.addEventListener("pointermove", (event) => {
-  if (!aimingWithPointer || !run || run.phase !== PHASES.AIMING || paused) return;
+  if (!aimingWithPointer || !run || run.phase !== PHASES.AIMING || paused)
+    return;
   setAimFromPoint(getCanvasPoint(event));
 });
 
@@ -1355,10 +1543,22 @@ window.addEventListener("keydown", (event) => {
   if (!run) return;
   if (event.key === "p" || event.key === "P") togglePause();
   if (paused || run.phase !== PHASES.AIMING) return;
-  if (event.key === "ArrowLeft") { aimAngle = clampAimAngle(aimAngle - .045); event.preventDefault(); }
-  if (event.key === "ArrowRight") { aimAngle = clampAimAngle(aimAngle + .045); event.preventDefault(); }
-  if (event.key === "ArrowUp") { aimAngle += (-Math.PI / 2 - aimAngle) * .18; event.preventDefault(); }
-  if (event.code === "Space") { event.preventDefault(); fireSelectedBall(); }
+  if (event.key === "ArrowLeft") {
+    aimAngle = clampAimAngle(aimAngle - 0.045);
+    event.preventDefault();
+  }
+  if (event.key === "ArrowRight") {
+    aimAngle = clampAimAngle(aimAngle + 0.045);
+    event.preventDefault();
+  }
+  if (event.key === "ArrowUp") {
+    aimAngle += (-Math.PI / 2 - aimAngle) * 0.18;
+    event.preventDefault();
+  }
+  if (event.code === "Space") {
+    event.preventDefault();
+    fireSelectedBall();
+  }
 });
 
 elements.startButton.addEventListener("click", startRun);
@@ -1372,8 +1572,12 @@ elements.pauseButton.addEventListener("click", () => togglePause());
 elements.resumeButton.addEventListener("click", () => togglePause(false));
 elements.restartButton.addEventListener("click", startRun);
 elements.devLabButton.addEventListener("click", openDevLab);
-elements.devMaxPassives.addEventListener("click", () => setDevPassiveRanks("max"));
-elements.devClearPassives.addEventListener("click", () => setDevPassiveRanks("clear"));
+elements.devMaxPassives.addEventListener("click", () =>
+  setDevPassiveRanks("max"),
+);
+elements.devClearPassives.addEventListener("click", () =>
+  setDevPassiveRanks("clear"),
+);
 elements.devStartTest.addEventListener("click", startDevTest);
 elements.devResetTest.addEventListener("click", resetDevTest);
 elements.devExit.addEventListener("click", exitDevLab);

@@ -27,7 +27,8 @@ export const BALL_DEFINITIONS = Object.freeze({
     id: "hammer",
     name: "Hammer Ball",
     shortName: "Hammer",
-    description: "A slower, heavier shot that deals 2 damage on every collision.",
+    description:
+      "A slower, heavier shot that deals 2 damage on every collision.",
     color: "#f5c26b",
     glow: "#d67c28",
     speed: 500,
@@ -39,7 +40,8 @@ export const BALL_DEFINITIONS = Object.freeze({
     id: "drill",
     name: "Drill Ball",
     shortName: "Drill",
-    description: "Pierces its first two blocks before returning to normal ricochets.",
+    description:
+      "Pierces its first two blocks before returning to normal ricochets.",
     color: "#73e6d1",
     glow: "#24aa9b",
     speed: 630,
@@ -51,7 +53,8 @@ export const BALL_DEFINITIONS = Object.freeze({
     id: "storm",
     name: "Storm Orb",
     shortName: "Storm",
-    description: "Every third block hit arcs damage into the nearest surviving block.",
+    description:
+      "Every third block hit arcs damage into the nearest surviving block.",
     color: "#aaa6ff",
     glow: "#6a5cff",
     speed: 600,
@@ -63,7 +66,8 @@ export const BALL_DEFINITIONS = Object.freeze({
     id: "linebreaker",
     name: "Linebreaker",
     shortName: "Linebreaker",
-    description: "Its first damaging hit each shot fires a horizontal beam through the impact row.",
+    description:
+      "Its first damaging hit each shot fires a horizontal beam through the impact row.",
     color: "#7de7ff",
     glow: "#25bfff",
     speed: 600,
@@ -84,7 +88,8 @@ export const PASSIVE_DEFINITIONS = Object.freeze({
   banked: {
     id: "banked",
     name: "Banked Heat",
-    description: "A wall bounce empowers the next block hit by +1 damage per rank.",
+    description:
+      "A wall bounce empowers the next block hit by +1 damage per rank.",
     icon: "↗",
     maxRank: 3,
   },
@@ -98,7 +103,8 @@ export const PASSIVE_DEFINITIONS = Object.freeze({
   shattering: {
     id: "shattering",
     name: "Shattering Force",
-    description: "Destroyed blocks deal 1 damage per rank to orthogonal neighbors.",
+    description:
+      "Destroyed blocks deal 1 damage per rank to orthogonal neighbors.",
     icon: "✣",
     maxRank: 3,
   },
@@ -113,8 +119,18 @@ export const PASSIVE_DEFINITIONS = Object.freeze({
 
 export const CONTENT_UNLOCKS = Object.freeze([
   { id: "ball.drill", kind: "ball", contentId: "drill", price: 28 },
-  { id: "passive.overcharged", kind: "passive", contentId: "overcharged", price: 22 },
-  { id: "passive.shattering", kind: "passive", contentId: "shattering", price: 32 },
+  {
+    id: "passive.overcharged",
+    kind: "passive",
+    contentId: "overcharged",
+    price: 22,
+  },
+  {
+    id: "passive.shattering",
+    kind: "passive",
+    contentId: "shattering",
+    price: 32,
+  },
   { id: "ball.storm", kind: "ball", contentId: "storm", price: 40 },
   { id: "ball.linebreaker", kind: "ball", contentId: "linebreaker", price: 36 },
 ]);
@@ -203,6 +219,44 @@ export const ENCOUNTERS = Object.freeze([
   },
 ]);
 
+export const DEV_TEST_PRESETS = Object.freeze({
+  single: {
+    name: "Single Block",
+    grid: [row(".", ".", ".", "10", ".", ".", ".", ".")],
+  },
+  row: {
+    name: "Horizontal Row",
+    grid: [row("3", "3", "3", "3", "3", "3", "3", "3")],
+  },
+  maze: {
+    name: "Serpentine Maze",
+    grid: [
+      row("10", "10", "10", "10", "10", "10", "10", "10"),
+      row(".", ".", ".", ".", ".", ".", ".", "10"),
+      row(".", "10", "10", "10", "10", "10", "10", "10"),
+      row(".", ".", ".", ".", ".", ".", ".", "."),
+      row("10", "10", "10", "10", "10", "10", "10", "."),
+      row(".", ".", ".", ".", ".", ".", ".", "."),
+    ],
+  },
+  shields: {
+    name: "Shield Line",
+    grid: [row("S", "S", "S", "S", "S", "S", "S", "S")],
+  },
+  volatile: {
+    name: "Volatile Row",
+    grid: [row(".", ".", "V", "V", "V", "V", ".", ".")],
+  },
+  mixed: {
+    name: "Mixed Formation",
+    grid: [row("1", "S", "V", "1", "S", "V", "1", "S")],
+  },
+  boss: {
+    name: "Boss",
+    grid: [row(".", ".", "W", ".", ".", ".", ".", ".")],
+  },
+});
+
 export const BLOCK_TYPES = Object.freeze({
   normal: { color: "#56606d", edge: "#929ba5", xp: 1 },
   shielded: { color: "#586d7e", edge: "#9dd9f0", xp: 2 },
@@ -212,8 +266,9 @@ export const BLOCK_TYPES = Object.freeze({
 });
 
 export function getContentName(unlock) {
-  const definition = unlock.kind === "ball"
-    ? BALL_DEFINITIONS[unlock.contentId]
-    : PASSIVE_DEFINITIONS[unlock.contentId];
+  const definition =
+    unlock.kind === "ball"
+      ? BALL_DEFINITIONS[unlock.contentId]
+      : PASSIVE_DEFINITIONS[unlock.contentId];
   return definition?.name ?? unlock.contentId;
 }
