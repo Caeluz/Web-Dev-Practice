@@ -21,6 +21,7 @@ export const BALL_DEFINITIONS = Object.freeze({
     speed: 585,
     radius: 10,
     damage: 1,
+    burstDamage: 1,
     ability: "ember_burst",
   },
   hammer: {
@@ -47,6 +48,7 @@ export const BALL_DEFINITIONS = Object.freeze({
     speed: 630,
     radius: 9,
     damage: 1,
+    penetrations: 2,
     ability: "drill",
   },
   storm: {
@@ -60,6 +62,8 @@ export const BALL_DEFINITIONS = Object.freeze({
     speed: 600,
     radius: 10,
     damage: 1,
+    chainEvery: 3,
+    chainDamage: 1,
     ability: "storm_chain",
   },
   linebreaker: {
@@ -73,7 +77,24 @@ export const BALL_DEFINITIONS = Object.freeze({
     speed: 600,
     radius: 10,
     damage: 1,
+    beamDamage: 1,
     ability: "horizontal_laser",
+  },
+  pulse: {
+    id: "pulse",
+    name: "Pulse Core",
+    shortName: "Pulse",
+    description:
+      "Releases expanding shockwaves from damaging impacts.",
+    color: "#cf8cff",
+    glow: "#9e4dff",
+    speed: 590,
+    radius: 10,
+    damage: 1,
+    pulseRadius: 104,
+    pulseCharges: 99,
+    pulseDamage: 1,
+    ability: "ball_pulse",
   },
 });
 
@@ -133,6 +154,7 @@ export const CONTENT_UNLOCKS = Object.freeze([
   },
   { id: "ball.storm", kind: "ball", contentId: "storm", price: 40 },
   { id: "ball.linebreaker", kind: "ball", contentId: "linebreaker", price: 36 },
+  { id: "ball.pulse", kind: "ball", contentId: "pulse", price: 36 },
 ]);
 
 export const STARTER_UNLOCKS = Object.freeze([

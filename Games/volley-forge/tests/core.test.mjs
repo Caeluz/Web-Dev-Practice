@@ -32,6 +32,7 @@ import {
   circleRectCollision,
   clampAimAngle,
   getHorizontalLaserTargets,
+  getPulseTargets,
   hasFlightEnded,
   reflectedVelocity,
   resolveImpact,
@@ -206,6 +207,34 @@ test("Linebreaker is a Forge unlock and not a starter ball", () => {
   });
 });
 
+test("Pulse Core is a Forge unlock with impact pulses", () => {
+  assert.deepEqual(
+    {
+      damage: BALL_DEFINITIONS.pulse.damage,
+      speed: BALL_DEFINITIONS.pulse.speed,
+      radius: BALL_DEFINITIONS.pulse.radius,
+      pulseRadius: BALL_DEFINITIONS.pulse.pulseRadius,
+      pulseCharges: BALL_DEFINITIONS.pulse.pulseCharges,
+      ability: BALL_DEFINITIONS.pulse.ability,
+    },
+    {
+      damage: 1,
+      speed: 590,
+      radius: 10,
+      pulseRadius: 104,
+      pulseCharges: 99,
+      ability: "ball_pulse",
+    },
+  );
+  assert.equal(STARTER_UNLOCKS.includes("ball.pulse"), false);
+  assert.deepEqual(CONTENT_UNLOCKS.find((unlock) => unlock.id === "ball.pulse"), {
+    id: "ball.pulse",
+    kind: "ball",
+    contentId: "pulse",
+    price: 36,
+  });
+});
+
 test("Linebreaker targets every living block crossing its impact row once", () => {
   const origin = { id: "origin", alive: true, row: 2, heightCells: 1 };
   const targets = getHorizontalLaserTargets([
@@ -219,7 +248,49 @@ test("Linebreaker targets every living block crossing its impact row once", () =
   assert.deepEqual(targets.map((block) => block.id), ["same-row", "gap-row", "multi-row"]);
 });
 
-test("all six ball abilities and passive damage modifiers resolve correctly", () => {
+test("Pulse Core targets living blocks inside its impact radius", () => {
+  const origin = { id: "origin", alive: true, rect: { x: 40, y: 40, width: 20, height: 20 } };
+  const targets = getPulseTargets(
+    [
+      origin,
+      { id: "near", alive: true, rect: { x: 70, y: 40, width: 20, height: 20 } },
+      { id: "diagonal", alive: true, rect: { x: 65, y: 65, width: 20, height: 20 } },
+      { id: "far", alive: true, rect: { x: 120, y: 40, width: 20, height: 20 } },
+      { id: "dead", alive: false, rect: { x: 70, y: 40, width: 20, height: 20 } },
+    ],
+    origin,
+    { x: 50, y: 50, radius: 30 },
+    (block) => block.rect,
+  );
+  assert.deepEqual(targets.map((block) => block.id), ["near", "diagonal"]);
+});
+
+test("special ball ability tuning is defined in ball data", () => {
+  assert.deepEqual(
+    {
+      ember: { burstDamage: BALL_DEFINITIONS.ember.burstDamage },
+      drill: { penetrations: BALL_DEFINITIONS.drill.penetrations },
+      storm: {
+        chainEvery: BALL_DEFINITIONS.storm.chainEvery,
+        chainDamage: BALL_DEFINITIONS.storm.chainDamage,
+      },
+      linebreaker: { beamDamage: BALL_DEFINITIONS.linebreaker.beamDamage },
+      pulse: {
+        pulseCharges: BALL_DEFINITIONS.pulse.pulseCharges,
+        pulseDamage: BALL_DEFINITIONS.pulse.pulseDamage,
+      },
+    },
+    {
+      ember: { burstDamage: 1 },
+      drill: { penetrations: 2 },
+      storm: { chainEvery: 3, chainDamage: 1 },
+      linebreaker: { beamDamage: 1 },
+      pulse: { pulseCharges: 99, pulseDamage: 1 },
+    },
+  );
+});
+
+test("all seven ball abilities and passive damage modifiers resolve correctly", () => {
   const iron = {
     typeId: "iron", hits: 0, bankedCharge: 2, isFinal: true,
     emberTriggered: false, penetrationsRemaining: 0,
@@ -242,7 +313,8 @@ test("all six ball abilities and passive damage modifiers resolve correctly", ()
 
   const drill = {
     typeId: "drill", hits: 0, bankedCharge: 0, isFinal: false,
-    emberTriggered: false, penetrationsRemaining: 2,
+    emberTriggered: false,
+    penetrationsRemaining: BALL_DEFINITIONS.drill.penetrations,
   };
   assert.equal(resolveImpact(drill).penetrates, true);
   assert.equal(resolveImpact(drill).penetrates, true);
@@ -262,6 +334,15 @@ test("all six ball abilities and passive damage modifiers resolve correctly", ()
   };
   assert.equal(resolveImpact(linebreaker).lineBurst, true);
   assert.equal(resolveImpact(linebreaker).lineBurst, false);
+
+  const pulse = {
+    typeId: "pulse", hits: 0, bankedCharge: 0, isFinal: false,
+    emberTriggered: false, lineTriggered: false, pulseCharges: 3,
+    penetrationsRemaining: 0,
+  };
+  assert.equal(resolveImpact(pulse).pulseBurst, true);
+  pulse.pulseCharges = 0;
+  assert.equal(resolveImpact(pulse).pulseBurst, false);
 });
 
 test("flight ends at the bottom or safety timeout", () => {

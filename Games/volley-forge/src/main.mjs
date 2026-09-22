@@ -33,6 +33,7 @@ import {
   circleRectCollision,
   clampAimAngle,
   getHorizontalLaserTargets,
+  getPulseTargets,
   hasFlightEnded,
   reflectedVelocity,
   resolveImpact,
@@ -324,9 +325,10 @@ function fireSelectedBall() {
     radius: definition.radius,
     elapsed: 0,
     hits: 0,
-    penetrationsRemaining: definition.ability === "drill" ? 2 : 0,
+    penetrationsRemaining: definition.penetrations ?? 0,
     emberTriggered: false,
     lineTriggered: false,
+    pulseCharges: definition.pulseCharges ?? 0,
     bankedCharge: 0,
     isFinal,
     contactCooldowns: new Map(),
@@ -462,19 +464,28 @@ function handleBlockCollision(ball, block, collision) {
     const rect = blockRect(block);
     spawnHorizontalBeam(rect.y + rect.height / 2, definition.glow);
     for (const target of getHorizontalLaserTargets(blocks, block)) {
-      damageBlock(target, 1, "linebreaker", false, false);
+      damageBlock(target, definition.beamDamage, "linebreaker", false, false);
     }
   } else if (outcome.lineBurst) {
     ball.lineTriggered = false;
   }
 
+  if (outcome.pulseBurst && dealt > 0) {
+    ball.pulseCharges -= 1;
+    spawnPulseRing(ball.x, ball.y, definition.glow, definition.pulseRadius);
+    const pulse = { x: ball.x, y: ball.y, radius: definition.pulseRadius };
+    for (const target of getPulseTargets(blocks, block, pulse, blockRect)) {
+      damageBlock(target, definition.pulseDamage, "pulse", false, false);
+    }
+  }
+
   if (outcome.emberBurst) {
-    damageNeighbors(block, 1, "ember");
+    damageNeighbors(block, definition.burstDamage, "ember");
   }
   if (outcome.stormChain) {
     const target = nearestBlock(block);
     if (target) {
-      damageBlock(target, 1, "storm", false);
+      damageBlock(target, definition.chainDamage, "storm", false);
       const targetRect = blockRect(target);
       spawnArc(
         blockRect(block).x + blockRect(block).width / 2,
@@ -1117,6 +1128,18 @@ function spawnHorizontalBeam(y, color) {
   });
 }
 
+function spawnPulseRing(x, y, color, radius) {
+  particles.push({
+    kind: "pulse-ring",
+    x,
+    y,
+    radius,
+    life: 0.24,
+    maxLife: 0.24,
+    color,
+  });
+}
+
 function updateEffects(delta) {
   for (const block of blocks) {
     block.visualRow += (block.row - block.visualRow) * Math.min(1, delta * 9);
@@ -1457,6 +1480,29 @@ function drawParticles() {
       ctx.moveTo(particle.x1, particle.y);
       ctx.lineTo(particle.x2, particle.y);
       ctx.stroke();
+    } else if (particle.kind === "pulse-ring") {
+      const progress = Math.min(
+        1,
+        (1 - particle.life / particle.maxLife) * 3,
+      );
+      const radius = particle.radius * progress;
+      ctx.shadowColor = particle.color;
+      ctx.shadowBlur = 24;
+      ctx.globalAlpha *= 0.16 * (1 - progress * 0.35);
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha *= 4;
+      ctx.lineWidth = 5 - progress * 2.5;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, radius, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.globalAlpha *= 1.5;
+      ctx.fillStyle = "#f2d8ff";
+      ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.arc(particle.x, particle.y, 4 + 3 * (1 - progress), 0, Math.PI * 2);
+      ctx.fill();
     } else {
       ctx.lineWidth = 3;
       ctx.shadowColor = particle.color;

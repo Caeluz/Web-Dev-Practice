@@ -62,6 +62,13 @@ export function getHorizontalLaserTargets(blocks, origin) {
   });
 }
 
+export function getPulseTargets(blocks, origin, pulse, getRect) {
+  return blocks.filter((block) => {
+    if (!block.alive || block === origin) return false;
+    return Boolean(circleRectCollision(pulse, getRect(block)));
+  });
+}
+
 export function resolveImpact(ball, passiveRanks = {}) {
   const definition = BALL_DEFINITIONS[ball.typeId];
   if (!definition) throw new Error(`Unknown ball type: ${ball.typeId}`);
@@ -80,7 +87,8 @@ export function resolveImpact(ball, passiveRanks = {}) {
   if (emberBurst) ball.emberTriggered = true;
 
   const stormChain =
-    definition.ability === "storm_chain" && ball.hits % 3 === 0;
+    definition.ability === "storm_chain" &&
+    ball.hits % definition.chainEvery === 0;
   const penetrates =
     definition.ability === "drill" && ball.penetrationsRemaining > 0;
   if (penetrates) ball.penetrationsRemaining -= 1;
@@ -89,7 +97,17 @@ export function resolveImpact(ball, passiveRanks = {}) {
     definition.ability === "horizontal_laser" && !ball.lineTriggered;
   if (lineBurst) ball.lineTriggered = true;
 
-  return { damage, emberBurst, stormChain, lineBurst, penetrates };
+  const pulseBurst =
+    definition.ability === "ball_pulse" && (ball.pulseCharges ?? 0) > 0;
+
+  return {
+    damage,
+    emberBurst,
+    stormChain,
+    lineBurst,
+    pulseBurst,
+    penetrates,
+  };
 }
 
 export function hasFlightEnded(ball, exitY, maxSeconds) {
