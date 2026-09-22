@@ -82,6 +82,8 @@ button:not(:disabled) { cursor: pointer; }
   background: #171210; transition: .18s ease;
 }
 .ball-slot:not(:disabled):hover, .ball-slot.selected { border-color: var(--ball-color); transform: translateX(2px); box-shadow: inset 3px 0 var(--ball-color), 0 0 18px color-mix(in srgb, var(--ball-color) 18%, transparent); }
+.ball-slot.legendary { border-color: color-mix(in srgb, var(--ball-color) 62%, #5a3928); background: linear-gradient(110deg, rgba(255, 196, 85, .12), #171210 64%); }
+.ball-slot.legendary .ball-key { color: #ffd67b; }
 .ball-slot:disabled { opacity: .42; }
 .ball-orb { width: 30px; height: 30px; border: 2px solid rgba(255,255,255,.45); border-radius: 50%; background: radial-gradient(circle at 32% 28%, white, var(--ball-color) 28%, #241813 75%); box-shadow: 0 0 12px var(--ball-color); }
 .ball-slot b { display: block; color: #f1e5dc; font-size: 12px; }
@@ -94,6 +96,9 @@ button:not(:disabled) { cursor: pointer; }
   box-shadow: inset 3px 0 var(--ball-color);
 }
 .selected-ball-details[hidden] { display: none; }
+.selected-ball-details.legendary { position: relative; border-color: #c98b39; background: linear-gradient(145deg, rgba(255, 190, 75, .14), #171210 72%); box-shadow: inset 3px 0 #ffd36a, 0 0 22px rgba(255, 178, 63, .1); }
+.selected-ball-details.legendary::after { position: absolute; top: 7px; right: 8px; content: "LEGENDARY"; color: #ffd778; font-size: 7px; font-weight: 900; letter-spacing: .12em; }
+.selected-ball-details.legendary .selected-ball-heading { padding-top: 10px; }
 .selected-ball-heading { display: flex; align-items: center; gap: 10px; }
 .selected-ball-heading .ball-orb { flex: 0 0 auto; width: 34px; height: 34px; }
 .selected-ball-heading strong { display: block; color: #f4e7df; font-size: 12px; }
@@ -181,6 +186,10 @@ button:not(:disabled) { cursor: pointer; }
 }
 .upgrade-card::after { position: absolute; right: -28px; bottom: -38px; width: 110px; height: 110px; content: ""; border: 1px solid rgba(255,116,54,.2); transform: rotate(45deg); }
 .upgrade-card:hover { border-color: var(--ember); transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,.34), 0 0 24px rgba(255,92,34,.1); }
+.upgrade-card.legendary { border-color: #c58a38; background: radial-gradient(circle at 82% 20%, rgba(255, 205, 104, .18), transparent 34%), linear-gradient(165deg, #382719, #17110f); box-shadow: inset 0 0 28px rgba(255, 186, 65, .08); }
+.upgrade-card.legendary:hover { border-color: #ffdc85; box-shadow: 0 12px 30px rgba(0,0,0,.38), 0 0 28px rgba(255,190,66,.2); }
+.upgrade-card.legendary .card-kind, .upgrade-card.legendary .card-rank { color: #ffd778; }
+.upgrade-card.legendary .card-icon { border-color: #d9a14b; color: #ffe09a; box-shadow: 0 0 24px rgba(255, 190, 66, .24); }
 .card-kind { color: var(--ember-light); font-size: 9px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
 .card-icon { display: grid; place-items: center; width: 52px; height: 52px; margin: 22px 0; border: 1px solid #7d4934; border-radius: 50%; color: var(--ember-light); font-size: 23px; background: #1c1310; box-shadow: 0 0 20px rgba(255,85,35,.14); }
 .upgrade-card h3 { margin: 0 0 8px; color: #f5e1d1; font: 700 17px "Cinzel", serif; }
@@ -199,6 +208,9 @@ button:not(:disabled) { cursor: pointer; }
 .unlock-item p { margin: 0; color: #8e7f76; font-size: 10px; }
 .unlock-item button { min-width: 94px; min-height: 35px; border: 1px solid #774b37; border-radius: 6px; color: #201008; background: var(--ember-light); font-weight: 800; }
 .unlock-item button:disabled { color: #71655e; background: #29211d; border-color: #3e332d; }
+.unlock-item.legendary { border-color: #9d6c34; background: linear-gradient(100deg, rgba(255, 187, 69, .12), #171210 58%); box-shadow: inset 3px 0 #eeb454; }
+.unlock-item.legendary h3 { color: #ffe0a0; }
+.unlock-item.legendary button:not(:disabled) { border-color: #ffd16c; background: linear-gradient(#ffe19a, #eaa443); }
 .run-results { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 22px 0; }
 .run-results div { padding: 14px; border: 1px solid #47342b; border-radius: 9px; background: #17110f; text-align: center; }
 .run-results span { display: block; color: #8f8077; font-size: 9px; text-transform: uppercase; }

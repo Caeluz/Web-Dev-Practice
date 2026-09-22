@@ -96,6 +96,23 @@ export const BALL_DEFINITIONS = Object.freeze({
     pulseDamage: 1,
     ability: "ball_pulse",
   },
+  forgeblade: {
+    id: "forgeblade",
+    name: "Forgeblade Core",
+    shortName: "Forgeblade",
+    description:
+      "A Legendary core that phases to a chosen point, then sweeps a blade through nearby blocks.",
+    rarity: "legendary",
+    color: "#ffd36a",
+    glow: "#ff793d",
+    speed: 820,
+    radius: 9,
+    damage: 2,
+    bladeRadius: 88,
+    bladeMaxTargets: 5,
+    swingDuration: 0.55,
+    ability: "blade_sweep",
+  },
 });
 
 export const PASSIVE_DEFINITIONS = Object.freeze({
@@ -155,6 +172,13 @@ export const CONTENT_UNLOCKS = Object.freeze([
   { id: "ball.storm", kind: "ball", contentId: "storm", price: 40 },
   { id: "ball.linebreaker", kind: "ball", contentId: "linebreaker", price: 36 },
   { id: "ball.pulse", kind: "ball", contentId: "pulse", price: 36 },
+  {
+    id: "ball.forgeblade",
+    kind: "ball",
+    contentId: "forgeblade",
+    price: 90,
+    requiredBossVictories: 1,
+  },
 ]);
 
 export const STARTER_UNLOCKS = Object.freeze([

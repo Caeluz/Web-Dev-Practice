@@ -32,6 +32,7 @@ import {
 import {
   circleRectCollision,
   clampAimAngle,
+  getBladeTargets,
   getHorizontalLaserTargets,
   getPulseTargets,
   hasBallExited,
@@ -130,12 +131,14 @@ const FIXED_STEP = 1 / 120;
 const RECALL_AVAILABLE_SECONDS = 12;
 const RECALL_IDLE_SECONDS = 3;
 const MAX_FLIGHT_SECONDS = 30;
+const BLADE_TARGET_STEP = 24;
 let meta = loadMeta();
 let run = null;
 let blocks = [];
 let selectedSlotIndex = 0;
 let currentBall = null;
 let aimAngle = -Math.PI / 2;
+let bladeTarget = null;
 let aimingWithPointer = false;
 let paused = false;
 let helpResumeOnClose = false;
@@ -284,6 +287,7 @@ function startRun() {
   particles = [];
   paused = false;
   aimAngle = -Math.PI / 2;
+  bladeTarget = null;
   elements.startPanel.hidden = true;
   elements.pausedPanel.hidden = true;
   elements.pauseButton.disabled = false;
@@ -305,12 +309,54 @@ function loadEncounter(index) {
     0,
     run.arsenal.findIndex((ball) => !ball.spent),
   );
+  prepareBladeTarget();
   updateInterface();
   showToast(`${ENCOUNTERS[index].name} — ${ENCOUNTERS[index].subtitle}`);
 }
 
 function selectedBallSlot() {
   return run?.arsenal[selectedSlotIndex] ?? null;
+}
+
+function selectedBallDefinition() {
+  return BALL_DEFINITIONS[selectedBallSlot()?.typeId];
+}
+
+function isForgebladeSelected() {
+  return selectedBallDefinition()?.ability === "blade_sweep";
+}
+
+function clampBladeTarget(point) {
+  return {
+    x: Math.max(PLAY_LEFT, Math.min(PLAY_RIGHT, point.x)),
+    y: Math.max(GRID_TOP, Math.min(DANGER_Y, point.y)),
+  };
+}
+
+function bladeTargetsAt(point, definition = selectedBallDefinition()) {
+  if (!point || definition?.ability !== "blade_sweep") return [];
+  return getBladeTargets(
+    blocks,
+    point,
+    definition.bladeRadius,
+    definition.bladeMaxTargets,
+    blockRect,
+  );
+}
+
+function setBladeTarget(point) {
+  bladeTarget = clampBladeTarget(point);
+  aimAngle = clampAimAngle(
+    Math.atan2(bladeTarget.y - CANNON_Y, bladeTarget.x - CANNON_X),
+  );
+}
+
+function prepareBladeTarget() {
+  if (!isForgebladeSelected() || bladeTarget) return;
+  setBladeTarget({
+    x: CANNON_X,
+    y: (GRID_TOP + DANGER_Y) / 2,
+  });
 }
 
 function ballSpeedLabel(speed) {
@@ -335,6 +381,7 @@ function selectBall(index) {
   const slot = run.arsenal[index];
   if (!slot || slot.spent) return;
   selectedSlotIndex = index;
+  prepareBladeTarget();
   updateInterface();
 }
 
@@ -343,14 +390,25 @@ function fireSelectedBall() {
   const slot = selectedBallSlot();
   if (!slot || slot.spent) return;
   const definition = BALL_DEFINITIONS[slot.typeId];
+  const isForgeblade = definition.ability === "blade_sweep";
+  if (isForgeblade) {
+    prepareBladeTarget();
+    if (!bladeTarget || bladeTargetsAt(bladeTarget, definition).length === 0) {
+      showToast("Place the blade near a living block");
+      return;
+    }
+  }
   const isFinal = unspentBallCount(run) === 1;
+  const launchAngle = isForgeblade
+    ? Math.atan2(bladeTarget.y - CANNON_Y, bladeTarget.x - CANNON_X)
+    : aimAngle;
   currentBall = {
     slotInstanceId: slot.instanceId,
     typeId: slot.typeId,
-    x: CANNON_X + Math.cos(aimAngle) * 38,
-    y: CANNON_Y + Math.sin(aimAngle) * 38,
-    vx: Math.cos(aimAngle) * definition.speed,
-    vy: Math.sin(aimAngle) * definition.speed,
+    x: CANNON_X + Math.cos(launchAngle) * 38,
+    y: CANNON_Y + Math.sin(launchAngle) * 38,
+    vx: Math.cos(launchAngle) * definition.speed,
+    vy: Math.sin(launchAngle) * definition.speed,
     radius: definition.radius,
     elapsed: 0,
     lastDamageAt: 0,
@@ -364,6 +422,11 @@ function fireSelectedBall() {
     isFinal,
     contactCooldowns: new Map(),
     trail: [],
+    bladeState: isForgeblade ? "phasing" : null,
+    targetX: isForgeblade ? bladeTarget.x : null,
+    targetY: isForgeblade ? bladeTarget.y : null,
+    swingElapsed: 0,
+    bladeTargets: [],
   };
   run.phase = PHASES.BALL_IN_FLIGHT;
   audio.play("fire");
@@ -538,9 +601,87 @@ function handleBlockCollision(ball, block, collision) {
   }
 }
 
+function beginBladeSweep(ball, definition) {
+  ball.x = ball.targetX;
+  ball.y = ball.targetY;
+  ball.vx = 0;
+  ball.vy = 0;
+  ball.bladeState = "swinging";
+  ball.swingElapsed = 0;
+  ball.bladeTargets = getBladeTargets(
+    blocks,
+    { x: ball.x, y: ball.y },
+    definition.bladeRadius,
+    definition.bladeMaxTargets,
+    blockRect,
+  ).map((block, index) => {
+    const rect = blockRect(block);
+    const angle = Math.atan2(
+      rect.y + rect.height / 2 - ball.y,
+      rect.x + rect.width / 2 - ball.x,
+    );
+    return {
+      block,
+      primary: index === 0,
+      strikeAngle: (angle + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2),
+      struck: false,
+    };
+  });
+}
+
+function updateForgeblade(ball, definition, step) {
+  if (ball.bladeState === "phasing") {
+    const dx = ball.targetX - ball.x;
+    const dy = ball.targetY - ball.y;
+    const distance = Math.hypot(dx, dy);
+    const travel = definition.speed * step;
+    if (distance <= travel) beginBladeSweep(ball, definition);
+    else {
+      ball.x += (dx / distance) * travel;
+      ball.y += (dy / distance) * travel;
+    }
+  } else if (ball.bladeState === "swinging") {
+    ball.swingElapsed = Math.min(
+      definition.swingDuration,
+      ball.swingElapsed + step,
+    );
+    const sweptAngle =
+      (ball.swingElapsed / definition.swingDuration) * Math.PI * 2;
+    for (const target of ball.bladeTargets) {
+      if (target.struck || target.strikeAngle > sweptAngle) continue;
+      target.struck = true;
+      if (!target.block.alive) continue;
+      if (target.primary) {
+        const outcome = resolveImpact(ball, run.passives);
+        damageBlock(target.block, outcome.damage, "forgeblade");
+      } else {
+        damageBlock(
+          target.block,
+          definition.damage,
+          "forgeblade",
+          false,
+        );
+      }
+    }
+    if (ball.swingElapsed >= definition.swingDuration) {
+      finishBall();
+      return;
+    }
+  }
+
+  if (
+    ball.trail.length === 0 ||
+    Math.hypot(ball.x - ball.trail[0].x, ball.y - ball.trail[0].y) > 8
+  ) {
+    ball.trail.unshift({ x: ball.x, y: ball.y, life: 1 });
+    if (ball.trail.length > 18) ball.trail.pop();
+  }
+}
+
 function updateBall(step) {
   if (!currentBall || !run || run.phase !== PHASES.BALL_IN_FLIGHT) return;
   const ball = currentBall;
+  const definition = BALL_DEFINITIONS[ball.typeId];
   ball.elapsed += step;
   if (
     !ball.recallAnnounced &&
@@ -549,6 +690,10 @@ function updateBall(step) {
     ball.recallAnnounced = true;
     syncRecallButton();
     elements.toast.textContent = "Recall shot available";
+  }
+  if (definition.ability === "blade_sweep") {
+    updateForgeblade(ball, definition, step);
+    return;
   }
   ball.x += ball.vx * step;
   ball.y += ball.vy * step;
@@ -647,6 +792,7 @@ function finishBall() {
     for (const ball of run.arsenal) ball.spent = false;
     run.phase = PHASES.AIMING;
     selectedSlotIndex = 0;
+    prepareBladeTarget();
     updateInterface();
     if (boardCleared) showToast("Dev board reset");
     return;
@@ -659,6 +805,7 @@ function finishBall() {
   } else {
     run.phase = PHASES.AIMING;
     selectedSlotIndex = run.arsenal.findIndex((ball) => !ball.spent);
+    prepareBladeTarget();
     updateInterface();
   }
 }
@@ -692,6 +839,7 @@ function beginTurnResolution() {
       refreshArsenal(run);
       run.phase = PHASES.AIMING;
       selectedSlotIndex = 0;
+      prepareBladeTarget();
       updateInterface();
     });
   }, 520);
@@ -748,13 +896,14 @@ function showCardDraft() {
   currentDraft.forEach((choice) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "upgrade-card";
     const isBall = choice.kind === "ball";
+    const isLegendary = isBall && choice.definition.rarity === "legendary";
+    button.className = `upgrade-card${isLegendary ? " legendary" : ""}`;
     const rank = isBall
       ? "NEW ARSENAL BALL"
       : `RANK ${(run.passives[choice.id] ?? 0) + 1} / ${choice.definition.maxRank}`;
     button.innerHTML = `
-      <span class="card-kind">${isBall ? "Forged ball" : "Passive tempering"}</span>
+      <span class="card-kind">${isLegendary ? "Legendary ball" : isBall ? "Forged ball" : "Passive tempering"}</span>
       <i class="card-icon" aria-hidden="true">${isBall ? "●" : choice.definition.icon}</i>
       <h3>${choice.definition.name}</h3>
       <p>${choice.definition.description}</p>
@@ -866,7 +1015,7 @@ function renderArsenal() {
     const status = ballSlotStatus(slot);
     const button = document.createElement("button");
     button.type = "button";
-    button.className = `ball-slot${selectedSlotIndex === index ? " selected" : ""}`;
+    button.className = `ball-slot${selectedSlotIndex === index ? " selected" : ""}${definition.rarity === "legendary" ? " legendary" : ""}`;
     button.style.setProperty("--ball-color", definition.color);
     button.disabled = slot.spent || run.phase !== PHASES.AIMING || paused;
     button.innerHTML = `
@@ -890,6 +1039,10 @@ function renderSelectedBallDetails() {
   }
 
   elements.selectedBallDetails.hidden = false;
+  elements.selectedBallDetails.classList.toggle(
+    "legendary",
+    definition.rarity === "legendary",
+  );
   elements.selectedBallDetails.style.setProperty(
     "--ball-color",
     definition.color,
@@ -1011,6 +1164,8 @@ function startDevTest() {
   particles = [];
   paused = false;
   aimAngle = -Math.PI / 2;
+  bladeTarget = null;
+  prepareBladeTarget();
   elements.startPanel.hidden = true;
   elements.pausedPanel.hidden = true;
   elements.pauseButton.disabled = false;
@@ -1031,6 +1186,7 @@ function resetDevTest() {
   run.pendingDrafts = 0;
   paused = false;
   particles = [];
+  prepareBladeTarget();
   hideAllModals();
   updateInterface();
   showToast("Dev board reset");
@@ -1042,6 +1198,7 @@ function exitDevLab() {
     run = null;
     blocks = [];
     currentBall = null;
+    bladeTarget = null;
     particles = [];
     elements.startPanel.hidden = false;
     elements.pausedPanel.hidden = true;
@@ -1116,17 +1273,23 @@ function renderUnlockForge() {
   for (const unlock of CONTENT_UNLOCKS) {
     const owned = meta.unlockedIds.includes(unlock.id);
     const canAfford = meta.forgeShards >= unlock.price;
+    const meetsPrerequisite =
+      meta.bossVictories >= (unlock.requiredBossVictories ?? 0);
     const definition =
       unlock.kind === "ball"
         ? BALL_DEFINITIONS[unlock.contentId]
         : PASSIVE_DEFINITIONS[unlock.contentId];
     const row = document.createElement("article");
-    row.className = "unlock-item";
+    row.className = `unlock-item${definition.rarity === "legendary" ? " legendary" : ""}`;
     row.innerHTML = `<div><h3>${getContentName(unlock)}</h3><p>${definition.description}</p></div>`;
     const button = document.createElement("button");
     button.type = "button";
-    button.disabled = owned || !canAfford;
-    button.textContent = owned ? "Unlocked" : `◆ ${unlock.price}`;
+    button.disabled = owned || !meetsPrerequisite || !canAfford;
+    button.textContent = owned
+      ? "Unlocked"
+      : !meetsPrerequisite
+        ? "Defeat Warden"
+        : `◆ ${unlock.price}`;
     button.addEventListener("click", () => {
       const result = purchaseUnlock(meta, unlock.id);
       if (result.purchased) {
@@ -1416,11 +1579,81 @@ function roundedRect(x, y, width, height, radius) {
   ctx.roundRect(x, y, width, height, radius);
 }
 
+function traceBladeTarget(definition) {
+  prepareBladeTarget();
+  if (!bladeTarget) return;
+  const targets = bladeTargetsAt(bladeTarget, definition);
+  const valid = targets.length > 0;
+  ctx.save();
+  ctx.strokeStyle = valid ? definition.color : "#ff674d";
+  ctx.fillStyle = ctx.strokeStyle;
+  ctx.globalAlpha = 0.72;
+  ctx.lineWidth = 2;
+  ctx.setLineDash([8, 9]);
+  ctx.beginPath();
+  ctx.moveTo(CANNON_X, CANNON_Y - 38);
+  ctx.lineTo(bladeTarget.x, bladeTarget.y);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 0.28;
+  ctx.beginPath();
+  ctx.arc(
+    bladeTarget.x,
+    bladeTarget.y,
+    definition.bladeRadius,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+  ctx.globalAlpha = 0.95;
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(bladeTarget.x - 10, bladeTarget.y);
+  ctx.lineTo(bladeTarget.x + 10, bladeTarget.y);
+  ctx.moveTo(bladeTarget.x, bladeTarget.y - 10);
+  ctx.lineTo(bladeTarget.x, bladeTarget.y + 10);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawBladeTargetHighlights() {
+  const definition = selectedBallDefinition();
+  if (
+    !run ||
+    run.phase !== PHASES.AIMING ||
+    paused ||
+    definition?.ability !== "blade_sweep" ||
+    !bladeTarget
+  )
+    return;
+  ctx.save();
+  ctx.strokeStyle = definition.color;
+  ctx.fillStyle = definition.color;
+  ctx.lineWidth = 4;
+  ctx.font = '700 13px "Rajdhani", sans-serif';
+  ctx.textAlign = "left";
+  ctx.textBaseline = "top";
+  bladeTargetsAt(bladeTarget, definition).forEach((block, index) => {
+    const rect = blockRect(block);
+    ctx.globalAlpha = 0.22;
+    ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+    ctx.globalAlpha = 0.95;
+    roundedRect(rect.x - 3, rect.y - 3, rect.width + 6, rect.height + 6, 9);
+    ctx.stroke();
+    ctx.fillText(String(index + 1), rect.x + 6, rect.y + 5);
+  });
+  ctx.restore();
+}
+
 function traceAimPath() {
   if (!run || run.phase !== PHASES.AIMING || paused) return;
   const surveyorRank = run.passives.surveyor ?? 0;
   const collisionLimit = 2 + surveyorRank;
   const definition = BALL_DEFINITIONS[selectedBallSlot()?.typeId ?? "iron"];
+  if (definition.ability === "blade_sweep") {
+    traceBladeTarget(definition);
+    return;
+  }
   let x = CANNON_X + Math.cos(aimAngle) * 40;
   let y = CANNON_Y + Math.sin(aimAngle) * 40;
   let vx = Math.cos(aimAngle);
@@ -1549,6 +1782,44 @@ function drawBall(ball) {
   ctx.beginPath();
   ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
   ctx.fill();
+  if (definition.ability === "blade_sweep" && ball.bladeState === "swinging") {
+    const progress = Math.min(1, ball.swingElapsed / definition.swingDuration);
+    const angle = -Math.PI / 2 + progress * Math.PI * 2;
+    ctx.shadowColor = definition.glow;
+    ctx.shadowBlur = 26;
+    ctx.strokeStyle = definition.color;
+    ctx.lineCap = "round";
+    ctx.globalAlpha = 0.3;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(ball.x, ball.y, definition.bladeRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.lineWidth = 8;
+    ctx.beginPath();
+    ctx.moveTo(
+      ball.x + Math.cos(angle) * (ball.radius + 10),
+      ball.y + Math.sin(angle) * (ball.radius + 10),
+    );
+    ctx.lineTo(
+      ball.x + Math.cos(angle) * definition.bladeRadius,
+      ball.y + Math.sin(angle) * definition.bladeRadius,
+    );
+    ctx.stroke();
+    ctx.strokeStyle = "#fff6d0";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = "#9c4d25";
+    ctx.beginPath();
+    ctx.arc(
+      ball.x + Math.cos(angle) * (ball.radius + 5),
+      ball.y + Math.sin(angle) * (ball.radius + 5),
+      6,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
   ctx.restore();
 }
 
@@ -1637,6 +1908,7 @@ function render() {
   if (run) {
     traceAimPath();
     for (const block of blocks) drawBlock(block);
+    drawBladeTargetHighlights();
     drawCannon();
     if (currentBall) drawBall(currentBall);
     drawParticles();
@@ -1665,20 +1937,26 @@ canvas.addEventListener("pointerdown", (event) => {
   if (!run || run.phase !== PHASES.AIMING || paused) return;
   aimingWithPointer = true;
   canvas.setPointerCapture(event.pointerId);
-  setAimFromPoint(getCanvasPoint(event));
+  const point = getCanvasPoint(event);
+  if (isForgebladeSelected()) setBladeTarget(point);
+  else setAimFromPoint(point);
 });
 
 canvas.addEventListener("pointermove", (event) => {
   if (!aimingWithPointer || !run || run.phase !== PHASES.AIMING || paused)
     return;
-  setAimFromPoint(getCanvasPoint(event));
+  const point = getCanvasPoint(event);
+  if (isForgebladeSelected()) setBladeTarget(point);
+  else setAimFromPoint(point);
 });
 
 canvas.addEventListener("pointerup", (event) => {
   if (!aimingWithPointer) return;
   aimingWithPointer = false;
   if (!run || run.phase !== PHASES.AIMING || paused) return;
-  setAimFromPoint(getCanvasPoint(event));
+  const point = getCanvasPoint(event);
+  if (isForgebladeSelected()) setBladeTarget(point);
+  else setAimFromPoint(point);
   fireSelectedBall();
 });
 
@@ -1692,6 +1970,30 @@ window.addEventListener("keydown", (event) => {
     return;
   }
   if (paused || run.phase !== PHASES.AIMING) return;
+  if (isForgebladeSelected()) {
+    prepareBladeTarget();
+    if (event.key.startsWith("Arrow")) {
+      const movement = {
+        ArrowLeft: [-BLADE_TARGET_STEP, 0],
+        ArrowRight: [BLADE_TARGET_STEP, 0],
+        ArrowUp: [0, -BLADE_TARGET_STEP],
+        ArrowDown: [0, BLADE_TARGET_STEP],
+      }[event.key];
+      if (movement && bladeTarget) {
+        setBladeTarget({
+          x: bladeTarget.x + movement[0],
+          y: bladeTarget.y + movement[1],
+        });
+        event.preventDefault();
+      }
+      return;
+    }
+    if (event.code === "Space") {
+      event.preventDefault();
+      fireSelectedBall();
+    }
+    return;
+  }
   if (event.key === "ArrowLeft") {
     aimAngle = clampAimAngle(aimAngle - 0.045);
     event.preventDefault();

@@ -31,6 +31,7 @@ import {
 import {
   circleRectCollision,
   clampAimAngle,
+  getBladeTargets,
   getHorizontalLaserTargets,
   getPulseTargets,
   hasBallExited,
@@ -237,6 +238,41 @@ test("Pulse Core is a Forge unlock with impact pulses", () => {
   });
 });
 
+test("Forgeblade Core is a victory-gated Legendary unlock", () => {
+  assert.deepEqual(
+    {
+      rarity: BALL_DEFINITIONS.forgeblade.rarity,
+      damage: BALL_DEFINITIONS.forgeblade.damage,
+      speed: BALL_DEFINITIONS.forgeblade.speed,
+      radius: BALL_DEFINITIONS.forgeblade.radius,
+      bladeRadius: BALL_DEFINITIONS.forgeblade.bladeRadius,
+      bladeMaxTargets: BALL_DEFINITIONS.forgeblade.bladeMaxTargets,
+      swingDuration: BALL_DEFINITIONS.forgeblade.swingDuration,
+      ability: BALL_DEFINITIONS.forgeblade.ability,
+    },
+    {
+      rarity: "legendary",
+      damage: 2,
+      speed: 820,
+      radius: 9,
+      bladeRadius: 88,
+      bladeMaxTargets: 5,
+      swingDuration: 0.55,
+      ability: "blade_sweep",
+    },
+  );
+  assert.deepEqual(
+    CONTENT_UNLOCKS.find((unlock) => unlock.id === "ball.forgeblade"),
+    {
+      id: "ball.forgeblade",
+      kind: "ball",
+      contentId: "forgeblade",
+      price: 90,
+      requiredBossVictories: 1,
+    },
+  );
+});
+
 test("Linebreaker targets every living block crossing its impact row once", () => {
   const origin = { id: "origin", alive: true, row: 2, heightCells: 1 };
   const targets = getHorizontalLaserTargets([
@@ -267,6 +303,33 @@ test("Pulse Core targets living blocks inside its impact radius", () => {
   assert.deepEqual(targets.map((block) => block.id), ["near", "diagonal"]);
 });
 
+test("Forgeblade targeting excludes invalid blocks, sorts by distance, and caps at five", () => {
+  const blocks = [
+    { id: "fifth", alive: true, rect: { x: 80, y: 45, width: 10, height: 10 } },
+    { id: "primary", alive: true, rect: { x: 47, y: 47, width: 6, height: 6 } },
+    { id: "dead", alive: false, rect: { x: 45, y: 45, width: 10, height: 10 } },
+    { id: "third", alive: true, rect: { x: 45, y: 65, width: 10, height: 10 } },
+    { id: "outside", alive: true, rect: { x: 120, y: 45, width: 10, height: 10 } },
+    { id: "second", alive: true, rect: { x: 55, y: 45, width: 10, height: 10 } },
+    { id: "fourth", alive: true, rect: { x: 45, y: 75, width: 10, height: 10 } },
+    { id: "sixth", alive: true, rect: { x: 10, y: 45, width: 5, height: 10 } },
+  ];
+  const targets = getBladeTargets(
+    blocks,
+    { x: 50, y: 50 },
+    36,
+    5,
+    (block) => block.rect,
+  );
+  assert.deepEqual(targets.map((block) => block.id), [
+    "primary",
+    "second",
+    "third",
+    "fourth",
+    "fifth",
+  ]);
+});
+
 test("special ball ability tuning is defined in ball data", () => {
   assert.deepEqual(
     {
@@ -292,12 +355,17 @@ test("special ball ability tuning is defined in ball data", () => {
   );
 });
 
-test("all seven ball abilities and passive damage modifiers resolve correctly", () => {
+test("all eight ball abilities and passive damage modifiers resolve correctly", () => {
   const iron = {
     typeId: "iron", hits: 0, bankedCharge: 2, isFinal: true,
     emberTriggered: false, penetrationsRemaining: 0,
   };
   assert.equal(resolveImpact(iron, { tempered: 1, overcharged: 3 }).damage, 7);
+  const forgeblade = {
+    typeId: "forgeblade", hits: 0, bankedCharge: 0, isFinal: true,
+    emberTriggered: false, penetrationsRemaining: 0,
+  };
+  assert.equal(resolveImpact(forgeblade, { tempered: 1, overcharged: 3 }).damage, 6);
   assert.equal(iron.bankedCharge, 0);
 
   const ember = {
@@ -380,11 +448,23 @@ test("meta storage sanitizes corruption and persists unlock-only progress", () =
   meta.forgeShards = 36;
   assert.equal(purchaseUnlock(meta, "ball.linebreaker").purchased, true);
   assert.equal(meta.forgeShards, 0);
+  meta.forgeShards = 90;
+  assert.deepEqual(purchaseUnlock(meta, "ball.forgeblade"), {
+    purchased: false,
+    reason: "prerequisite",
+  });
+  assert.equal(meta.forgeShards, 90);
+  assert.equal(meta.unlockedIds.includes("ball.forgeblade"), false);
+  meta.bossVictories = 1;
+  assert.equal(purchaseUnlock(meta, "ball.forgeblade").purchased, true);
+  assert.equal(meta.forgeShards, 0);
   assert.equal(saveMeta(meta, storage), true);
   assert.equal(values.has(SAVE_KEY), true);
   const loaded = loadMeta(storage);
   assert.ok(loaded.unlockedIds.includes("ball.drill"));
   assert.ok(loaded.unlockedIds.includes("ball.linebreaker"));
+  assert.ok(loaded.unlockedIds.includes("ball.forgeblade"));
+  assert.equal(loaded.bossVictories, 1);
   assert.equal(loaded.forgeShards, 0);
 
   const freshRun = createRunState(9);

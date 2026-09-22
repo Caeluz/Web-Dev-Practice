@@ -69,6 +69,30 @@ export function getPulseTargets(blocks, origin, pulse, getRect) {
   });
 }
 
+export function getBladeTargets(blocks, origin, radius, maxTargets, getRect) {
+  return blocks
+    .map((block, index) => {
+      if (!block.alive) return null;
+      const rect = getRect(block);
+      if (!circleRectCollision({ ...origin, radius }, rect)) return null;
+      const centerX = rect.x + rect.width / 2;
+      const centerY = rect.y + rect.height / 2;
+      return {
+        block,
+        index,
+        distanceSquared:
+          (centerX - origin.x) ** 2 + (centerY - origin.y) ** 2,
+      };
+    })
+    .filter(Boolean)
+    .sort(
+      (left, right) =>
+        left.distanceSquared - right.distanceSquared || left.index - right.index,
+    )
+    .slice(0, Math.max(0, maxTargets))
+    .map((entry) => entry.block);
+}
+
 export function resolveImpact(ball, passiveRanks = {}) {
   const definition = BALL_DEFINITIONS[ball.typeId];
   if (!definition) throw new Error(`Unknown ball type: ${ball.typeId}`);

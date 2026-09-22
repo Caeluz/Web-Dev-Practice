@@ -63,6 +63,8 @@ export function purchaseUnlock(meta, unlockId) {
   if (!unlock) return { purchased: false, reason: "unknown" };
   if (meta.unlockedIds.includes(unlockId))
     return { purchased: false, reason: "owned" };
+  if ((meta.bossVictories ?? 0) < (unlock.requiredBossVictories ?? 0))
+    return { purchased: false, reason: "prerequisite" };
   if (meta.forgeShards < unlock.price)
     return { purchased: false, reason: "insufficient" };
   meta.forgeShards -= unlock.price;
