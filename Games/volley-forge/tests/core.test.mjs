@@ -33,9 +33,11 @@ import {
   clampAimAngle,
   getHorizontalLaserTargets,
   getPulseTargets,
-  hasFlightEnded,
+  hasBallExited,
+  isRecallAvailable,
   reflectedVelocity,
   resolveImpact,
+  shouldAutoRecall,
 } from "../src/combat.mjs";
 import {
   SAVE_KEY,
@@ -345,10 +347,22 @@ test("all seven ball abilities and passive damage modifiers resolve correctly", 
   assert.equal(resolveImpact(pulse).pulseBurst, false);
 });
 
-test("flight ends at the bottom or safety timeout", () => {
-  assert.equal(hasFlightEnded({ y: 970, radius: 10, elapsed: 1 }, 950, 12), true);
-  assert.equal(hasFlightEnded({ y: 500, radius: 10, elapsed: 12 }, 950, 12), true);
-  assert.equal(hasFlightEnded({ y: 500, radius: 10, elapsed: 3 }, 950, 12), false);
+test("shot recall becomes available after twelve seconds", () => {
+  assert.equal(isRecallAvailable({ elapsed: 11.99 }, 12), false);
+  assert.equal(isRecallAvailable({ elapsed: 12 }, 12), true);
+});
+
+test("inactive shots auto-recall after the grace period or hard limit", () => {
+  assert.equal(shouldAutoRecall({ elapsed: 14.99, lastDamageAt: 0 }, 12, 3, 30), false);
+  assert.equal(shouldAutoRecall({ elapsed: 15, lastDamageAt: 0 }, 12, 3, 30), true);
+  assert.equal(shouldAutoRecall({ elapsed: 16.99, lastDamageAt: 14 }, 12, 3, 30), false);
+  assert.equal(shouldAutoRecall({ elapsed: 17, lastDamageAt: 14 }, 12, 3, 30), true);
+  assert.equal(shouldAutoRecall({ elapsed: 30, lastDamageAt: 29.9 }, 12, 3, 30), true);
+});
+
+test("shots still end immediately after leaving the playfield", () => {
+  assert.equal(hasBallExited({ y: 970, radius: 10 }, 950), true);
+  assert.equal(hasBallExited({ y: 500, radius: 10 }, 950), false);
 });
 
 test("meta storage sanitizes corruption and persists unlock-only progress", () => {

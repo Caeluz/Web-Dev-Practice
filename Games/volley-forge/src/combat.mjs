@@ -110,6 +110,22 @@ export function resolveImpact(ball, passiveRanks = {}) {
   };
 }
 
-export function hasFlightEnded(ball, exitY, maxSeconds) {
-  return ball.y - ball.radius > exitY || ball.elapsed >= maxSeconds;
+export function hasBallExited(ball, exitY) {
+  return ball.y - ball.radius > exitY;
+}
+
+export function isRecallAvailable(ball, availableSeconds) {
+  return ball.elapsed >= availableSeconds;
+}
+
+export function shouldAutoRecall(
+  ball,
+  availableSeconds,
+  idleSeconds,
+  maxSeconds,
+) {
+  if (ball.elapsed >= maxSeconds) return true;
+  if (!isRecallAvailable(ball, availableSeconds)) return false;
+  const idleStartedAt = Math.max(availableSeconds, ball.lastDamageAt ?? 0);
+  return ball.elapsed - idleStartedAt >= idleSeconds;
 }

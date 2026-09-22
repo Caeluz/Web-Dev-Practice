@@ -34,9 +34,11 @@ import {
   clampAimAngle,
   getHorizontalLaserTargets,
   getPulseTargets,
-  hasFlightEnded,
+  hasBallExited,
+  isRecallAvailable,
   reflectedVelocity,
   resolveImpact,
+  shouldAutoRecall,
 } from "./combat.mjs";
 import { loadMeta, purchaseUnlock, saveMeta } from "./storage.mjs";
 
@@ -77,6 +79,7 @@ const elements = {
   pauseButton: document.querySelector("#pause-button"),
   pausedPanel: document.querySelector("#paused-panel"),
   phaseLabel: document.querySelector("#phase-label"),
+  recallButton: document.querySelector("#recall-button"),
   replaceBack: document.querySelector("#replace-back"),
   replaceCopy: document.querySelector("#replace-copy"),
   replaceModal: document.querySelector("#replace-modal"),
@@ -117,7 +120,9 @@ const CANNON_X = WIDTH / 2;
 const CANNON_Y = 880;
 const BALL_EXIT_Y = 950;
 const FIXED_STEP = 1 / 120;
-const MAX_FLIGHT_SECONDS = 12;
+const RECALL_AVAILABLE_SECONDS = 12;
+const RECALL_IDLE_SECONDS = 3;
+const MAX_FLIGHT_SECONDS = 30;
 let meta = loadMeta();
 let run = null;
 let blocks = [];
@@ -324,6 +329,8 @@ function fireSelectedBall() {
     vy: Math.sin(aimAngle) * definition.speed,
     radius: definition.radius,
     elapsed: 0,
+    lastDamageAt: 0,
+    recallAnnounced: false,
     hits: 0,
     penetrationsRemaining: definition.penetrations ?? 0,
     emberTriggered: false,
@@ -418,6 +425,9 @@ function damageBlock(
 
   const dealt = Math.min(block.hp, amount);
   block.hp -= amount;
+  if (dealt > 0 && currentBall && run.phase === PHASES.BALL_IN_FLIGHT) {
+    currentBall.lastDamageAt = currentBall.elapsed;
+  }
   run.damageDealt += dealt;
   run.score += dealt * 22;
   spawnParticles(
@@ -508,6 +518,14 @@ function updateBall(step) {
   if (!currentBall || !run || run.phase !== PHASES.BALL_IN_FLIGHT) return;
   const ball = currentBall;
   ball.elapsed += step;
+  if (
+    !ball.recallAnnounced &&
+    isRecallAvailable(ball, RECALL_AVAILABLE_SECONDS)
+  ) {
+    ball.recallAnnounced = true;
+    syncRecallButton();
+    elements.toast.textContent = "Recall shot available";
+  }
   ball.x += ball.vx * step;
   ball.y += ball.vy * step;
 
@@ -556,17 +574,48 @@ function updateBall(step) {
 
   if (!blocks.some((block) => block.alive)) {
     finishBall();
-  } else if (hasFlightEnded(ball, BALL_EXIT_Y, MAX_FLIGHT_SECONDS)) {
-    if (ball.elapsed >= MAX_FLIGHT_SECONDS)
-      showToast("Shot recalled by the forge");
+  } else if (hasBallExited(ball, BALL_EXIT_Y)) {
+    finishBall();
+  } else if (
+    shouldAutoRecall(
+      ball,
+      RECALL_AVAILABLE_SECONDS,
+      RECALL_IDLE_SECONDS,
+      MAX_FLIGHT_SECONDS,
+    )
+  ) {
+    showToast("Shot recalled by the forge");
     finishBall();
   }
+}
+
+function syncRecallButton() {
+  const available = Boolean(
+    currentBall &&
+      run?.phase === PHASES.BALL_IN_FLIGHT &&
+      isRecallAvailable(currentBall, RECALL_AVAILABLE_SECONDS),
+  );
+  elements.recallButton.hidden = !available;
+  elements.recallButton.disabled = !available || paused;
+}
+
+function recallCurrentShot() {
+  if (
+    paused ||
+    !currentBall ||
+    run?.phase !== PHASES.BALL_IN_FLIGHT ||
+    !isRecallAvailable(currentBall, RECALL_AVAILABLE_SECONDS)
+  )
+    return;
+  showToast("Shot recalled");
+  finishBall();
 }
 
 function finishBall() {
   if (!run || !currentBall) return;
   markBallSpent(run, currentBall.slotInstanceId);
   currentBall = null;
+  syncRecallButton();
 
   if (run.devTest) {
     const boardCleared = !blocks.some((block) => block.alive);
@@ -969,6 +1018,7 @@ function openDevLab() {
 }
 
 function updateInterface() {
+  syncRecallButton();
   elements.shardCount.textContent = meta.forgeShards.toLocaleString();
   elements.muteButton.textContent = meta.settings.muted ? "×" : "♪";
   elements.muteButton.setAttribute(
@@ -1588,6 +1638,11 @@ window.addEventListener("keydown", (event) => {
   if (event.key >= "1" && event.key <= "4") selectBall(Number(event.key) - 1);
   if (!run) return;
   if (event.key === "p" || event.key === "P") togglePause();
+  if (event.key === "r" || event.key === "R") {
+    event.preventDefault();
+    recallCurrentShot();
+    return;
+  }
   if (paused || run.phase !== PHASES.AIMING) return;
   if (event.key === "ArrowLeft") {
     aimAngle = clampAimAngle(aimAngle - 0.045);
@@ -1615,6 +1670,7 @@ elements.closeForge.addEventListener("click", closeForge);
 elements.helpButton.addEventListener("click", openHelp);
 elements.closeHelp.addEventListener("click", closeHelp);
 elements.pauseButton.addEventListener("click", () => togglePause());
+elements.recallButton.addEventListener("click", recallCurrentShot);
 elements.resumeButton.addEventListener("click", () => togglePause(false));
 elements.restartButton.addEventListener("click", startRun);
 elements.devLabButton.addEventListener("click", openDevLab);

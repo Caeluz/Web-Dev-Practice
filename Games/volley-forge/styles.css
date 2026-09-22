@@ -116,6 +116,23 @@ button:not(:disabled) { cursor: pointer; }
 .dev-lab-button:hover { border-color: #7de7ff; background: #204752; }
 .text-button { border: 0; color: #a8978e; background: transparent; }
 .paused-panel[hidden], .start-panel[hidden] { display: none; }
+.recall-button {
+  position: absolute; left: calc(50% + 7%); top: 91.67%; z-index: 2; min-height: 44px; padding: 0 13px;
+  border: 1px solid #ff9b65; border-radius: 8px; color: #fff0e5; font-weight: 800;
+  background: rgba(83, 37, 23, .94); transform: translateY(-50%);
+  animation: recall-ready-glow 1.8s ease-in-out infinite;
+}
+.recall-button:hover { border-color: #ffc09b; background: rgba(112, 48, 27, .97); }
+.recall-button:disabled { opacity: .55; cursor: default; }
+.recall-button[hidden] { display: none; }
+.recall-button kbd { margin-left: 7px; color: #d9a98d; font-family: inherit; font-size: 10px; font-weight: 700; }
+@keyframes recall-ready-glow {
+  0%, 100% { box-shadow: 0 7px 20px rgba(0, 0, 0, .34), 0 0 0 rgba(255, 139, 82, 0); }
+  50% { box-shadow: 0 7px 20px rgba(0, 0, 0, .34), 0 0 14px rgba(255, 139, 82, .28); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .recall-button { animation: none; box-shadow: 0 7px 20px rgba(0, 0, 0, .34); }
+}
 .toast { position: absolute; left: 50%; bottom: 76px; z-index: 4; padding: 9px 14px; border: 1px solid #75442f; border-radius: 7px; color: #ffe8d6; background: rgba(36,20,15,.95); opacity: 0; transform: translate(-50%, 10px); transition: .2s; pointer-events: none; white-space: nowrap; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 
