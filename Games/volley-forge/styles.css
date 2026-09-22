@@ -88,6 +88,21 @@ button:not(:disabled) { cursor: pointer; }
 .ball-slot small { display: block; margin-top: 2px; color: var(--muted); font-size: 9px; text-transform: uppercase; }
 .ball-key { color: #765b4f; font-size: 10px; }
 .empty-slot { display: grid; place-items: center; min-height: 54px; border: 1px dashed #3a2c27; border-radius: 9px; color: #64534b; font-size: 11px; }
+.selected-ball-details {
+  margin-top: 12px; padding: 12px; border: 1px solid color-mix(in srgb, var(--ball-color) 45%, #3e302b);
+  border-radius: 9px; background: color-mix(in srgb, var(--ball-color) 6%, #171210);
+  box-shadow: inset 3px 0 var(--ball-color);
+}
+.selected-ball-details[hidden] { display: none; }
+.selected-ball-heading { display: flex; align-items: center; gap: 10px; }
+.selected-ball-heading .ball-orb { flex: 0 0 auto; width: 34px; height: 34px; }
+.selected-ball-heading strong { display: block; color: #f4e7df; font-size: 12px; }
+.selected-ball-heading span { display: block; margin-top: 2px; color: var(--ball-color); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.selected-ball-details > p { margin: 10px 0 0; color: #aa9a91; font-size: 10px; line-height: 1.5; }
+.selected-ball-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin: 11px 0 0; }
+.selected-ball-stats div { min-width: 0; padding: 7px 5px; border: 1px solid #3a2b25; border-radius: 6px; text-align: center; background: rgba(12, 9, 8, .55); }
+.selected-ball-stats dt { color: #806e64; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.selected-ball-stats dd { margin: 3px 0 0; overflow-wrap: anywhere; color: #eeded3; font-size: 10px; font-weight: 800; }
 
 .forge-frame { overflow: hidden; }
 .canvas-header { display: flex; align-items: center; justify-content: space-between; min-height: 58px; padding: 10px 16px; border-bottom: 1px solid var(--line); background: #1b1412; }

@@ -95,6 +95,13 @@ const elements = {
   runModal: document.querySelector("#run-modal"),
   runTitle: document.querySelector("#run-title"),
   scoreLabel: document.querySelector("#score-label"),
+  selectedBallDamage: document.querySelector("#selected-ball-damage"),
+  selectedBallDescription: document.querySelector("#selected-ball-description"),
+  selectedBallDetails: document.querySelector("#selected-ball-details"),
+  selectedBallName: document.querySelector("#selected-ball-name"),
+  selectedBallSize: document.querySelector("#selected-ball-size"),
+  selectedBallSpeed: document.querySelector("#selected-ball-speed"),
+  selectedBallStatus: document.querySelector("#selected-ball-status"),
   shardCount: document.querySelector("#shard-count"),
   shotCount: document.querySelector("#shot-count"),
   startButton: document.querySelector("#start-button"),
@@ -304,6 +311,23 @@ function loadEncounter(index) {
 
 function selectedBallSlot() {
   return run?.arsenal[selectedSlotIndex] ?? null;
+}
+
+function ballSpeedLabel(speed) {
+  if (speed <= 540) return "Slow";
+  if (speed <= 610) return "Standard";
+  return "Fast";
+}
+
+function ballSizeLabel(radius) {
+  if (radius < 10) return "Small";
+  if (radius <= 11) return "Standard";
+  return "Large";
+}
+
+function ballSlotStatus(slot) {
+  if (currentBall?.slotInstanceId === slot.instanceId) return "In Flight";
+  return slot.spent ? "Spent" : "Ready";
 }
 
 function selectBall(index) {
@@ -825,6 +849,7 @@ function renderArsenal() {
       empty.textContent = index === 0 ? "Iron Ball" : "Empty slot";
       elements.arsenal.append(empty);
     }
+    renderSelectedBallDetails();
     return;
   }
 
@@ -838,6 +863,7 @@ function renderArsenal() {
       continue;
     }
     const definition = BALL_DEFINITIONS[slot.typeId];
+    const status = ballSlotStatus(slot);
     const button = document.createElement("button");
     button.type = "button";
     button.className = `ball-slot${selectedSlotIndex === index ? " selected" : ""}`;
@@ -845,13 +871,35 @@ function renderArsenal() {
     button.disabled = slot.spent || run.phase !== PHASES.AIMING || paused;
     button.innerHTML = `
       <i class="ball-orb" aria-hidden="true"></i>
-      <span><b>${definition.shortName}</b><small>${slot.spent ? "Spent" : "Ready"}</small></span>
+      <span><b>${definition.shortName}</b><small>${status}</small></span>
       <span class="ball-key">${index + 1}</span>
     `;
     button.title = definition.description;
     button.addEventListener("click", () => selectBall(index));
     elements.arsenal.append(button);
   }
+  renderSelectedBallDetails();
+}
+
+function renderSelectedBallDetails() {
+  const slot = selectedBallSlot();
+  const definition = slot ? BALL_DEFINITIONS[slot.typeId] : null;
+  if (!run || !slot || !definition) {
+    elements.selectedBallDetails.hidden = true;
+    return;
+  }
+
+  elements.selectedBallDetails.hidden = false;
+  elements.selectedBallDetails.style.setProperty(
+    "--ball-color",
+    definition.color,
+  );
+  elements.selectedBallName.textContent = definition.name;
+  elements.selectedBallStatus.textContent = ballSlotStatus(slot);
+  elements.selectedBallDescription.textContent = definition.description;
+  elements.selectedBallDamage.textContent = definition.damage;
+  elements.selectedBallSpeed.textContent = ballSpeedLabel(definition.speed);
+  elements.selectedBallSize.textContent = ballSizeLabel(definition.radius);
 }
 
 function renderPassives() {

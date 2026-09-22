@@ -74,6 +74,36 @@
             <span id="shot-count" class="chip">0 / 0</span>
           </div>
           <div id="arsenal" class="arsenal" aria-label="Equipped balls"></div>
+          <section
+            id="selected-ball-details"
+            class="selected-ball-details"
+            aria-live="polite"
+            aria-atomic="true"
+            hidden
+          >
+            <div class="selected-ball-heading">
+              <i class="ball-orb" aria-hidden="true"></i>
+              <div>
+                <strong id="selected-ball-name"></strong>
+                <span id="selected-ball-status"></span>
+              </div>
+            </div>
+            <p id="selected-ball-description"></p>
+            <dl class="selected-ball-stats">
+              <div>
+                <dt>Damage</dt>
+                <dd id="selected-ball-damage"></dd>
+              </div>
+              <div>
+                <dt>Speed</dt>
+                <dd id="selected-ball-speed"></dd>
+              </div>
+              <div>
+                <dt>Size</dt>
+                <dd id="selected-ball-size"></dd>
+              </div>
+            </dl>
+          </section>
           <p class="panel-tip">
             Select a ready ball, then drag across the forge to aim.
           </p>
