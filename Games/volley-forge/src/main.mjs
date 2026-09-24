@@ -421,6 +421,7 @@ function fireSelectedBall() {
     bankedCharge: 0,
     isFinal,
     contactCooldowns: new Map(),
+    penetratedBlocks: new Set(),
     trail: [],
     bladeState: isForgeblade ? "phasing" : null,
     targetX: isForgeblade ? bladeTarget.x : null,
@@ -594,11 +595,13 @@ function handleBlockCollision(ball, block, collision) {
   }
 
   if (outcome.penetrates) {
+    ball.penetratedBlocks.add(block.id);
     ball.x += (ball.vx / definition.speed) * (ball.radius * 1.6);
     ball.y += (ball.vy / definition.speed) * (ball.radius * 1.6);
   } else {
     reflectBall(ball, collision);
   }
+  return outcome.penetrates;
 }
 
 function beginBladeSweep(ball, definition) {
@@ -717,19 +720,16 @@ function updateBall(step) {
   }
 
   for (const block of blocks) {
-    if (
-      !block.alive ||
-      (ball.contactCooldowns.get(block.id) ?? 0) > ball.elapsed
-    )
-      continue;
+    if (!block.alive) continue;
     const collision = circleRectCollision(ball, blockRect(block));
+    if (ball.penetratedBlocks.has(block.id)) {
+      if (!collision) ball.penetratedBlocks.delete(block.id);
+      continue;
+    }
+    if ((ball.contactCooldowns.get(block.id) ?? 0) > ball.elapsed)
+      continue;
     if (collision) {
-      handleBlockCollision(ball, block, collision);
-      if (
-        BALL_DEFINITIONS[ball.typeId].ability !== "drill" ||
-        ball.penetrationsRemaining <= 0
-      )
-        break;
+      if (!handleBlockCollision(ball, block, collision)) break;
     }
   }
 
@@ -1660,7 +1660,8 @@ function traceAimPath() {
   let vy = Math.sin(aimAngle);
   const points = [{ x, y }];
   let collisions = 0;
-  let lastBlock = null;
+  let penetrationsRemaining = definition.penetrations ?? 0;
+  const contactedBlocks = new Set();
 
   for (let step = 0; step < 420 && collisions < collisionLimit; step += 1) {
     x += vx * 5;
@@ -1676,22 +1677,30 @@ function traceAimPath() {
       );
       points.push({ x, y });
       collisions += 1;
-      lastBlock = null;
     }
     if (y - definition.radius <= PLAY_TOP) {
       vy = Math.abs(vy);
       y = PLAY_TOP + definition.radius;
       points.push({ x, y });
       collisions += 1;
-      lastBlock = null;
     }
     for (const block of blocks) {
-      if (!block.alive || block.id === lastBlock) continue;
+      if (!block.alive) continue;
       const collision = circleRectCollision(
         { x, y, radius: definition.radius },
         blockRect(block),
       );
+      if (contactedBlocks.has(block.id)) {
+        if (!collision) contactedBlocks.delete(block.id);
+        continue;
+      }
       if (!collision) continue;
+      contactedBlocks.add(block.id);
+      if (penetrationsRemaining > 0) {
+        penetrationsRemaining -= 1;
+        points.push({ x, y });
+        break;
+      }
       const dot = vx * collision.nx + vy * collision.ny;
       vx -= 2 * dot * collision.nx;
       vy -= 2 * dot * collision.ny;
@@ -1699,7 +1708,6 @@ function traceAimPath() {
       y += collision.ny * (collision.overlap + 3);
       points.push({ x, y });
       collisions += 1;
-      lastBlock = block.id;
       break;
     }
     if (y > DANGER_Y + 80) break;
