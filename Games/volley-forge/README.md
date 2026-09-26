@@ -14,6 +14,8 @@ Then open `http://localhost:8000/Games/volley-forge/`.
 
 ## Controls
 
+- Before each run or restart, choose one owned starting ball and select **Begin Run**. Purchased legendary balls are eligible too. Your last confirmed choice is remembered across sessions.
+- In the starter picker, use Tab to navigate, arrow keys to change the selected ball, and Enter or Space to activate a button. Cancel or Escape returns without changing your run or saved selection.
 - Pointer: select a ready ball, then drag and release on the play field.
 - Keyboard: `1`–`4` selects a ball, arrow keys adjust aim, Space fires, `R` recalls an eligible shot, and `P` pauses.
 - Touch: tap an arsenal slot, drag across the play field, and release to fire.

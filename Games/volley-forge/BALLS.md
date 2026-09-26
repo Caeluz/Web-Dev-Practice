@@ -2,6 +2,8 @@
 
 Every ball occupies one arsenal slot and becomes spent after its shot resolves. Damage is the unmodified amount before passives, shields, or special effects.
 
+Before each run, you can choose any owned ball as your single starter, including Forgeblade after purchasing it. The picker remembers your last confirmed choice. Other eligible balls can still appear in drafts; your currently equipped balls are excluded.
+
 ## Quick reference
 
 | Ball | Role | Damage | Speed | Radius | Ability | Unlock | Ideal use |

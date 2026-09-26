@@ -22,6 +22,7 @@ import {
   createSlagBlock,
   descendBlocks,
   grantXp,
+  getOwnedBallDefinitions,
   hasCrossedDangerLine,
   markBallSpent,
   refreshArsenal,
@@ -48,6 +49,81 @@ import {
   saveMeta,
   sanitizeMeta,
 } from "../src/storage.mjs";
+
+test("starter choices follow definition order and include purchased legendary balls", () => {
+  const meta = createDefaultMeta();
+  assert.deepEqual(getOwnedBallDefinitions(meta.unlockedIds).map((ball) => ball.id),
+    ["iron", "ember", "hammer"]);
+  meta.forgeShards = 200;
+  assert.equal(purchaseUnlock(meta, "ball.forgeblade").purchased, false);
+  assert.equal(getOwnedBallDefinitions(meta.unlockedIds).some((ball) => ball.id === "forgeblade"), false);
+  meta.bossVictories = 1;
+  assert.equal(purchaseUnlock(meta, "ball.forgeblade").purchased, true);
+  assert.equal(purchaseUnlock(meta, "ball.drill").purchased, true);
+  assert.deepEqual(getOwnedBallDefinitions(meta.unlockedIds).map((ball) => ball.id),
+    ["iron", "ember", "hammer", "drill", "forgeblade"]);
+});
+
+test("each starter creates exactly one ready ball without changing run progression", () => {
+  const baseline = createRunState(123);
+  for (const ball of Object.values(BALL_DEFINITIONS)) {
+    const run = createRunState(123, ball.id);
+    assert.deepEqual(run, {
+      ...baseline,
+      arsenal: [{ instanceId: 1, typeId: ball.id, spent: false }],
+    });
+  }
+  for (const invalidId of [undefined, null, {}, ["iron"], "missing", "toString", "__proto__"]) {
+    assert.deepEqual(createRunState(123, invalidId), baseline);
+  }
+  assert.equal(createDevTestRunState("forgeblade").arsenal[0].typeId, "forgeblade");
+});
+
+test("drafts exclude the chosen starter and offer Iron when it is not equipped", () => {
+  const unlockedIds = [...STARTER_UNLOCKS, "ball.forgeblade"];
+  for (const starter of ["ember", "hammer", "forgeblade"]) {
+    const draft = createDraft(createRunState(123, starter), unlockedIds, createSeededRandom(123), 99);
+    assert.ok(draft.some((choice) => choice.kind === "ball" && choice.id === "iron"));
+    assert.ok(!draft.some((choice) => choice.kind === "ball" && choice.id === starter));
+  }
+});
+
+test("starter preferences preserve old saves and reject unknown or unowned balls", () => {
+  const oldSave = {
+    ...createDefaultMeta(),
+    forgeShards: 57,
+    unlockedIds: [...STARTER_UNLOCKS, "ball.drill"],
+    bestScore: 1234,
+    bossVictories: 2,
+    settings: { muted: true },
+  };
+  delete oldSave.startingBallId;
+  assert.deepEqual(sanitizeMeta(oldSave), { ...oldSave, startingBallId: "iron" });
+  for (const invalidId of [null, 1, {}, "missing", "storm", "forgeblade", "toString"]) {
+    assert.deepEqual(sanitizeMeta({ ...oldSave, startingBallId: invalidId }),
+      { ...oldSave, startingBallId: "iron" });
+  }
+  assert.equal(sanitizeMeta({ ...oldSave, startingBallId: "drill" }).startingBallId, "drill");
+});
+
+test("saved purchased legendary starter survives reload and initializes a normal run", () => {
+  const values = new Map();
+  const storage = {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, value),
+  };
+  const meta = createDefaultMeta();
+  meta.forgeShards = 90;
+  meta.bossVictories = 1;
+  purchaseUnlock(meta, "ball.forgeblade");
+  meta.startingBallId = "forgeblade";
+  assert.equal(saveMeta(meta, storage), true);
+  const loaded = loadMeta(storage);
+  assert.deepEqual(loaded, meta);
+  const run = createRunState(123, loaded.startingBallId);
+  assert.equal(run.arsenal[0].typeId, "forgeblade");
+  assert.equal(run.devTest, undefined);
+});
 
 test("XP overflow creates sequential draft choices", () => {
   const run = createRunState(1);
@@ -131,7 +207,7 @@ test("Dev Lab presets are deterministic and unknown presets fall back to a row",
   assert.ok(row.every((block) => block.hp === 3 && block.kind === "normal"));
 
   const maze = createDevTestBlocks("maze");
-  assert.equal(maze.length, 27);
+  assert.equal(maze.length, 23);
   assert.ok(maze.every((block) => block.hp === 10 && block.kind === "normal"));
 
   const shields = createDevTestBlocks("shields");
@@ -191,7 +267,7 @@ test("aiming and collision helpers constrain and reflect shots", () => {
   assert.ok(reflected.vx < 0);
 });
 
-test("Linebreaker is a Forge unlock and not a starter ball", () => {
+test("Linebreaker is a Forge unlock and not unlocked on a fresh save", () => {
   assert.deepEqual(
     {
       damage: BALL_DEFINITIONS.linebreaker.damage,
@@ -433,7 +509,7 @@ test("shots still end immediately after leaving the playfield", () => {
   assert.equal(hasBallExited({ y: 500, radius: 10 }, 950), false);
 });
 
-test("meta storage sanitizes corruption and persists unlock-only progress", () => {
+test("meta storage sanitizes corruption and persists Forge progress", () => {
   const values = new Map();
   const storage = {
     getItem: (key) => values.get(key) ?? null,

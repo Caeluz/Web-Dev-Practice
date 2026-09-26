@@ -21,6 +21,7 @@ import {
   createSeededRandom,
   createSlagBlock,
   descendBlocks,
+  getOwnedBallDefinitions,
   grantXp,
   hasCrossedDangerLine,
   markBallSpent,
@@ -107,6 +108,11 @@ const elements = {
   shotCount: document.querySelector("#shot-count"),
   startButton: document.querySelector("#start-button"),
   startPanel: document.querySelector("#start-panel"),
+  starterModal: document.querySelector("#starter-modal"),
+  starterOptions: document.querySelector("#starter-options"),
+  confirmStarter: document.querySelector("#confirm-starter"),
+  cancelStarter: document.querySelector("#cancel-starter"),
+  gameShell: document.querySelector(".game-shell"),
   toast: document.querySelector("#toast"),
   turnLabel: document.querySelector("#turn-label"),
   unlockList: document.querySelector("#unlock-list"),
@@ -155,6 +161,7 @@ let pendingBallChoice = null;
 let forgeReturn = "start";
 let sessionId = 0;
 let devTestConfig = null;
+let starterPicker = null;
 
 class ForgeAudio {
   constructor() {
@@ -247,6 +254,7 @@ function showToast(message) {
 
 function hideAllModals() {
   for (const modal of [
+    elements.starterModal,
     elements.cardModal,
     elements.replaceModal,
     elements.forgeModal,
@@ -260,6 +268,7 @@ function hideAllModals() {
 
 function showModal(modal) {
   for (const candidate of [
+    elements.starterModal,
     elements.cardModal,
     elements.replaceModal,
     elements.forgeModal,
@@ -272,10 +281,91 @@ function showModal(modal) {
   modal.hidden = false;
 }
 
-function startRun() {
+function openStarterPicker() {
+  if (starterPicker) return;
+  const ownedBalls = getOwnedBallDefinitions(meta.unlockedIds);
+  const selectedId = ownedBalls.some((ball) => ball.id === meta.startingBallId)
+    ? meta.startingBallId
+    : "iron";
+  starterPicker = {
+    selectedId,
+    returnFocus: document.activeElement,
+    returnToResults: run?.phase === PHASES.RUN_OVER,
+    wasPaused: paused,
+  };
+  paused = true;
+  aimingWithPointer = false;
+  elements.gameShell.inert = true;
+  elements.starterOptions.replaceChildren();
+  for (const ball of ownedBalls) {
+    const card = document.createElement("label");
+    card.className = `upgrade-card starter-card${ball.rarity === "legendary" ? " legendary" : ""}`;
+    card.style.setProperty("--ball-color", ball.color);
+    card.innerHTML = `
+      <input type="radio" name="starting-ball" value="${ball.id}" aria-labelledby="starter-name-${ball.id}" aria-describedby="starter-description-${ball.id}" />
+      <span class="card-kind">${ball.rarity === "legendary" ? "Legendary ball" : "Forged ball"}</span>
+      <h3 id="starter-name-${ball.id}"><i class="starter-color" aria-hidden="true"></i>${ball.name}</h3>
+      <p id="starter-description-${ball.id}">${ball.description}</p>
+      <span class="starter-selection" aria-hidden="true">Selected</span>
+    `;
+    const input = card.querySelector("input");
+    input.checked = ball.id === selectedId;
+    input.addEventListener("change", () => {
+      if (starterPicker && input.checked) starterPicker.selectedId = ball.id;
+    });
+    elements.starterOptions.append(card);
+  }
+  showModal(elements.starterModal);
+  elements.starterOptions.querySelector("input:checked")?.focus();
+}
+
+function cancelStarterPicker() {
+  if (!starterPicker) return;
+  const { returnFocus, returnToResults, wasPaused } = starterPicker;
+  starterPicker = null;
+  elements.gameShell.inert = false;
+  paused = wasPaused;
+  if (returnToResults) showModal(elements.runModal);
+  else hideAllModals();
+  returnFocus?.focus();
+}
+
+function confirmStarterPicker() {
+  if (!starterPicker) return;
+  const selectedId = starterPicker.selectedId;
+  const startingBallId = getOwnedBallDefinitions(meta.unlockedIds).some(
+    (ball) => ball.id === selectedId,
+  ) ? selectedId : "iron";
+  meta.startingBallId = startingBallId;
+  saveMeta(meta);
+  starterPicker = null;
+  elements.gameShell.inert = false;
+  startRun(startingBallId);
+  canvas.focus();
+}
+
+function handleStarterKey(event) {
+  if (event.key === "Escape") {
+    event.preventDefault();
+    cancelStarterPicker();
+  } else if (event.key === "Tab") {
+    // Only the checked radio is a tab stop in a native radio group.
+    const first = elements.starterOptions.querySelector("input:checked");
+    const last = elements.cancelStarter;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first?.focus();
+    }
+  }
+}
+
+function startRun(startingBallId = "iron") {
   sessionId += 1;
   const seed = Date.now();
-  run = createRunState(seed);
+  run = createRunState(seed, startingBallId);
   devTestConfig = null;
   random = createSeededRandom(seed);
   blocks = createEncounterBlocks(0);
@@ -823,13 +913,18 @@ function beginTurnResolution() {
   audio.play("danger");
   updateInterface();
 
-  window.setTimeout(() => {
+  window.setTimeout(function finishTurnResolution() {
     if (
       !run ||
       activeSession !== sessionId ||
       run.phase !== PHASES.TURN_RESOLUTION
     )
       return;
+    // A paused restart picker must not be replaced by a delayed draft/result.
+    if (paused) {
+      window.setTimeout(finishTurnResolution, 100);
+      return;
+    }
     for (const block of blocks) block.visualRow = block.row;
     if (hasCrossedDangerLine(blocks, DANGER_ROW)) {
       endRun(false);
@@ -856,8 +951,12 @@ function completeEncounter() {
 
   processDraftsOr(() => {
     const activeSession = sessionId;
-    window.setTimeout(() => {
+    window.setTimeout(function finishEncounter() {
       if (!run || activeSession !== sessionId) return;
+      if (paused) {
+        window.setTimeout(finishEncounter, 100);
+        return;
+      }
       if (isFinal) endRun(true);
       else loadEncounter(run.encounterIndex + 1);
     }, 850);
@@ -981,12 +1080,16 @@ function endRun(victory) {
     ? "The Forge Warden is broken."
     : "The forge claims this volley.";
   elements.runMessage.textContent = victory
-    ? "Your discoveries return to the forge. Future runs still begin with one Iron Ball."
+    ? "Your discoveries return to the forge. Choose any owned ball to lead your next run."
     : "Spend the shards you recovered, reshape the card pool, and try a sharper build.";
   elements.resultScore.textContent = run.score.toLocaleString();
   elements.resultEncounters.textContent = `${run.encountersCleared} / ${ENCOUNTERS.length}`;
   elements.resultShards.textContent = `◆ ${reward}`;
-  window.setTimeout(() => showModal(elements.runModal), 420);
+  const activeSession = sessionId;
+  window.setTimeout(() => {
+    if (activeSession === sessionId && run?.phase === PHASES.RUN_OVER && !starterPicker)
+      showModal(elements.runModal);
+  }, 420);
 }
 
 function renderArsenal() {
@@ -1969,6 +2072,10 @@ canvas.addEventListener("pointerup", (event) => {
 });
 
 window.addEventListener("keydown", (event) => {
+  if (starterPicker) {
+    handleStarterKey(event);
+    return;
+  }
   if (event.key >= "1" && event.key <= "4") selectBall(Number(event.key) - 1);
   if (!run) return;
   if (event.key === "p" || event.key === "P") togglePause();
@@ -2020,8 +2127,10 @@ window.addEventListener("keydown", (event) => {
   }
 });
 
-elements.startButton.addEventListener("click", startRun);
-elements.newRunButton.addEventListener("click", startRun);
+elements.startButton.addEventListener("click", openStarterPicker);
+elements.newRunButton.addEventListener("click", openStarterPicker);
+elements.confirmStarter.addEventListener("click", confirmStarterPicker);
+elements.cancelStarter.addEventListener("click", cancelStarterPicker);
 elements.forgeButton.addEventListener("click", () => openForge("start"));
 elements.runForgeButton.addEventListener("click", () => openForge("run"));
 elements.closeForge.addEventListener("click", closeForge);
@@ -2030,7 +2139,7 @@ elements.closeHelp.addEventListener("click", closeHelp);
 elements.pauseButton.addEventListener("click", () => togglePause());
 elements.recallButton.addEventListener("click", recallCurrentShot);
 elements.resumeButton.addEventListener("click", () => togglePause(false));
-elements.restartButton.addEventListener("click", startRun);
+elements.restartButton.addEventListener("click", openStarterPicker);
 elements.devLabButton.addEventListener("click", openDevLab);
 elements.devMaxPassives.addEventListener("click", () =>
   setDevPassiveRanks("max"),

@@ -120,6 +120,7 @@
           <div class="canvas-wrap" id="canvas-wrap">
             <canvas
               id="game-canvas"
+              tabindex="-1"
               width="720"
               height="960"
               aria-label="Volley-Forge play field"
@@ -209,6 +210,27 @@
     </main>
 
     <div id="modal-backdrop" class="modal-backdrop" hidden>
+      <section
+        id="starter-modal"
+        class="modal starter-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="starter-title"
+        aria-describedby="starter-description"
+        hidden
+      >
+        <p class="eyebrow">Shape your next run</p>
+        <h2 id="starter-title">Choose your starting ball</h2>
+        <p id="starter-description">Start with one owned ball. Purchased legendary balls are welcome too.</p>
+        <fieldset class="starter-fieldset">
+          <legend>Owned balls</legend>
+          <div id="starter-options" class="card-options starter-options"></div>
+        </fieldset>
+        <div class="modal-actions">
+          <button id="confirm-starter" class="primary-button" type="button">Begin Run</button>
+          <button id="cancel-starter" class="secondary-button" type="button">Cancel</button>
+        </div>
+      </section>
       <section
         id="card-modal"
         class="modal card-modal"
@@ -352,6 +374,7 @@
         <p class="eyebrow">Field manual</p>
         <h2 id="help-title">How to play</h2>
         <ol>
+          <li><b>Choose a starter</b> from your owned balls before each run, including purchased legendary balls.</li>
           <li><b>Select</b> any glowing ball in your arsenal.</li>
           <li><b>Drag and release</b> above the cannon to aim and fire.</li>
           <li>

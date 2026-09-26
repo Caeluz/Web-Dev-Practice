@@ -28,7 +28,17 @@ export function xpToNext(level) {
   return 6 + 4 * Math.max(0, level - 1);
 }
 
-export function createRunState(seed = Date.now()) {
+export function getOwnedBallDefinitions(unlockedIds) {
+  const unlocked = new Set(unlockedIds);
+  return Object.values(BALL_DEFINITIONS).filter((ball) =>
+    unlocked.has(`ball.${ball.id}`),
+  );
+}
+
+export function createRunState(seed = Date.now(), startingBallId = "iron") {
+  const typeId = typeof startingBallId === "string" && Object.hasOwn(BALL_DEFINITIONS, startingBallId)
+    ? startingBallId
+    : "iron";
   return {
     phase: PHASES.AIMING,
     seed,
@@ -38,7 +48,7 @@ export function createRunState(seed = Date.now()) {
     level: 1,
     xp: 0,
     pendingDrafts: 0,
-    arsenal: [{ instanceId: 1, typeId: "iron", spent: false }],
+    arsenal: [{ instanceId: 1, typeId, spent: false }],
     nextBallInstanceId: 2,
     passives: {},
     score: 0,
